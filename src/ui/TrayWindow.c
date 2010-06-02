@@ -47,9 +47,6 @@ Bool CreateTrayWindow() {
     }
     if (tray.window == (Window) NULL)
         return False;
-    // GNOME, NET WM Specification
-    tray_send_opcode(dpy, dock, CurrentTime, SYSTEM_TRAY_REQUEST_DOCK,
-            0, 0);
 
     XSizeHints size_hints;
     size_hints.flags = PWinGravity | PBaseSize;

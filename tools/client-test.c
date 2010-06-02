@@ -93,11 +93,23 @@ int main ( int argc, char *argv[] )
 		}
 	}
 
-	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", XDisplayName(NULL));
+    Display *dpy = NULL;
+    if ((dpy = XOpenDisplay ((char *) NULL)) == NULL) {
+        fprintf (stderr, "Error: fcitx-remote can only run under X\n");
+        fprintf (stderr, "Hint: If you running fcitx-remote from console, you may need to "
+                "set the $DISPLAY.\n");
+        return 1;
+    }
+
+	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", DisplayString(dpy));
+
+    if (dpy)
+        XCloseDisplay(dpy);
+
 	socket_fd = create_socket(socketfile);
 	if (socket_fd < 0) {
 		fprintf(stderr, "Can't open socket %s: %s\n", socketfile, strerror(errno));
-		return 0;
+		return 1;
 	}
 
 	if (o == 0) {

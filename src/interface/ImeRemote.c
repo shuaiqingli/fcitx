@@ -38,6 +38,7 @@
 extern Property state_prop;
 #endif
 extern Bool bUseDBus; 
+extern Display* dpy;
 char socketfile[PATH_MAX]="";
 CARD16 g_last_connect_id;
 
@@ -140,7 +141,7 @@ static void main_loop (int socket_fd)
 
 void* remoteThread (void* val)
 {
-	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", XDisplayName(NULL));
+	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", DisplayString(dpy));
 	int socket_fd = create_socket(socketfile);
 	if (socket_fd < 0) {
 		fprintf(stderr, "Can't open socket %s: %s\n", socketfile, strerror(errno));
