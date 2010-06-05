@@ -53,7 +53,7 @@
 #include "im/special/QuickPhrase.h"
 #include "im/special/AutoEng.h"
 #include "im/extra/extra.h"
-
+#include "ui/skin.h"
 #include "interface/DBus.h"
 
 IM             *im = NULL;
@@ -230,8 +230,7 @@ extern Bool     bWrittenRecord;
 #endif
 
 #ifdef _ENABLE_TRAY
-extern tray_win_t tray;
-extern Bool	tray_mapped;
+extern TrayWindow tray;
 #endif
 
 char *sCornerTrans[] = {
@@ -289,7 +288,7 @@ void CloseIM (IMForwardEventStruct * call_data)
     DrawMainWindow ();
 
 #ifdef _ENABLE_TRAY
-    DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH);
+    DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
 #endif
     }
 #ifdef _ENABLE_DBUS
@@ -813,7 +812,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
 #ifdef _ENABLE_TRAY
         			    if (!tray.window) {
         			        CreateTrayWindow();
-        			        DrawTrayWindow (INACTIVE_ICON,0,0,TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH);
+        			        DrawTrayWindow (INACTIVE_ICON,0,0,tray.size, tray.size);
         			    }
 #endif
         			    if (!aboutWindow)
@@ -828,7 +827,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
 #ifdef _ENABLE_TRAY
         			    XDestroyWindow(dpy,tray.window);
         			    tray.window = (Window) NULL;
-        			    tray_mapped = False;
+        			    tray.bTrayMapped = False;
 #endif
         			}
 
@@ -1245,8 +1244,7 @@ void SwitchIM (INT8 index)
     if (!bShowVK && bCompactMainWindow)
         MAINWND_WIDTH -= 24;
 
-    XResizeWindow (dpy, mainWindow, MAINWND_WIDTH, MAINWND_HEIGHT);
-
+	XResizeWindow (dpy, mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);
     DrawMainWindow ();
     }
 
@@ -1282,6 +1280,34 @@ void SwitchIM (INT8 index)
     updateProperty(&state_prop);
     }
 #endif
+}
+
+void SelectIM(int imidx)
+{
+//	int i=0;
+	INT8        iLastIM;
+	iIMIndex=imidx;
+
+    iLastIM = (iIMIndex >= iIMCount) ? (iIMCount - 1) : iIMIndex;
+
+	if (im[iLastIM].Destroy)
+	    im[iLastIM].Destroy ();
+	if (im[iIMIndex].Init)
+	    im[iIMIndex].Init ();
+	ResetInput ();
+	DrawMainWindow ();
+/*
+	while(1)
+	{
+		if( iIMIndex == imidx )
+			break;
+		SwitchIM(-1);
+
+		i++;
+		if(i >20)
+			break;
+	}*/
+	//printf("im[%d]:%s\n",iIMIndex,im[iIMIndex].strName);
 }
 
 void DoPhraseTips (void)

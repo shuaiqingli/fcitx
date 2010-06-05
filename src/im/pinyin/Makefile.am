@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/xpm -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/xpm -I$(top_srcdir)/src `pkg-config --cflags cairo`
 DEFS = -DPKGDATADIR=\"$(pkgdatadir)\"
 
 noinst_LIBRARIES=libimpinyin.a

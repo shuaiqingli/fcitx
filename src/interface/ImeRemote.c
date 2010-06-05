@@ -129,9 +129,9 @@ static void main_loop (int socket_fd)
 #ifdef _ENABLE_TRAY
 			if (!bUseDBus) {
 				if (ConnectIDGetState (g_last_connect_id) == IS_CHN)
-					DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+					DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
 				else
-					DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+					DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
 			}
 #endif
 		}

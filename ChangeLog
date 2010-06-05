@@ -1,3 +1,6 @@
+2010-06-05: t3swing <t3swing@gmail.com>
+    * 增加皮肤支持
+	* 界面全面修改为cairo绘制
 
 2010-04-26: CSSlayer <wengxt@gmail.com>
 	* 修复QuickPhrase的一些崩溃问题，加入翻页支持

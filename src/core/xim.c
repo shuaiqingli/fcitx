@@ -219,7 +219,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 
     if (!bUseDBus) {
 #ifdef _ENABLE_TRAY
-	    DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);
+	    DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
 	    if (hideMainWindow == HM_SHOW) {
 		DisplayMainWindow ();
@@ -344,7 +344,7 @@ void EnterChineseMode (Bool bState)
     if (!bUseDBus) {
 	DisplayMainWindow ();
 #ifdef _ENABLE_TRAY
-	DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);
+	DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
     }
 
@@ -375,7 +375,7 @@ Bool MyTriggerNotifyHandler (IMTriggerNotifyStruct * call_data)
 
 #ifdef _ENABLE_TRAY
 	if (!bUseDBus)
-	    DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);
+	    DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
     }
     else

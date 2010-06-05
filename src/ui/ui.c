@@ -40,12 +40,15 @@
 #include "core/MyErrorsHandlers.h"
 #include "ui/MainWindow.h"
 #include "ui/InputWindow.h"
+#include "ui/MenuWindow.h"
 #include "im/special/vk.h"
 #include "core/IC.h"
 #include "tools/tools.h"
 #include "im/pinyin/sp.h"
 #include "ui/about.h"
 #include "ui/TrayWindow.h"
+#include "ui/skin.h"
+#include "core/ime.h"
 
 Display        *dpy;
 int             iScreen;
@@ -57,6 +60,8 @@ XftDraw        *xftDraw = (XftDraw *) NULL;
 XftFont        *xftMainWindowFont = (XftFont *) NULL;
 XftFont        *xftMainWindowFontEn = (XftFont *) NULL;
 XftFont        *xftVKWindowFont = (XftFont *) NULL;
+XftFont        *xftMenuFont = (XftFont *) NULL;
+
 Bool            bUseBold = True;
 int             iMainWindowFontSize = 9;
 int             iVKWindowFontSize = 11;
@@ -102,6 +107,7 @@ extern Bool bMainWindow_Hiden;
 extern int      MAINWND_WIDTH;
 extern Bool     bCompactMainWindow;
 extern INT8     iIMIndex;
+unsigned char   iCurrentVK ;
 extern CARD16   connect_id;
 extern Bool     bShowVK;
 extern Bool     bVK;
@@ -109,7 +115,7 @@ extern Bool     bCorner;
 extern Bool     bIsDisplaying;
 
 #ifdef _ENABLE_TRAY
-extern tray_win_t tray;
+extern TrayWindow tray;
 #endif
 
 //added by yunfan
@@ -161,7 +167,7 @@ void InitGC (Window window)
     iPixel = BlackPixel (dpy, DefaultScreen (dpy));
     XSetForeground (dpy, dimGC, iPixel);
 
-    if (mainWindowColor.backGC)
+/*    if (mainWindowColor.backGC)
     XFreeGC (dpy, mainWindowColor.backGC);
     mainWindowColor.backGC = XCreateGC (dpy, window, 0, &values);
     if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(mainWindowColor.backColor)))
@@ -187,7 +193,7 @@ void InitGC (Window window)
     else
     iPixel = BlackPixel (dpy, DefaultScreen (dpy));
     XSetForeground (dpy, inputWindowColor.backGC, iPixel);
-
+*/
     if (VKWindowColor.foreGC)
     XFreeGC (dpy, VKWindowColor.foreGC);
     VKWindowColor.foreGC = XCreateGC (dpy, window, 0, &values);
@@ -270,6 +276,11 @@ void CreateFont (void)
     if (xftDraw)
     XftDrawDestroy (xftDraw);
     xftDraw = XftDrawCreate (dpy, inputWindow, DefaultVisual (dpy, DefaultScreen (dpy)), DefaultColormap (dpy, DefaultScreen (dpy)));
+    
+    if(xftMenuFont)
+    XftFontClose (dpy, xftMenuFont);
+    xftMenuFont = XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontName, XFT_SIZE, XftTypeDouble, 10.0, XFT_ANTIALIAS, XftTypeBool, 0, NULL);
+
 
     setlocale (LC_CTYPE, "");
 }
@@ -371,7 +382,7 @@ void Draw3DEffect (Window window, int x, int y, int width, int height, _3D_EFFEC
  */
 void MyXEventHandler (XEvent * event)
 {
-    unsigned char   iPos;
+   // unsigned char   iPos;
     
     switch (event->type) {
 #ifdef _ENABLE_TRAY
@@ -391,7 +402,7 @@ void MyXEventHandler (XEvent * event)
         DrawMainWindow ();
     }
 #ifdef _ENABLE_TRAY 
-    tray_event_handler(event);
+    TrayEventHandler(event);
 #endif
     break;
     case Expose:
@@ -406,9 +417,33 @@ void MyXEventHandler (XEvent * event)
         DrawVKWindow ();
     else if (event->xexpose.window == inputWindow)
         DrawInputWindow ();
+	else if (event->xexpose.window == mainMenu.menuWindow)
+	    DrawXlibMenu(dpy,&mainMenu);
+	else if (event->xexpose.window == vkMenu.menuWindow)
+	{
+		if(iCurrentVK>=0)
+			vkMenu.mark=iCurrentVK;
+		DrawXlibMenu(dpy,&vkMenu);
+	}  
+	else if (event->xexpose.window == imMenu.menuWindow)
+	{
+		if(iIMIndex >=0)
+			imMenu.mark=iIMIndex;
+	    DrawXlibMenu(dpy,&imMenu);
+	}
+	else if (event->xexpose.window == skinMenu.menuWindow)
+	{
+		int i;
+		for(i=0;i<12;i++)
+		{
+			if(strcmp(skinType,skinBuf[i].dirbase) == 0)
+				skinMenu.mark=i;
+		}
+	    DrawXlibMenu(dpy,&skinMenu);
+	}
 #ifdef _ENABLE_TRAY
     else if (event->xexpose.window == tray.window) {
-        tray_event_handler(event);
+        TrayEventHandler(event);
     }
 #endif
     //added by yunfan
@@ -418,7 +453,7 @@ void MyXEventHandler (XEvent * event)
     break;
     case DestroyNotify:
 #ifdef _ENABLE_TRAY 
-    tray_event_handler(event);
+    TrayEventHandler(event);
 #endif
     break;
     case ButtonPress:
@@ -431,25 +466,29 @@ void MyXEventHandler (XEvent * event)
         MouseClick (&x, &y, inputWindow);
         DrawInputWindow ();
         }
-        else if (event->xbutton.window == mainWindow) {
-        if (IsInBox (event->xbutton.x, event->xbutton.y, 1, 1, 16, 17)) {
-            iMainWindowX = event->xbutton.x;
-            iMainWindowY = event->xbutton.y;
-            if (!MouseClick (&iMainWindowX, &iMainWindowY, mainWindow)) {
-            if (ConnectIDGetState (connect_id) != IS_CHN) {
-                SetIMState ((ConnectIDGetState (connect_id) == IS_ENG) ? False : True);
-                DrawMainWindow ();
-            }
-            else
-                ChangeIMState (connect_id);
+        else if (event->xbutton.window == mainWindow)
+        {
+
+			if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.logo_img))
+			{
+		  		iMainWindowX = event->xbutton.x;
+		    	iMainWindowY = event->xbutton.y;
+		    	if (!MouseClick (&iMainWindowX, &iMainWindowY, mainWindow))
+		    	{
+					if (ConnectIDGetState (connect_id) != IS_CHN) {
+			   				SetIMState ((ConnectIDGetState (connect_id) == IS_ENG) ? False : True);
+			    			DrawMainWindow ();
+					}
+				}
+				
 #ifdef _ENABLE_TRAY
-            if (ConnectIDGetState (connect_id) == IS_CHN)
-                DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
-            else
-                DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+	            if (ConnectIDGetState (connect_id) == IS_CHN)
+	                DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
+	            else
+	                DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
 #endif
             }
-        }
+
         }
         else if (event->xbutton.window == VKWindow) {
         if (!VKMouseKey (event->xbutton.x, event->xbutton.y)) {
@@ -463,70 +502,161 @@ void MyXEventHandler (XEvent * event)
         else if (event->xbutton.window == aboutWindow) {
         XUnmapWindow (dpy, aboutWindow);
         DrawMainWindow ();
-        }
+        }else if(event->xbutton.window == mainMenu.menuWindow)
+		{
+			int i;
+			i=selectShellIndex(&mainMenu,event->xbutton.y);
+			
+			if(i==0)
+			{	
+				DisplayAboutWindow ();
+				XUnmapWindow (dpy, mainMenu.menuWindow);
+				DrawMainWindow ();
+			}
+			//fcitx配置工具接口
+			else if(i==6)
+			{
+				 XUnmapWindow (dpy, inputWindow);
+				 XUnmapWindow (dpy, mainMenu.menuWindow);
+				//用一个标志位检测fcitx配置程序是否在运行，如果在运行，则跳过，否则可以同时运行多个fcitx_tools程序，会有共享内存方面的bug
+				// if( fcitx_tools_status == 0)
+				// 	fcitx_tools_interface();	
+			}
+			else if(i==7)
+			{
+				clearSelectFlag(&mainMenu);
+				XUnmapWindow (dpy, mainMenu.menuWindow);
+				XUnmapWindow (dpy, vkMenu.menuWindow);
+				XUnmapWindow (dpy, imMenu.menuWindow);
+				XUnmapWindow (dpy, skinMenu.menuWindow);
+			
+			}
+	    }
+		else if (event->xbutton.window == imMenu.menuWindow) 
+		{
+			SelectIM(selectShellIndex(&imMenu,event->xbutton.y));
+			clearSelectFlag(&mainMenu);
+			XUnmapWindow (dpy, imMenu.menuWindow);
+			XUnmapWindow (dpy, mainMenu.menuWindow);
+	
+		}
+		else if (event->xbutton.window == skinMenu.menuWindow) {
+			//皮肤切换在此进行
+			int i;
+			i=selectShellIndex(&skinMenu,event->xbutton.y);
+			//
+			if(strcmp(skinType,skinBuf[i].dirbase) !=0 )
+			{
+				clearSelectFlag(&mainMenu);
+				XUnmapWindow (dpy, mainMenu.menuWindow);
+				XUnmapWindow (dpy, vkMenu.menuWindow);
+				XUnmapWindow (dpy, imMenu.menuWindow);
+				XUnmapWindow (dpy, skinMenu.menuWindow);
+				DisplaySkin(skinBuf[i].dirbase);	
+				SaveConfig();
+			}
+		}
+		else if (event->xbutton.window == vkMenu.menuWindow) {
+			SelectVK(selectShellIndex(&vkMenu,event->xbutton.y));
+			clearSelectFlag(&mainMenu);
+			XUnmapWindow (dpy, mainMenu.menuWindow);
+			XUnmapWindow (dpy, vkMenu.menuWindow);
+		}
         //****************************
         SaveProfile ();
         break;
+
+		case Button3:
+		
+		if(event->xbutton.window == mainMenu.menuWindow)
+		{
+			clearSelectFlag(&mainMenu);
+			XUnmapWindow (dpy, mainMenu.menuWindow);
+			XUnmapWindow (dpy, vkMenu.menuWindow);
+			XUnmapWindow (dpy, imMenu.menuWindow);
+			XUnmapWindow (dpy, skinMenu.menuWindow);
+		}
+#ifdef _ENABLE_TRAY	
+		else if(event->xbutton.window == tray.window)
+		{
+			
+			loadSkinDir();
+			//dock的定位和普通的定位不同，这里有待完善，先放到右下角
+
+			GetMenuHeight(dpy,&mainMenu);
+			mainMenu.pos_x=DisplayWidth(dpy, iScreen) -event->xbutton.x-mainMenu.width-20;
+			mainMenu.pos_y=DisplayHeight(dpy, iScreen) -event->xbutton.x-mainMenu.height-20;
+			DrawXlibMenu( dpy,&mainMenu);
+			DisplayXlibMenu(dpy,&mainMenu);		
+		}
+#endif	
+		else if (event->xbutton.window == mainWindow )
+		 {
+		 	loadSkinDir();
+
+			GetMenuHeight(dpy,&mainMenu);
+				
+			mainMenu.pos_x = iMainWindowX;
+			mainMenu.pos_y = iMainWindowY+skin_config.skin_main_bar.mbbg_img.height+5;
+			if( (mainMenu.pos_y+mainMenu.height) > DisplayHeight(dpy, iScreen) )
+					mainMenu.pos_y= iMainWindowY-5-mainMenu.height;
+			
+			DrawXlibMenu( dpy,&mainMenu);
+			DisplayXlibMenu(dpy,&mainMenu);
+		}
+		break;
     }
     break;
     case ButtonRelease:
-    if (event->xbutton.window == mainWindow) {
-        switch (event->xbutton.button) {
-        case Button1:
-        iPos = 20;
-        if (!bCompactMainWindow) {
-            if (IsInBox (event->xbutton.x, event->xbutton.y, 20, 1, 38, 19))
-            ChangePunc ();
-            else if (IsInBox (event->xbutton.x, event->xbutton.y, 38, 1, 55, 19))
-            ChangeCorner ();
-            else if (IsInBox (event->xbutton.x, event->xbutton.y, 56, 1, 73, 19))
-            ChangeLegend ();
-            else if (IsInBox (event->xbutton.x, event->xbutton.y, 74, 1, 91, 19))
-            ChangeGBKT ();
+    if (event->xbutton.window == mainWindow)
+    {
+        switch (event->xbutton.button)
+        {
+        case Button1:  
 
-            iPos = 92;
-        }
-        if (IsInBox (event->xbutton.x, event->xbutton.y, iPos, 1, iPos + 10, 19))
-            ChangeLock ();
-        else {
-            if (bShowVK || !bCompactMainWindow) {
-            if (IsInBox (event->xbutton.x, event->xbutton.y, iPos + 11, 1, iPos + 30, 19))
-                SwitchVK ();
-            iPos += 20;
-            }
+		    if (IsInRspArea(event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.zhpunc_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.enpunc_img))
+						ChangePunc ();
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.half_corner_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.full_corner_img) )
+						ChangeCorner ();
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lxoff_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.lxon_img ) )
+						ChangeLegend ();
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.chs_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.cht_img ) )
+						ChangeGBKT ();
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.unlock_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lock_img ) )
+		  				ChangeLock ();
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.vkhide_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.vkshow_img ) )
+			    		SwitchVK ();
+			else if (!bCorner && IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.pinyin_img ))
+						SwitchIM (-1);
 
-            if (!bCorner && IsInBox (event->xbutton.x, event->xbutton.y, iPos + 11, 1, MAINWND_WIDTH, 19))
-            SwitchIM (-1);
-        }
-        break;
+		break;
+
         //added by yunfan
         case Button2:
         DisplayAboutWindow ();
         break;
         //********************
         case Button3:
-        if (IsInBox (event->xbutton.x, event->xbutton.y, 1, 1, 16, 17))
-            XUnmapWindow (dpy, mainWindow);
-        else if (!bVK) {
-            bCompactMainWindow = !bCompactMainWindow;
-            SwitchIM (iIMIndex);
-        }
-        break;
-        }
-    }
+
 #ifdef _ENABLE_TRAY
-    else if (event->xbutton.window == tray.window) {
+ 		 if (event->xbutton.window == tray.window) {
         switch (event->xbutton.button) {
         case Button1:
         if (ConnectIDGetState (connect_id) != IS_CHN) {
             SetIMState (True);
             DrawMainWindow ();
 
-            DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+            DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
         }
         else {
             SetIMState (False);
-            DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+            DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
             }
 
         break;
@@ -543,6 +673,8 @@ void MyXEventHandler (XEvent * event)
         break;
         }
     }
+    }
+    }
 #endif
     break;
     case FocusIn:
@@ -553,6 +685,25 @@ void MyXEventHandler (XEvent * event)
     break;
     default:
     break;
+
+	case MotionNotify:
+		if(event->xany.window == mainMenu.menuWindow)
+		{	
+			MainMenuEvent(event->xmotion.x,event->xmotion.y);
+		}
+		else if(event->xany.window == imMenu.menuWindow)	
+		{	
+			IMMenuEvent(event->xmotion.x,event->xmotion.y);
+		}	
+		else if(event->xany.window == vkMenu.menuWindow)	
+		{	
+			VKMenuEvent(event->xmotion.x,event->xmotion.y);
+		}	
+		else if(event->xany.window == skinMenu.menuWindow)	
+		{	
+			SkinMenuEvent(event->xmotion.x,event->xmotion.y);
+		}	
+					break;
     }
 }
 
@@ -565,6 +716,11 @@ Bool IsInBox (int x0, int y0, int x1, int y1, int x2, int y2)
     return True;
 
     return False;
+}
+
+Bool IsInRspArea(int x0,int y0,skin_img_t img)
+{
+	return IsInBox (x0,y0,img.response_x , img.response_y, img.response_x+img.response_w, img.response_y+img.response_h);
 }
 
 #ifdef _USE_XFT

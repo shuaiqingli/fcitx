@@ -1,31 +1,32 @@
 #ifdef _ENABLE_TRAY
 
 #include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <X11/Xmd.h>
+#include <X11/xpm.h>
+#include <X11/extensions/Xrender.h>
 
 #include "ui/TrayWindow.h"
+#include "ui/tray.h"
+#include "ui/skin.h"
 #include "core/xim.h"
-#include "inactive.xpm"
-#include "active.xpm"
 
-Bool tray_mapped = False;
-tray_win_t tray;
+TrayWindow tray;
 Bool bUseTrayIcon = True;
 
 extern Display *dpy;
 extern int iScreen;
-extern Atom Atoms[6];
 extern CARD16 connect_id;
 
-Bool ProcessTrayIcon(char** data, XImage** image, Pixmap* pixmapshape, Pixmap* pixmap);
-
 Bool CreateTrayWindow() {
-     XTextProperty tp;
+    XTextProperty tp;
     char   strWindowName[]="Fcitx Tray Window";
-    
-    tray_init(dpy, &tray);
-    XVisualInfo* vi = tray_get_visual(dpy, &tray);
-    Window dock = tray_get_dock(dpy);
+
+    InitTray(dpy, &tray);
+
+    XVisualInfo* vi = TrayGetVisual(dpy, &tray);
     if (vi && vi->visual) {
         Window p = DefaultRootWindow (dpy);
         Colormap colormap = XCreateColormap(dpy, p, vi->visual, AllocNone);
@@ -40,7 +41,7 @@ Bool CreateTrayWindow() {
     }
     else {
         tray.window = XCreateSimpleWindow (dpy, DefaultRootWindow(dpy), \
-            0, 0, 1, 1, 0, \
+            -1, -1, 1, 1, 0, \
             BlackPixel (dpy, DefaultScreen (dpy)), \
             WhitePixel (dpy, DefaultScreen (dpy)));
         XSetWindowBackgroundPixmap(dpy, tray.window, ParentRelative);
@@ -48,10 +49,11 @@ Bool CreateTrayWindow() {
     if (tray.window == (Window) NULL)
         return False;
 
+    load_tray_img();
     XSizeHints size_hints;
     size_hints.flags = PWinGravity | PBaseSize;
-    size_hints.base_width = 22;
-    size_hints.base_height = 22;
+    size_hints.base_width = tray.size;
+    size_hints.base_height = tray.size;
     XSetWMNormalHints(dpy, tray.window, &size_hints);
 
     //Set the name of the window
@@ -60,26 +62,14 @@ Bool CreateTrayWindow() {
     tp.format = 16;
     tp.nitems = strlen(strWindowName);
     XSetWMName (dpy, tray.window, &tp);
-    
-    if (!ProcessTrayIcon(inactive_xpm, &tray.icon[INACTIVE_ICON], &tray.icon_mask[INACTIVE_ICON],
-				&tray.picon[INACTIVE_ICON])) {
-        fprintf(stderr, "failed to get inactive icon image\n");
-        return False;
+   
+    if (vi && vi->visual)
+        tray.cs = cairo_xlib_surface_create(dpy, tray.window, tray.visual.visual, 200, 200);
+    else
+    {
+        Visual *target_visual = DefaultVisual (dpy, iScreen);
+        tray.cs = cairo_xlib_surface_create(dpy, tray.window, target_visual, 200, 200);
     }
-
-    if (!ProcessTrayIcon(active_xpm, &tray.icon[ACTIVE_ICON], &tray.icon_mask[ACTIVE_ICON],
-				&tray.picon[ACTIVE_ICON])) {
-        fprintf(stderr, "failed to get active icon image\n");
-        return False;
-    }
-
-    /* GCs for copy and drawing on mask */
-    XGCValues gv;
-    gv.foreground = BlackPixel(dpy, DefaultScreen(dpy));
-    gv.background = BlackPixel(dpy, DefaultScreen(dpy));
-    tray.gc = XCreateGC(dpy, tray.window, GCBackground|GCForeground, &gv);
-
-	XSetClipMask(dpy, tray.gc, tray.icon_mask[0]);
 
     XSelectInput (dpy, tray.window, ExposureMask | KeyPressMask | \
             ButtonPressMask | ButtonReleaseMask | StructureNotifyMask \
@@ -87,110 +77,102 @@ Bool CreateTrayWindow() {
     return True;
 }
 
-Bool ProcessTrayIcon(char** data, XImage** image, Pixmap* pixmapshape, Pixmap* pixmap)
-{
-	XImage* dummy = NULL;
-	XpmAttributes attr;
-	attr.valuemask = XpmColormap | XpmDepth | XpmCloseness;
-	attr.colormap = DefaultColormap(dpy, iScreen);
-	attr.depth = DefaultDepth(dpy, iScreen);
-	attr.closeness = 40000;
-	attr.exactColors = False;
-	if (XpmCreateImageFromData(dpy, data, image, &dummy, &attr))
-		return False;
-	if (XpmCreatePixmapFromData(dpy, tray.window,data, pixmap,
-				pixmapshape, &attr))
-		return False;
-	if (dummy)
-		XDestroyImage(dummy);
-
-	return True;
-}
-
 void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
-    if ( !bUseTrayIcon )
-	return;
-	
-    if (!tray_mapped) {
-        tray_mapped = True;
-        if (!tray_find_dock(dpy, tray.window))
-            return;
+	cairo_t *c;
+	cairo_surface_t *png_surface ;
+    skin_img_t* skinImg;
+    if (!tray.bTrayMapped) {
+        tray.bTrayMapped = True;
+        if (!TrayFindDock(dpy, &tray))
+			return;
     }
 
-    if (!tray_get_visual(dpy, &tray))
+    /* 画png */
+    if (f_state)
     {
-        XClearArea (dpy, tray.window, x, y, w, h, False);
-        XSetClipOrigin(dpy, tray.gc, x, y);
-        XPutImage(dpy, tray.window, tray.gc, tray.icon[f_state],
-                x, y, x, y, w, h);
+        png_surface = trayActive;
+        skinImg = &skin_config.skin_tray_icon.active_img;
     }
     else
     {
-        Picture trayw, mask, icon;
-        
-        XWindowAttributes attrs;
-        
-        XGetWindowAttributes( dpy, tray.window , &attrs );
-        XRenderPictFormat*  format = XRenderFindVisualFormat( dpy, attrs.visual );
-
-        XRenderPictFormat *pformat = XRenderFindStandardFormat( dpy, PictStandardA1 );
-        XRenderPictFormat *pformat2 = XRenderFindStandardFormat( dpy, PictStandardRGB24 );
-
-        XRenderPictureAttributes pattrs;
-        
-        trayw = XRenderCreatePicture(dpy, tray.window,
-                format, 0, NULL);
-        
-        mask = XRenderCreatePicture(dpy, tray.icon_mask[f_state],
-                pformat, 0, NULL);
-
-        pattrs.alpha_map = mask;
-        icon = XRenderCreatePicture(dpy, tray.picon[f_state],
-                pformat2, CPAlphaMap, &pattrs);
-
-
-
-        XRenderComposite(dpy, PictOpOver, icon, None, trayw, 
-                x,y , x,y,x,y,w,h);
-        XRenderFreePicture(dpy,trayw);
-        XRenderFreePicture(dpy,mask);
-        XRenderFreePicture(dpy,icon);
-
+        png_surface = trayInactive;
+        skinImg = &skin_config.skin_tray_icon.inactive_img;
     }
+
+
+    /* 清空窗口 */
+    c=cairo_create(tray.cs);
+    cairo_scale(c, ((double) tray.size) / skinImg->height, ((double) tray.size) / skinImg->width);
+	cairo_set_source_rgba(c, 0, 0, 0, 0);
+    cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(c);
+
+    if( strlen(skinImg->img_name) != 0 && strcmp( skinImg->img_name ,"NONE.img") != 0)
+    {
+        cairo_set_source_surface(c, png_surface, x , y );
+        cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+        cairo_paint_with_alpha(c,1);
+    }
+	
+	cairo_destroy(c);
+
 }
 
-void tray_win_deinit(tray_win_t *f_tray) {
+void DeInitTrayWindow(TrayWindow *f_tray) {
     ;
 }
 
-void tray_event_handler(XEvent* event)
+void RedrawTrayWindow(void) {
+    TrayFindDock(dpy, &tray);
+}
+
+void TrayEventHandler(XEvent* event)
 {
     if (!bUseTrayIcon)
         return;
     switch (event->type) {
 		case ClientMessage:
-			if (event->xclient.message_type == Atoms[ATOM_MANAGER]
-			 && event->xclient.data.l[1] == Atoms[ATOM_SELECTION])
+			if (event->xclient.message_type == tray.atoms[ATOM_MANAGER]
+			 && event->xclient.data.l[1] == tray.atoms[ATOM_SELECTION])
 			{
-                tray_find_dock(dpy, tray.window);
+                TrayFindDock(dpy, &tray);
 			}
 			break;
 
 		case Expose:
 			if (event->xexpose.window == tray.window) {
                 if (ConnectIDGetState (connect_id) == IS_CHN)
-                    DrawTrayWindow (ACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+                    DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
                 else
-                    DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_HEIGHT, TRAY_ICON_WIDTH );
+                    DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
 			}
 			break;
+        case ConfigureNotify:
+            if (tray.window == event->xconfigure.window)
+            {
+                int size = event->xconfigure.height;
+                if (size != tray.size)
+                {
+                    tray.size = size;
+                    XSizeHints size_hints;
+                    size_hints.flags = PWinGravity | PBaseSize;
+                    size_hints.base_width = tray.size;
+                    size_hints.base_height = tray.size;
+                    XSetWMNormalHints(dpy, tray.window, &size_hints);
+                }
+
+                if (ConnectIDGetState (connect_id) == IS_CHN)
+                    DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
+                else
+                    DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
+                break;
+            }
+
+
 		case DestroyNotify:
-            tray_mapped = False;
+            tray.bTrayMapped = False;
 			break;
 	}
 }
 
-void tray_win_redraw(void) {
-    tray_find_dock(dpy, tray.window);
-}
 #endif

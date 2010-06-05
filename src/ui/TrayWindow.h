@@ -4,17 +4,33 @@
 #include <X11/Xlib.h>
 #include <X11/xpm.h>
 #include <X11/extensions/shape.h>
-#include <X11/extensions/Xrender.h>
 #include <string.h>
-#include "tray.h"
+#include <cairo.h>
+#include <cairo-xlib.h>
 
 #define INACTIVE_ICON 0
 #define ACTIVE_ICON   1
 
+typedef struct TrayWindow {
+    Window window;
+
+    XImage* icon[2];
+    Pixmap picon[2];
+    GC gc;
+    Bool bTrayMapped;
+    XVisualInfo visual;
+    Atom atoms[6];
+
+    cairo_surface_t *cs;
+    int size;
+} TrayWindow;
+
 Bool CreateTrayWindow();
 void DrawTrayWindow(int f_state, int x, int y, int w, int h);
-void tray_win_deinit(tray_win_t *f_tray);
-void tray_win_redraw(void);
-void tray_event_handler(XEvent* event);
+void DeInitTrayWindow(TrayWindow *f_tray);
+void RedrawTrayWindow(void);
+void TrayEventHandler(XEvent* event);
+
+extern TrayWindow tray;
 
 #endif

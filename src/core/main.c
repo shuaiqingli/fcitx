@@ -46,6 +46,8 @@
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
 #include "ui/InputWindow.h"
+#include "ui/skin.h"
+#include "ui/MenuWindow.h"
 
 #ifdef _ENABLE_TRAY
 #include "ui/TrayWindow.h"
@@ -79,7 +81,7 @@ extern HIDE_MAINWINDOW hideMainWindow;
 extern void* remoteThread(void*);
 
 #ifdef _ENABLE_TRAY
-extern tray_win_t tray;
+extern TrayWindow tray;
 #endif
 
 extern pthread_rwlock_t plock;
@@ -139,6 +141,11 @@ int main (int argc, char *argv[])
 	exit (5);
 #endif
 
+	/**
+	*  加载皮肤配置文件,一般在share/xpm/skin dir/fcitx_skin.conf中,制作皮肤的时候配置好
+	*/
+		load_skin_config();
+
     /*创建字体。实际上，就是根据用户的设置，使用xft读取字体的相关信息。
      * xft是x11提供的处理字体的相关函数集
      */
@@ -170,7 +177,11 @@ int main (int argc, char *argv[])
 #endif
 
     CreateInputWindow ();	//创建输入窗口
-    CreateVKWindow ();		//创建虚拟键盘窗口
+    CreateVKWindow ();		//创建虚拟键盘窗口   
+    CreateMenuWindow( );    //创建菜单窗口
+	CreateImMenuWindow();   //创建输入法选择菜单窗口
+	CreateSkinMenuWindow(); //创建皮肤选择菜单窗口
+	CreateVKMenuWindow();	//创建软键盘布局选择菜单窗口
 
     if (!bUseDBus)
 	CreateAboutWindow ();	//创建关于窗口
@@ -230,7 +241,7 @@ int main (int argc, char *argv[])
     tray.window = (Window) NULL;
     if (!bUseDBus) {
 	CreateTrayWindow ();		//创建系统托盘窗口
-    	DrawTrayWindow (INACTIVE_ICON, 0, 0, TRAY_ICON_WIDTH, TRAY_ICON_HEIGHT);	//显示托盘图标
+    	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);	//显示托盘图标
     }
 #endif
 

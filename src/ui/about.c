@@ -21,7 +21,7 @@
 #include "ui/about.h"
 #include "ui/ui.h"
 #include "core/xim.h"
-#include "about_icon.xpm"
+#include "default/about_icon.xpm"
 #include "version.h"
 
 #include <ctype.h>

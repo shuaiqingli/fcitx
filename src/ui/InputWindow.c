@@ -43,10 +43,10 @@
 #include "tools/tools.h"
 
 #include "interface/DBus.h"
-
+#include "skin.h"
 //下面的顺序不能颠倒
-#include "next.xpm"
-#include "prev.xpm"
+//#include "next.xpm"
+//#include "prev.xpm"
 
 Window          inputWindow;
 int             iInputWindowX = INPUTWND_STARTX;
@@ -59,22 +59,6 @@ uint            iInputWindowUpWidth = INPUTWND_WIDTH;
 uint            iInputWindowDownWidth = INPUTWND_WIDTH;
 
 uint            INPUTWND_START_POS_UP = 8;
-
-MESSAGE_COLOR   messageColor[MESSAGE_TYPE_COUNT] = {
-    {NULL, {0, 255 << 8, 0, 0}},
-    {NULL, {0, 0, 0, 255 << 8}},
-    {NULL, {0, 200 << 8, 0, 0}},
-    {NULL, {0, 0, 150 << 8, 100 << 8}},
-    {NULL, {0, 0, 0, 255 << 8}},
-    {NULL, {0, 100 << 8, 100 << 8, 255 << 8}},
-    {NULL, {0, 0, 0, 0}}
-};
-
-MESSAGE_COLOR   inputWindowLineColor = { NULL, {0, 90 << 8, 160 << 8, 90 << 8} };	//输入框中的线条色
-XColor          colorArrow = { 0, 255 << 8, 0, 0 };	//箭头的颜色
-
-WINDOW_COLOR    inputWindowColor = { NULL, NULL, {0, 240 << 8, 255 << 8, 240 << 8} };
-MESSAGE_COLOR   cursorColor = { NULL, {0, 92 << 8, 210 << 8, 131 << 8} };
 
 // *************************************************************
 MESSAGE         messageUp[32];	//输入条上部分显示的内容
@@ -104,20 +88,9 @@ int		iOffsetX = 0;
 int		iOffsetY = 16;
 
 extern Display *dpy;
-extern int      iScreen;
-
-#ifdef _USE_XFT
-extern XftFont *xftFont;
-extern XftFont *xftFontEn;
-#else
-extern XFontSet fontSet;
-#endif
-
-extern GC       dimGC;
-extern GC       lightGC;
 
 extern Bool     bUseGBKT;
-
+extern int iScreen;
 //计算速度
 extern Bool     bStartRecordType;
 extern Bool     bShowUserSpeed;
@@ -141,34 +114,47 @@ extern FILE	*fpRecord;
 extern Bool	bRecording;
 #endif
 
+Pixmap pm_input_bar;
+
 Bool CreateInputWindow (void)
 {
     XSetWindowAttributes	attrib;
     unsigned long	attribmask;
-    int			iBackPixel;
     XTextProperty	tp;
     char		strWindowName[]="Fcitx Input Window";
+	int depth;
+	Colormap cmap;
+	Visual * vs;
+	int scr;
+	GC gc;
+	XGCValues xgv;
+	
+	load_input_img();
+    CalculateInputWindowHeight ();   
+	scr=DefaultScreen(dpy);
+   	vs=find_argb_visual (dpy, scr);
+   	cmap = XCreateColormap (dpy, RootWindow(dpy, scr),vs, AllocNone);
+   	
+    attrib.override_redirect = True;//False;
+	attrib.background_pixel = 0;
+	attrib.border_pixel = 0;
+	attrib.colormap =cmap;
+	attribmask = (CWBackPixel|CWBorderPixel|CWOverrideRedirect |CWColormap); 
+	depth = 32;
+	
+	inputWindow=XCreateWindow (dpy, RootWindow(dpy, scr),iInputWindowX, iInputWindowY, INPUT_BAR_MAX_LEN, iInputWindowHeight, 0, depth,InputOutput, vs,attribmask, &attrib);
 
-    //根据窗口的背景色来设置XPM的色彩
-    sprintf (strXPMBackColor, ". c #%02x%02x%02x", inputWindowColor.backColor.red >> 8, inputWindowColor.backColor.green >> 8, inputWindowColor.backColor.blue >> 8);
-    //设置箭头的颜色
-    sprintf (strXPMColor, "# c #%02x%02x%02x", colorArrow.red >> 8, colorArrow.green >> 8, colorArrow.blue >> 8);
+	if(mainWindow == (Window)NULL)
+		return False;
+		
+	xgv.foreground = WhitePixel(dpy, scr);
 
-    CalculateInputWindowHeight ();
-
-    attrib.override_redirect = True;
-    attribmask = CWOverrideRedirect;
-
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(inputWindowColor.backColor)))
-	iBackPixel = inputWindowColor.backColor.pixel;
-    else
-	iBackPixel = WhitePixel (dpy, DefaultScreen (dpy));
-
-    inputWindow = XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), iInputWindowX, iInputWindowY, INPUTWND_WIDTH, iInputWindowHeight, 0, WhitePixel (dpy, DefaultScreen (dpy)), iBackPixel);
-    if (inputWindow == (Window) NULL)
-	return False;
-
-    XChangeWindowAttributes (dpy, inputWindow, attribmask, &attrib);
+	pm_input_bar=XCreatePixmap(dpy,inputWindow, INPUT_BAR_MAX_LEN, iInputWindowHeight, depth);
+	gc = XCreateGC(dpy,pm_input_bar, GCForeground, &xgv);
+	XFillRectangle(dpy, pm_input_bar, gc, 0, 0,INPUT_BAR_MAX_LEN, iInputWindowHeight);
+	cs_input_bar=cairo_xlib_surface_create(dpy, pm_input_bar, vs, INPUT_BAR_MAX_LEN, iInputWindowHeight);
+	
+	load_input_msg();
     XSelectInput (dpy, inputWindow, ButtonPressMask | ButtonReleaseMask  | PointerMotionMask | ExposureMask);
 
     //Set the name of the window
@@ -178,8 +164,6 @@ Bool CreateInputWindow (void)
     tp.nitems = strlen(strWindowName);
     XSetWMName (dpy, inputWindow, &tp);
 
-    InitInputWindowColor ();
-
     return True;
 }
 
@@ -188,15 +172,8 @@ Bool CreateInputWindow (void)
  */
 void CalculateInputWindowHeight (void)
 {
-    int             iHeight;
-
-#ifdef _USE_XFT
-    iHeight = FontHeight (xftFont);
-#else
-    iHeight = FontHeight (fontSet);
-#endif
-
-    iInputWindowHeight = iHeight * 2 + iHeight / 2 + 8;
+	iInputWindowHeight=skin_config.skin_input_bar.ibbg_img.height;
+	//printf("iInputWindowHeight:%d \n",iInputWindowHeight);
 }
 
 void DisplayInputWindow (void)
@@ -219,45 +196,7 @@ void DisplayInputWindow (void)
 
 void InitInputWindowColor (void)
 {
-    XGCValues       values;
-    int             iPixel;
-    int             i;
 
-    for (i = 0; i < MESSAGE_TYPE_COUNT; i++) {
-	if (messageColor[i].gc)
-	    XFreeGC (dpy, messageColor[i].gc);
-	messageColor[i].gc = XCreateGC (dpy, inputWindow, 0, &values);
-	if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(messageColor[i].color)))
-	    iPixel = messageColor[i].color.pixel;
-	else
-	    iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-	XSetForeground (dpy, messageColor[i].gc, iPixel);
-    }
-
-    if (inputWindowLineColor.gc)
-	XFreeGC (dpy, inputWindowLineColor.gc);
-    inputWindowLineColor.gc = XCreateGC (dpy, inputWindow, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(inputWindowLineColor.color)))
-	iPixel = inputWindowLineColor.color.pixel;
-    else
-	iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, inputWindowLineColor.gc, iPixel);
-
-    cursorColor.color.red = cursorColor.color.red ^ inputWindowColor.backColor.red;
-    cursorColor.color.green = cursorColor.color.green ^ inputWindowColor.backColor.green;
-    cursorColor.color.blue = cursorColor.color.blue ^ inputWindowColor.backColor.blue;
-
-    if (cursorColor.gc)
-	XFreeGC (dpy, cursorColor.gc);
-    cursorColor.gc = XCreateGC (dpy, inputWindow, 0, &values);
-    //为了画绿色光标
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &cursorColor.color))
-	iPixel = cursorColor.color.pixel;
-    else
-	iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-
-    XSetForeground (dpy, cursorColor.gc, iPixel);
-    XSetFunction (dpy, cursorColor.gc, GXxor);
 }
 
 void ResetInputWindow (void)
@@ -268,13 +207,6 @@ void ResetInputWindow (void)
 
 void CalInputWindow (void)
 {
-    int             i;
-
-#ifdef _USE_XFT
-    char            strTemp[MESSAGE_MAX_LENGTH];
-    char           *p1, *p2;
-    Bool            bEn;
-#endif
 
 #ifdef _DEBUG
     fprintf (stderr, "CAL InputWindow\n");
@@ -332,271 +264,59 @@ void CalInputWindow (void)
 	uMessageUp ++;
     }
 #endif
-
-    iInputWindowUpWidth = 2 * INPUTWND_START_POS_UP + 1;
-    for (i = 0; i < uMessageUp; i++) {
-#ifdef _USE_XFT
-	p1 = messageUp[i].strMsg;
-	while (*p1) {
-		int clen = utf8_char_len(p1);
-	    p2 = strTemp;
-		strncpy(p2, p1, clen);
-		strTemp[clen] = '\0';
-		p1 += clen;
-
-		bEn = (clen == 1);
-
-	    iInputWindowUpWidth += StringWidth (strTemp, (bEn) ? xftFontEn : xftFont);
-	}
-#else
-	iInputWindowUpWidth += StringWidth (messageUp[i].strMsg, fontSet);
-#endif
-    }
-
-    if (bShowPrev)
-	iInputWindowUpWidth += 16;
-    else if (bShowNext)
-	iInputWindowUpWidth += 8;
-
-    iInputWindowDownWidth = 2 * INPUTWND_START_POS_DOWN + 1;
-    for (i = 0; i < uMessageDown; i++) {
-#ifdef _USE_XFT
-	p1 = messageDown[i].strMsg;
-	while (*p1) {
-		int clen = utf8_char_len(p1);
-	    p2 = strTemp;
-		strncpy(p2, p1, clen);
-		strTemp[clen] = '\0';
-		p1 += clen;
-
-		bEn = (clen == 1);
-
-	    iInputWindowDownWidth += StringWidth (strTemp, (bEn) ? xftFontEn : xftFont);
-	}
-#else
-	iInputWindowDownWidth += StringWidth (messageDown[i].strMsg, fontSet);
-#endif
-    }
-
-    if (iInputWindowUpWidth < iInputWindowDownWidth)
-	iInputWindowWidth = iInputWindowDownWidth;
-    else
-	iInputWindowWidth = iInputWindowUpWidth;
-
-    if (iInputWindowWidth < INPUTWND_WIDTH)
-	iInputWindowWidth = INPUTWND_WIDTH;
-    if (iFixedInputWindowWidth) {
-	if (iInputWindowWidth < iFixedInputWindowWidth)
-	    iInputWindowWidth = iFixedInputWindowWidth;
-    }
 }
 
 void DrawInputWindow(void)
 {
-    XImage         *mask;
-    XpmAttributes   attrib;
-    int	i;
-
-    XClearArea (dpy, inputWindow, 2, 2, iInputWindowWidth - 2, iInputWindowHeight / 2 - 2, False);
-    XClearArea (dpy, inputWindow, 2, iInputWindowHeight / 2 + 1, iInputWindowWidth - 2, iInputWindowHeight / 2 - 2, False);
-
-    DisplayMessageUp ();
-    DisplayMessageDown ();
-
-    //**************************
-    attrib.valuemask = 0;
-
-    if (_3DEffectInputWindow == _3D_UPPER)
-	Draw3DEffect (inputWindow, 1, 1, iInputWindowWidth - 2, iInputWindowHeight - 2, _3D_UPPER);
-    else if (_3DEffectInputWindow == _3D_LOWER)
-	Draw3DEffect (inputWindow, 0, 0, iInputWindowWidth, iInputWindowHeight, _3D_LOWER);
-
-    XDrawRectangle (dpy, inputWindow, inputWindowLineColor.gc, 0, 0, iInputWindowWidth - 1, iInputWindowHeight - 1);
-    if (_3DEffectInputWindow == _3D_LOWER)
-	XDrawLine (dpy, inputWindow, lightGC, 2 + 5, iInputWindowHeight / 2 - 1, iInputWindowWidth - 2 - 5, iInputWindowHeight / 2 - 1);
-    else if (_3DEffectInputWindow == _3D_UPPER)
-	XDrawLine (dpy, inputWindow, dimGC, 2 + 5, iInputWindowHeight / 2 - 1, iInputWindowWidth - 2 - 5, iInputWindowHeight / 2 - 1);
-    XDrawLine (dpy, inputWindow, inputWindowLineColor.gc, 2 + 5, iInputWindowHeight / 2, iInputWindowWidth - 2 - 5, iInputWindowHeight / 2);
-    if (_3DEffectInputWindow == _3D_LOWER)
-	XDrawLine (dpy, inputWindow, dimGC, 2 + 5, iInputWindowHeight / 2 + 1, iInputWindowWidth - 2 - 5, iInputWindowHeight / 2 + 1);
-    else if (_3DEffectInputWindow == _3D_UPPER)
-	XDrawLine (dpy, inputWindow, lightGC, 2 + 5, iInputWindowHeight / 2 + 1, iInputWindowWidth - 2 - 5, iInputWindowHeight / 2 + 1);
-
-    if (bShowPrev) {
-	if (!pPrev) {
-	    i = XpmCreateImageFromData (dpy, xpm_prev, &pPrev, &mask, &attrib);
-	    if (i != XpmSuccess)
-		fprintf (stderr, "Failed to read xpm file: Prev\n");
+	int i;
+	char up_str[MESSAGE_MAX_LENGTH]={0};
+	char first_str[MESSAGE_MAX_LENGTH]={0};
+	char down_str[MESSAGE_MAX_LENGTH]={0};
+	char * strGBKT=NULL;
+	GC gc = XCreateGC( dpy, inputWindow, 0, NULL );
+	
+	for (i = 0; i < uMessageUp; i++)
+	{
+		//printf("messageUp:%s\n",messageUp[i].strMsg);
+		strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp[i].strMsg) : messageUp[i].strMsg;
+		strcat(up_str,strGBKT);
+		
+		if (bUseGBKT)
+	   		free (strGBKT);
 	}
-	XPutImage (dpy, inputWindow, inputWindowColor.foreGC, pPrev, 0, 0, iInputWindowWidth - 20, (iInputWindowHeight / 2 - 12) / 2, 6, 12);
-    }
-    if (bShowNext) {
-	if (!pNext) {
-	    i = XpmCreateImageFromData (dpy, xpm_next, &pNext, &mask, &attrib);
-	    if (i != XpmSuccess)
-		fprintf (stderr, "Failed to read xpm file: Next\n");
+	
+	strGBKT=NULL;
+	
+	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[0].strMsg) : messageDown[0].strMsg;
+	strcpy(first_str,strGBKT);
+	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[1].strMsg) : messageDown[1].strMsg;
+	strcat(first_str,strGBKT);
+	strGBKT=NULL;
+	
+	for (i = 2; i < uMessageDown; i++) 
+	{
+		//printf("%d:%s\n",i, messageDown[i].strMsg);
+	   	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[i].strMsg) : messageDown[i].strMsg;
+	   	strcat(down_str,strGBKT);
+	   	
+	   	if (bUseGBKT)
+	   		free (strGBKT);
 	}
-	XPutImage (dpy, inputWindow, inputWindowColor.foreGC, pNext, 0, 0, iInputWindowWidth - 10, (iInputWindowHeight / 2 - 12) / 2, 6, 12);
-    }
-}
-
-/*
- * 在输入窗的上部分显示信息
- */
-void DisplayMessageUp (void)
-{
-    int             i = 0;
-    int             iPos = 0;
-    int             iCursorPixPos = 0;
-    int             iChar;
-    char            strText[MESSAGE_MAX_LENGTH];
-
-#ifdef _USE_XFT
-    char            strTemp[MESSAGE_MAX_LENGTH];
-    char           *p1, *p2;
-    Bool            bEn;
-#endif
-
-    char           *strGBKT;
-
-    iInputWindowUpWidth = INPUTWND_START_POS_UP;
-    iChar = iCursorPos;
-
-    for (i = 0; i < uMessageUp; i++) {
-#ifdef _USE_XFT
-	p1 = messageUp[i].strMsg;
-	iPos = 0;
-	while (*p1) {
-		int clen = utf8_char_len(p1);
-	    p2 = strTemp;
-		strncpy(p2, p1, clen);
-		strTemp[clen] = '\0';
-		p1 += clen;
-
-		bEn = (clen == 1);
-
-	    strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (strTemp) : strTemp;
-
-#ifdef _ENABLE_RECORDING
-	    OutputString (inputWindow, (bEn) ? xftFontEn : xftFont, strGBKT, iInputWindowUpWidth + iPos, (2 * iInputWindowHeight - 1) / 5, messageColor[(messageUp[i].type==MSG_RECORDING)? MSG_TIPS:messageUp[i].type].color);
-#else
-	    OutputString (inputWindow, (bEn) ? xftFontEn : xftFont, strGBKT, iInputWindowUpWidth + iPos, (2 * iInputWindowHeight - 1) / 5, messageColor[messageUp[i].type].color);
-#endif
-	    iPos += StringWidth (strGBKT, (bEn) ? xftFontEn : xftFont);
-
-	    if (bUseGBKT)
-		free (strGBKT);
-	}
-#else
-	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp[i].strMsg) : messageUp[i].strMsg;
-
-#ifdef _ENABLE_RECORDING
-	OutputString (inputWindow, fontSet, strGBKT, iInputWindowUpWidth, (2 * iInputWindowHeight - 1) / 5, messageColor[(messageUp[i].type==MSG_RECORDING)? MSG_TIPS:messageUp[i].type].gc);
-#else
-	OutputString (inputWindow, fontSet, strGBKT, iInputWindowUpWidth, (2 * iInputWindowHeight - 1) / 5, messageColor[messageUp[i].type].gc);
-#endif
-	iPos = StringWidth (strGBKT, fontSet);
-
-	if (bUseGBKT)
-	    free (strGBKT);
-#endif
-	iInputWindowUpWidth += iPos;
-
-	if (bShowCursor && iChar) {
-	    if (strlen (messageUp[i].strMsg) > iChar) {
-		strncpy (strText, messageUp[i].strMsg, iChar);
-		strText[iChar] = '\0';
-#ifdef _USE_XFT
-		p1 = strText;
-		while (*p1) {
-			int clen = utf8_char_len(p1);
-			p2 = strTemp;
-			strncpy(p2, p1, clen);
-			strTemp[clen] = '\0';
-			p1 += clen;
-			bEn = (clen == 1);
-
-		    iCursorPixPos += StringWidth (strTemp, (bEn) ? xftFontEn : xftFont);
-		}
-#else
-		iCursorPixPos += StringWidth (strText, fontSet);
-#endif
-		iChar = 0;
-	    }
-	    else {
-		iCursorPixPos += iPos;
-		iChar -= strlen (messageUp[i].strMsg);
-	    }
-	}
-    }
-
-    if (bShowCursor)
-	DrawCursor (INPUTWND_START_POS_UP + iCursorPixPos);
-}
-
-/*
- * 在输入窗的下部分显示信息
- */
-void DisplayMessageDown (void)
-{
-    uint            i;
-    uint            iPos;
-
-#ifdef _USE_XFT
-    char            strTemp[MESSAGE_MAX_LENGTH];
-    char           *p1, *p2;
-    Bool            bEn;
-#endif
-
-    char           *strGBKT;
-
-    iPos = INPUTWND_START_POS_DOWN;
-    for (i = 0; i < uMessageDown; i++) {
-	//借用iInputWindowDownWidth作为一个临时变量
-
-#ifdef _USE_XFT
-	p1 = messageDown[i].strMsg;
-
-	while (*p1) {
-		int clen = utf8_char_len(p1);
-	    p2 = strTemp;
-		strncpy(p2, p1, clen);
-		strTemp[clen] = '\0';
-		p1 += clen;
-
-		bEn = (clen == 1);
-
-	    strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (strTemp) : strTemp;
-
-	    iInputWindowDownWidth = StringWidth (strGBKT, (bEn) ? xftFontEn : xftFont);
-	    OutputString (inputWindow, (bEn) ? xftFontEn : xftFont, strGBKT, iPos, (9 * iInputWindowHeight - 12) / 10, messageColor[messageDown[i].type].color);
-	    iPos += iInputWindowDownWidth;
-
-	    if (bUseGBKT)
-		free (strGBKT);
-	}
-#else
-	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[i].strMsg) : messageDown[i].strMsg;
-
-	iInputWindowDownWidth = StringWidth (strGBKT, fontSet);
-	OutputString (inputWindow, fontSet, strGBKT, iPos, (9 * iInputWindowHeight - 12) / 10, messageColor[messageDown[i].type].gc);
-	iPos += iInputWindowDownWidth;
-
-	if (bUseGBKT)
-	    free (strGBKT);
-#endif
-    }
-}
-
-void DrawCursor (int iPos)
-{
-    XDrawLine (dpy, inputWindow, cursorColor.gc, iPos, 8, iPos, iInputWindowHeight / 2 - 4);
-    XDrawLine (dpy, inputWindow, cursorColor.gc, iPos + 1, 8, iPos + 1, iInputWindowHeight / 2 - 4);
+  
+	draw_input_bar(up_str,first_str,down_str,&iInputWindowWidth);
+   //printf("%s: %s: %s\n",up_str,first_str,down_str);
+	XResizeWindow(dpy,inputWindow,iInputWindowWidth, iInputWindowHeight);	
+	XCopyArea (dpy, pm_input_bar, inputWindow, gc, 0, 0, iInputWindowWidth, iInputWindowHeight, 0, 0);
+ 
 }
 
 void MoveInputWindow(CARD16 connect_id)
 {
-    if (ConnectIDGetTrackCursor (connect_id) && bTrackCursor) {
+	iInputWindowWidth=(iInputWindowWidth>skin_config.skin_input_bar.ibbg_img.width)?iInputWindowWidth:skin_config.skin_input_bar.ibbg_img.width;
+	iInputWindowWidth=(iInputWindowWidth>=INPUT_BAR_MAX_LEN)?INPUT_BAR_MAX_LEN:iInputWindowWidth;
+	
+    if (ConnectIDGetTrackCursor (connect_id) && bTrackCursor)
+    {
         int iTempInputWindowX, iTempInputWindowY;
 
 	if (iClientCursorX < 0)
@@ -620,7 +340,10 @@ void MoveInputWindow(CARD16 connect_id)
 	}
 
 	if (!bUseDBus)
-	    XMoveResizeWindow (dpy, inputWindow, iTempInputWindowX, iTempInputWindowY, iInputWindowWidth, iInputWindowHeight);
+	{
+		//printf("iInputWindowWidth:%d\n",iInputWindowWidth);
+		XMoveWindow (dpy, inputWindow, iTempInputWindowX, iTempInputWindowY);
+	}
 #ifdef _ENABLE_DBUS
 	else
 	{
@@ -639,21 +362,24 @@ void MoveInputWindow(CARD16 connect_id)
 #endif
 	ConnectIDSetPos (connect_id, iTempInputWindowX - iOffsetX, iTempInputWindowY - iOffsetY);
     }
-    else {
-	position * pos = ConnectIDGetPos(connect_id);
-	if (bCenterInputWindow) {
-	    iInputWindowX = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
-	    if (iInputWindowX < 0)
-		iInputWindowX = 0;
-	}
-	else
-	    iInputWindowX = pos ? pos->x : iInputWindowX;
-
-	if (!bUseDBus)
-	    XMoveResizeWindow (dpy, inputWindow, iInputWindowX, pos ? pos->y : iInputWindowY, iInputWindowWidth, iInputWindowHeight);
+    else
+    {
+		position * pos = ConnectIDGetPos(connect_id);
+		if (bCenterInputWindow) {
+		    iInputWindowX = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
+		    if (iInputWindowX < 0)
+			iInputWindowX = 0;
+		}
+		else
+		    iInputWindowX = pos ? pos->x : iInputWindowX;
+	
+		if (!bUseDBus)
+		{
+			XMoveResizeWindow (dpy, inputWindow, iInputWindowX, pos ? pos->y : iInputWindowY, iInputWindowWidth, iInputWindowHeight); 
+		}
 #ifdef _ENABLE_DBUS
-	else
-	    KIMUpdateSpotLocation(iInputWindowX, pos ? pos->y : iInputWindowY);
+		else
+		    KIMUpdateSpotLocation(iInputWindowX, pos ? pos->y : iInputWindowY);
 #endif
     }
     
