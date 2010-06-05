@@ -172,6 +172,19 @@ void TrayEventHandler(XEvent* event)
 		case DestroyNotify:
             tray.bTrayMapped = False;
 			break;
+
+        case ReparentNotify:
+            {
+                if (event->xreparent.parent == DefaultRootWindow(dpy) && event->xreparent.window == tray.window)
+                {
+                    tray.bTrayMapped = False;
+                    if (ConnectIDGetState (connect_id) == IS_CHN)
+                        DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
+                    else
+                        DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
+                }
+            }
+            break;
 	}
 }
 

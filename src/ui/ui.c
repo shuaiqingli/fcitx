@@ -385,17 +385,16 @@ void MyXEventHandler (XEvent * event)
    // unsigned char   iPos;
     
     switch (event->type) {
+    case ConfigureNotify:
 #ifdef _ENABLE_TRAY
-    /*case ReparentNotify:
-    if ( event->xreparent.window == tray.window ) {
-        if (ConnectIDGetState (connect_id) == IS_CHN)
-        DrawTrayWindow (ACTIVE_ICON);
-        else
-        DrawTrayWindow (INACTIVE_ICON);
-    }
-    
-    break;*/
+        TrayEventHandler(event);
 #endif
+        break;
+    case ReparentNotify:
+#ifdef _ENABLE_TRAY
+        TrayEventHandler(event);
+#endif
+        break;
     case ClientMessage:
     if ((event->xclient.message_type == about_protocol_atom) && ((Atom) event->xclient.data.l[0] == about_kill_atom)) {
         XUnmapWindow (dpy, aboutWindow);
