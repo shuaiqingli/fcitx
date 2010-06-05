@@ -35,7 +35,7 @@ skin_config_t skin_config;
 
 //指定皮肤类型 在config文件中配置
 char  skinType[64];
-//指定皮肤所在的文件夹 一般在/usr/share/fcitx/xpm目录下面
+//指定皮肤所在的文件夹 一般在/usr/share/fcitx/skin目录下面
 skin_dir_t skinBuf[10];
 int skinCount;
 
@@ -75,7 +75,7 @@ skin_config_t skin_config;
 
 //指定皮肤类型 在config文件中配置
 char  skin_type[64];
-//指定皮肤所在的文件夹 一般在/usr/share/fcitx/xpm目录下面
+//指定皮肤所在的文件夹 一般在/usr/share/fcitx/skin目录下面
 skin_dir_t skin_buf[10];
 char skin_path[PATH_MAX];
 extern Display  *dpy;
@@ -283,7 +283,7 @@ int load_skin_config()
 	memset(&skin_config,0,sizeof(skin_config_t));
   
     //获取配置文件的绝对路径
-    sprintf(skin_path,"%s/xpm/%s/",PKGDATADIR,skinType);
+    sprintf(skin_path,"%s/skin/%s/",PKGDATADIR,skinType);
     sprintf(buf,"%s/fcitx_skin.conf",skin_path);
 
 	fp = fopen(buf, "r");
@@ -728,9 +728,9 @@ void DisplaySkin(char * skinname)
 	XMapRaised(dpy,mainWindow);
 }
 
-//xpm图片文件加载函数完成
+//图片文件加载函数完成
 /*-------------------------------------------------------------------------------------------------------------*/
-//xpm目录下读入skin的文件夹名
+//skin目录下读入skin的文件夹名
 
 int loadSkinDir()
 {
@@ -746,7 +746,7 @@ int loadSkinDir()
 		memset(&skinBuf[i],0,sizeof(skin_dir_t));
 	}
 
-	sprintf(pathbuf, "%s/xpm/", PKGDATADIR);
+	sprintf(pathbuf, "%s/skin/", PKGDATADIR);
 
 	dir= opendir(pathbuf);
 
@@ -763,7 +763,7 @@ int loadSkinDir()
 		memset(pathbuf,0,sizeof(pathbuf));
 		if( strcmp( drt->d_name, ".") == 0 || strcmp(drt->d_name,"..") == 0)
 			continue;
-		sprintf(pathbuf,"%s/xpm/%s",PKGDATADIR,drt->d_name);
+		sprintf(pathbuf,"%s/skin/%s",PKGDATADIR,drt->d_name);
 		//printf("filename:%s\n",pathbuf);
 		if( stat(pathbuf,&file_stat) == -1)
 		{

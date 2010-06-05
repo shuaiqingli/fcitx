@@ -1,4 +1,4 @@
-defaultdir = $(pkgdatadir)/xpm/default
+defaultdir = $(pkgdatadir)/skin/snow
 default_DATA =  bar.png\
 		cn1.png\
 		cn_biaodian1.png\
@@ -9,6 +9,5 @@ default_DATA =  bar.png\
 		jian1.png\
 		skin1.png\
 		active.png\
-		inactive.png\
-		about_icon.xpm
+		inactive.png
 EXTRA_DIST = $(default_DATA)

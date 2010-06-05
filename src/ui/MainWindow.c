@@ -39,20 +39,6 @@
 #include "core/ime.h"
 #include "tools/tools.h"
 
-//下面的顺序不能改变
-//#include "logo.xpm"
-//#include "fullcorner.xpm"
-//#include "halfcorner.xpm"
-//#include "chnPunc.xpm"
-//#include "engPunc.xpm"
-//#include "lx-0.xpm"
-//#include "lx-1.xpm"
-//#include "lock-0.xpm"
-//#include "lock-1.xpm"
-//#include "vk-1.xpm"
-//#include "ft-0.xpm"
-//#include "ft-1.xpm"
-
 #include "ui/skin.h"
 #include "ui/ui.h"
 #include "im/special/vk.h"

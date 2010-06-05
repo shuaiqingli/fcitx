@@ -44,9 +44,6 @@
 
 #include "interface/DBus.h"
 #include "skin.h"
-//下面的顺序不能颠倒
-//#include "next.xpm"
-//#include "prev.xpm"
 
 Window          inputWindow;
 int             iInputWindowX = INPUTWND_STARTX;

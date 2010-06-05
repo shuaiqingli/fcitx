@@ -215,8 +215,9 @@ AC_CONFIG_FILES([
            fcitx.spec
            doc/Makefile
            data/Makefile
-           xpm/Makefile
-           xpm/default/Makefile
+           skin/Makefile
+           skin/default/Makefile
+           skin/snow/Makefile
            png/Makefile
            lib/Makefile
            src/version.h

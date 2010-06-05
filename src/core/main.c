@@ -142,7 +142,7 @@ int main (int argc, char *argv[])
 #endif
 
 	/**
-	*  加载皮肤配置文件,一般在share/xpm/skin dir/fcitx_skin.conf中,制作皮肤的时候配置好
+	*  加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
 	*/
 		load_skin_config();
 
