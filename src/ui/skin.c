@@ -281,17 +281,27 @@ int load_skin_config()
 	FILE    *fp;
   	char  buf[256]={0};
 	memset(&skin_config,0,sizeof(skin_config_t));
-  
+
+reload:
     //获取配置文件的绝对路径
     sprintf(skin_path,"%s/skin/%s/",PKGDATADIR,skinType);
     sprintf(buf,"%s/fcitx_skin.conf",skin_path);
 
 	fp = fopen(buf, "r");
 	
-	if(!fp){
-		perror("fopen");
-		exit(1);	// 如果安装目录里面也没有配置文件，那就只好告诉用户，无法运行了
-	}
+    if (!fp)
+    {
+        if (strcmp(skinType, "default") == 0)
+        {
+            fprintf(stderr, "Can not load default skin, is installion correct?\n");
+            perror("fopen");
+            exit(1);	// 如果安装目录里面也没有配置文件，那就只好告诉用户，无法运行了
+        }
+        perror("fopen");
+        fprintf(stderr, "Can not load skin %s, return to default\n", skinType);
+        strcpy(skinType, "default");
+        goto reload;
+    }
 
 	fill_skin_config_str(fp,"skin_info","skin_name",skin_config.skin_info.skin_name);
 	fill_skin_config_str(fp,"skin_info","skin_version",skin_config.skin_info.skin_version);
