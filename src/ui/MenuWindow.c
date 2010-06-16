@@ -73,7 +73,7 @@ void InitMenuDefault(xlibMenu * Menu)
 //	Menu->charcolor=0x111111;
 //	Menu->charselectcolor=(0xFFFFFF-0x111111);
 	Menu->font_size=14;
-	strcpy(Menu->font,"WenQuanYi Bitmap Song");
+	strcpy(Menu->font,skin_config.skin_font.font_zh);
 	Menu->mark=-1;
 }
 
@@ -354,8 +354,9 @@ Bool CreateMenuWindow( )
 Bool CreateImMenuWindow() 
 {	
 	Bool ret;
+
 	InitMenuDefault(&imMenu);
-	SetMeueShell(&imMenu.shell[0],"1.智能拼音",0,menushell);
+/*	SetMeueShell(&imMenu.shell[0],"1.智能拼音",0,menushell);
 	SetMeueShell(&imMenu.shell[1],"2.智能双拼",0,menushell);
 	SetMeueShell(&imMenu.shell[2],"3.区位输入",0,menushell);
 	SetMeueShell(&imMenu.shell[3],"4.五笔字型",0,menushell);
@@ -366,8 +367,8 @@ Bool CreateImMenuWindow()
 	SetMeueShell(&imMenu.shell[8],"9.冰蟾全息",0,menushell);
 	SetMeueShell(&imMenu.shell[9],"10.自然码",0,menushell);
 	SetMeueShell(&imMenu.shell[10],"11.电报码",0,menushell);
-	
-	imMenu.useItemCount=11;
+*/	
+
 	ret=CreateXlibMenu(dpy,&imMenu);
 	return ret;
 }  
@@ -408,6 +409,7 @@ Bool CreateVKMenuWindow()
 void MainMenuEvent(int x,int y)
 {
 	int i,j;
+	char tmpstr[64]={0};
 	i=selectShellIndex(&mainMenu, y);
 	//printf("i=%d\n",i);
 	colorRevese(&mainMenu,i);
@@ -442,7 +444,15 @@ void MainMenuEvent(int x,int y)
 			DisplayXlibMenu(dpy,&skinMenu);	
 			break;
 		case 3:
-			//imMenu.menuFont=xftMenuFont ;
+			for(i=0;i<iIMCount;i++)
+			{
+				memset(tmpstr,0,sizeof(tmpstr));
+				sprintf(tmpstr,"%d.%s",i+1,im[i].strName);
+				//printf("%s\n",tmpstr);
+				SetMeueShell(&imMenu.shell[i],tmpstr,0,menushell);
+			}
+			imMenu.useItemCount=iIMCount;
+			
 			imMenu.pos_x=mainMenu.pos_x;
 			imMenu.pos_y=mainMenu.pos_y;
 		

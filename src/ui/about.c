@@ -21,7 +21,6 @@
 #include "ui/about.h"
 #include "ui/ui.h"
 #include "core/xim.h"
-#include "xpm/about_icon.xpm"
 #include "version.h"
 
 #include <ctype.h>
@@ -32,7 +31,6 @@
 #endif
 #include <iconv.h>
 #include <X11/Xatom.h>
-#include <X11/xpm.h>
 
 extern Display *dpy;
 extern int      iScreen;
@@ -91,7 +89,6 @@ Bool CreateAboutWindow (void)
     XSelectInput (dpy, aboutWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
 
     InitAboutWindowColor ();
-    setIcon ();
 
     return True;
 }
@@ -162,32 +159,3 @@ void DrawAboutWindow (void)
 #endif
 }
 
-// we use logo.xpm as the Application icon
-void setIcon (void)
-{
-    int             rv;
-    Pixmap          pixmap = 0;
-    Pixmap          mask = 0;
-    XpmAttributes   attrib;
-    XWMHints       *h = XGetWMHints (dpy, aboutWindow);
-    XWMHints        wm_hints;
-    Bool            got_hints = h != 0;
-
-    attrib.valuemask = 0;
-    rv = XCreatePixmapFromData (dpy, aboutWindow, about_icon_xpm, &pixmap, &mask, &attrib);
-    if (rv != XpmSuccess) {
-	fprintf (stderr, "Failed to read xpm file: %s\n", XpmGetErrorString (rv));
-	return;
-    }
-
-    if (!got_hints) {
-	h = &wm_hints;
-	h->flags = 0;
-    }
-    h->icon_pixmap = pixmap;
-    h->icon_mask = mask;
-    h->flags |= IconPixmapHint | IconMaskHint;
-    XSetWMHints (dpy, aboutWindow, h);
-    if (got_hints)
-	XFree ((char *) h);
-}

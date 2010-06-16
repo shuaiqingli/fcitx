@@ -1148,51 +1148,7 @@ Configure_group configure_groups[] = {
 */
 void load_CS_config()
 {
-/*	FILE    *fp;
-	char    buf[PATH_MAX]={0};
-	char tmp[64]={0};
-	
-//如果不是采用默认皮肤,加载默认配色方案,皮肤配色不全需加载这里.
-	if(!ISDEFAULT)
-	{
-		strcpy(colorScheme,"默认方案");
-	}
-		
-	sprintf(buf, "%s/xpm/cs.conf", PKGDATADIR);
-	fp = fopen(buf, "r");
-	
-	if(!fp){
-		perror("fopen");
-		return ;	// 没有配置文件,直接退出.
-	}
-	
-	_3DEffectMainWindow=fill_skin_config_int(fp,colorScheme,"主窗口使用3D界面");
-	_3DEffectInputWindow=fill_skin_config_int(fp,colorScheme,"输入条使用3D界面");
-	iFixedInputWindowWidth=fill_skin_config_int(fp,colorScheme,"输入条固定宽度");
-	iOffsetX=fill_skin_config_int(fp,colorScheme,"输入条偏移量X");
-	iOffsetY=fill_skin_config_int(fp,colorScheme,"输入条偏移量Y");
-	fill_skin_config_color(fp,colorScheme,"光标色",&(cursorColor.color));
-	fill_skin_config_color(fp,colorScheme,"主窗口背景色",&(mainWindowColor.backColor));
-	fill_skin_config_color(fp,colorScheme,"主窗口线条色",&(mainWindowLineColor.color));
-	fill_skin_config_str(fp,colorScheme,"主窗口输入法名称色",tmp);
 
-	main_window_input_method_name_color(tmp);
-	fill_skin_config_color(fp,colorScheme,"输入窗背景色",&(inputWindowColor.backColor));
-	fill_skin_config_color(fp,colorScheme,"输入窗提示色",&(messageColor[0].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗用户输入色",&(messageColor[1].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗序号色",&(messageColor[2].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗第一个候选字色",&(messageColor[3].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗用户词组色",&(messageColor[4].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗提示编码色",&(messageColor[5].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗其它文本色",&(messageColor[6].color));
-	fill_skin_config_color(fp,colorScheme,"输入窗线条色",&(inputWindowLineColor.color));
-	fill_skin_config_color(fp,colorScheme,"输入窗箭头色",&(colorArrow));
-	fill_skin_config_color(fp,colorScheme,"虚拟键盘窗背景色",&(VKWindowColor.backColor));
-	fill_skin_config_color(fp,colorScheme,"虚拟键盘窗字母色",&(VKWindowAlphaColor.color));
-	fill_skin_config_color(fp,colorScheme,"虚拟键盘窗符号色",&(VKWindowFontColor.color));
-	
-	fclose(fp);
-	*/
 }
 
 
@@ -1328,7 +1284,6 @@ void LoadConfig (Bool bMode)
 	Trigger_Keys[1].modifier_mask = 0;
     }
     
-   load_CS_config();
 }
 
 /**

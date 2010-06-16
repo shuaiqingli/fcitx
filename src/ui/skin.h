@@ -43,11 +43,24 @@
 #include "ui.h"
 #include "MainWindow.h"
 #include "InputWindow.h"
+#include "core/IC.h"
+#include "ui/ui.h"
+#include "core/ime.h"
+#include "tools/tools.h"
+#include "ui/ui.h"
+#include "im/special/vk.h"
 
 #define SIZEX 800
 #define SIZEY 200
 //输入条最大长度(缓冲区大小由这个决定)
 #define INPUT_BAR_MAX_LEN 1500
+
+typedef enum
+{
+	RELEASE,//鼠标释放状态
+	PRESS,//鼠标按下
+	MOTION//鼠标停留
+}mouse_e;
 
 typedef struct
 {
@@ -62,6 +75,8 @@ typedef struct
 	int  response_y;
 	int  response_w;
 	int  response_h;
+	//鼠标不同状态mainnMenuwindow不同的显示状态.
+	mouse_e mouse;
 }skin_img_t;
 
 
@@ -199,11 +214,18 @@ extern cairo_surface_t *  otherim;
 extern cairo_surface_t *  trayActive;
 extern cairo_surface_t *  trayInactive;
 
+extern mouse_e ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
+
 extern Display *dpy;
 extern Window  mainWindow;
 extern Window   inputWindow;
 
 extern Bool bShowCursor;
+extern INT8	iIMCount;
+extern IM	*im;
+extern INT8	iIMIndex;
+extern Bool	bShowPrev;
+extern Bool	bShowNext;
 extern int skinCount;
 extern skin_config_t skin_config;
 extern char  skinType[64];
@@ -218,9 +240,10 @@ extern void load_main_img();
 void load_tray_img();
 void load_input_img();
 void load_input_msg();
-void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png);
+void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse);
 extern void draw_main_bar();
-void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
+extern void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
+extern void set_mouse_status(mouse_e m);
 /**
 * 加载皮肤配置文件
 */

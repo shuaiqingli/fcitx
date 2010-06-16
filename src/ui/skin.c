@@ -72,7 +72,7 @@ cairo_surface_t *  trayInactive;
 //定义全局皮肤配置结构
 skin_config_t skin_config;
 
-
+mouse_e ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
 //指定皮肤类型 在config文件中配置
 char  skin_type[64];
 //指定皮肤所在的文件夹 一般在/usr/share/fcitx/skin目录下面
@@ -451,8 +451,8 @@ void load_main_img()
 void load_input_img()
 {
 	load_a_img( &skin_config.skin_input_bar.ibbg_img, &input);
-	load_a_img( &skin_config.skin_input_bar.ibbg_img, &prev);
-	load_a_img( &skin_config.skin_input_bar.ibbg_img, &next);
+	load_a_img( &skin_config.skin_input_bar.back_arrow_img, &prev);
+	load_a_img( &skin_config.skin_input_bar.forward_arrow_img, &next);
 }
 
 void load_tray_img()
@@ -460,12 +460,14 @@ void load_tray_img()
     load_a_img( &skin_config.skin_tray_icon.active_img, &trayActive);
     load_a_img( &skin_config.skin_tray_icon.inactive_img, &trayInactive);
 }
+
 void distroy_a_img(cairo_surface_t ** png)
 {
 	if(png != NULL)
 		cairo_surface_destroy(*png);
 	*png=NULL;
 }
+
 void distroy_img()
 {
 	distroy_a_img(&bar);
@@ -501,7 +503,7 @@ void distroy_img()
 	distroy_a_img(&next);
 }
 
-cairo_t *c ,*c2,*c3,*c4,*c5;
+static cairo_t *c ,*c1,*c2,*c3,*c4,*c5;
 /**
 *输入条的绘制非常注重效率,画笔在绘图过程中不释放
 */
@@ -518,6 +520,7 @@ void load_input_msg()
 	convert_str2color(&cursor_color,skin_config.skin_input_bar.cursor_color);
 //输入条背景图画笔
 //	c=cairo_create(cs_input_bar);
+	c1=	cairo_create(cs_input_bar);
 	
 //拼音画笔
 	c2=cairo_create(cs_input_bar);
@@ -546,22 +549,42 @@ void load_input_msg()
 
 void free_input_msg()
 {
-//	cairo_destroy(c);
+	cairo_destroy(c1);
 	cairo_destroy(c2);
 	cairo_destroy(c3);
 	cairo_destroy(c4);
 	cairo_destroy(c5);
 }
 
-void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png)
+void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse)
 {
+	cairo_t * cr;
 /*	printf("%s=%d %d %d %d %d %d %d %d\n",img.img_name,img.position_x, img.position_y,img.width,img.height,
 										                img.response_x,img.response_y,img.response_w,img.response_h);*/
 	if( strlen(img.img_name) == 0 || strcmp( img.img_name ,"NONE.img") ==0)
 		return;	
 
-	cairo_set_source_surface(*c,png, img.position_x, img.position_y);
-	cairo_paint(*c);
+    if(mouse == MOTION)
+    {
+	    cairo_set_source_surface(*c,png, img.position_x, img.position_y);
+		cairo_paint_with_alpha(*c,0.7);
+		
+	}
+	else if(mouse == PRESS)
+	{
+		cr=cairo_create(cs_main_bar);
+		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+		cairo_translate(cr, img.position_x+(int)(img.width*0.2/2), img.position_y+(int)(img.height*0.2/2));
+		cairo_scale(cr, 0.8, 0.8);
+		cairo_set_source_surface(cr,png,0,0);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+	}
+	else //if( img.mouse == RELEASE)
+	{
+		cairo_set_source_surface(*c,png, img.position_x, img.position_y);
+		cairo_paint(*c);
+	}
 }
 
 void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth)
@@ -584,7 +607,7 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	
 	cairo_text_extents(c2,up_str,&extents);
 	up_len=(int)extents.width;
-	cursor_pos=up_len+skin_config.skin_font.font_size+5;	
+	cursor_pos=up_len+skin_config.skin_font.font_size;	
 
 	cairo_text_extents(c3,first_str,&extents);
 	down_len= (int)extents.width;
@@ -639,6 +662,28 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	cairo_clip(c);
 	cairo_paint(c);
 
+	if(bShowCursor )
+	{	
+		//画向前向后箭头
+		
+		cairo_set_source_surface(c1, prev,
+							input_bar_len-(skin_config.skin_input_bar.ibbg_img.width-skin_config.skin_input_bar.back_arrow_img.position_x) , 
+							skin_config.skin_input_bar.back_arrow_img.position_y);				
+		if(bShowNext)
+			cairo_paint(c1);
+		else
+			cairo_paint_with_alpha(c1,0.5);
+		
+		//画向前箭头
+		cairo_set_source_surface(c1, next,
+							input_bar_len-(skin_config.skin_input_bar.ibbg_img.width-skin_config.skin_input_bar.forward_arrow_img.position_x) , 
+							skin_config.skin_input_bar.forward_arrow_img.position_y);
+		if(bShowPrev)
+			cairo_paint(c1);
+		else
+			cairo_paint_with_alpha(c1,0.5);
+	}
+		
 	//画第二部分,智能变化有两种方式
 	if( flag == 1) //
 	{
@@ -712,6 +757,20 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	cairo_destroy(c);
 }
 
+/*
+*把鼠标状态初始化为某一种状态.
+*/
+void set_mouse_status(mouse_e m)
+{
+	 ms_logo=m;
+	 ms_punc=m;
+	 ms_corner=m;
+	 ms_lx=m;
+	 ms_chs=m;
+	 ms_lock=m;
+	 ms_vk=m;
+	 ms_py=m;
+}
 
 
 void DisplaySkin(char * skinname)

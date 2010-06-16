@@ -458,12 +458,14 @@ void MyXEventHandler (XEvent * event)
     case ButtonPress:
     switch (event->xbutton.button) {
     case Button1:
-        if (event->xbutton.window == inputWindow) {
-        int x, y;
-        x = event->xbutton.x;
-        y = event->xbutton.y;
-        MouseClick (&x, &y, inputWindow);
-        DrawInputWindow ();
+	    set_mouse_status(RELEASE);
+        if (event->xbutton.window == inputWindow)
+        {
+        	int x, y;
+        	x = event->xbutton.x;
+        	y = event->xbutton.y;
+        	MouseClick (&x, &y, inputWindow);
+        	DrawInputWindow ();
         }
         else if (event->xbutton.window == mainWindow)
         {
@@ -472,13 +474,14 @@ void MyXEventHandler (XEvent * event)
 			{
 		  		iMainWindowX = event->xbutton.x;
 		    	iMainWindowY = event->xbutton.y;
+		    	ms_logo=PRESS;
 		    	if (!MouseClick (&iMainWindowX, &iMainWindowY, mainWindow))
 		    	{
 					if (ConnectIDGetState (connect_id) != IS_CHN) {
-			   				SetIMState ((ConnectIDGetState (connect_id) == IS_ENG) ? False : True);
-			    			DrawMainWindow ();
+			   				SetIMState ((ConnectIDGetState (connect_id) == IS_ENG) ? False : True);	
 					}
 				}
+				DrawMainWindow ();
 				
 #ifdef _ENABLE_TRAY
 	            if (ConnectIDGetState (connect_id) == IS_CHN)
@@ -487,21 +490,73 @@ void MyXEventHandler (XEvent * event)
 	                DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
 #endif
             }
-
+            else if (IsInRspArea(event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.zhpunc_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.enpunc_img))
+			{
+				ms_punc=PRESS;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.half_corner_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.full_corner_img) )
+			{
+				ms_corner=PRESS;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lxoff_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.lxon_img ) )
+			{
+				ms_lx=PRESS;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.chs_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.cht_img ) )
+			{
+				ms_chs=PRESS;
+			}
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.unlock_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lock_img ) )
+		  	{
+		  		ms_lock=PRESS;
+		  	}
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.vkhide_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.vkshow_img ) )
+			{
+				ms_vk=PRESS;
+			}
+			else if (!bCorner && IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.pinyin_img ))
+			{		
+				ms_py=PRESS;
+			}
+			DrawMainWindow ();
+			set_mouse_status(RELEASE);
         }
-        else if (event->xbutton.window == VKWindow) {
-        if (!VKMouseKey (event->xbutton.x, event->xbutton.y)) {
-            iVKWindowX = event->xbutton.x;
-            iVKWindowY = event->xbutton.y;
-            MouseClick (&iVKWindowX, &iVKWindowY, VKWindow);
-            DrawVKWindow ();
-        }
+       	else if(event->xbutton.window == tray.window)
+       	{
+			SetIMState ((ConnectIDGetState (connect_id) == IS_ENG) ? False : True);
+			DrawMainWindow ();   
+			  	
+#ifdef _ENABLE_TRAY
+			if (ConnectIDGetState (connect_id) == IS_CHN)
+				DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
+			else
+				DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
+#endif      	
+       	
+       	}
+        else if (event->xbutton.window == VKWindow) 
+        {
+        	if (!VKMouseKey (event->xbutton.x, event->xbutton.y))
+        	{
+        	    iVKWindowX = event->xbutton.x;
+        	    iVKWindowY = event->xbutton.y;
+        	    MouseClick (&iVKWindowX, &iVKWindowY, VKWindow);
+        	    DrawVKWindow ();
+        	}
         }
         //added by yunfan
-        else if (event->xbutton.window == aboutWindow) {
-        XUnmapWindow (dpy, aboutWindow);
-        DrawMainWindow ();
-        }else if(event->xbutton.window == mainMenu.menuWindow)
+        else if (event->xbutton.window == aboutWindow)
+        {
+        	XUnmapWindow (dpy, aboutWindow);
+        	DrawMainWindow ();
+        }
+        else if(event->xbutton.window == mainMenu.menuWindow)
 		{
 			int i;
 			i=selectShellIndex(&mainMenu,event->xbutton.y);
@@ -539,7 +594,8 @@ void MyXEventHandler (XEvent * event)
 			XUnmapWindow (dpy, mainMenu.menuWindow);
 	
 		}
-		else if (event->xbutton.window == skinMenu.menuWindow) {
+		else if (event->xbutton.window == skinMenu.menuWindow)
+		{
 			//皮肤切换在此进行
 			int i;
 			i=selectShellIndex(&skinMenu,event->xbutton.y);
@@ -580,11 +636,22 @@ void MyXEventHandler (XEvent * event)
 		{
 			
 			loadSkinDir();
-			//dock的定位和普通的定位不同，这里有待完善，先放到右下角
 
 			GetMenuHeight(dpy,&mainMenu);
-			mainMenu.pos_x=DisplayWidth(dpy, iScreen) -event->xbutton.x-mainMenu.width-20;
-			mainMenu.pos_y=DisplayHeight(dpy, iScreen) -event->xbutton.x-mainMenu.height-20;
+			
+			if( event->xbutton.x_root-event->xbutton.x+mainMenu.width >=DisplayWidth(dpy, iScreen) )
+				mainMenu.pos_x=DisplayWidth(dpy, iScreen)-mainMenu.width-event->xbutton.x;	
+			else			
+				mainMenu.pos_x=event->xbutton.x_root-event->xbutton.x;
+			
+			//面板的高度是可以变动的，需要取得准确的面板高度，才能准确确定右键菜单位置。
+			if( event->xbutton.y_root+mainMenu.height-event->xbutton.y >=DisplayHeight(dpy, iScreen) )
+				mainMenu.pos_y=DisplayHeight(dpy, iScreen)-mainMenu.height-event->xbutton.y-15;	
+			else			
+				mainMenu.pos_y=event->xbutton.y_root-event->xbutton.y+25;//+skin_config.skin_tray_icon.active_img.height;
+				
+			/*printf("%d %d :%d %d :%d \n",event->xbutton.x,event->xbutton.y,event->xbutton.x_root,\
+								event->xbutton.y_root,skin_config.skin_tray_icon.active_img.height);*/
 			DrawXlibMenu( dpy,&mainMenu);
 			DisplayXlibMenu(dpy,&mainMenu);		
 		}
@@ -611,9 +678,11 @@ void MyXEventHandler (XEvent * event)
     {
         switch (event->xbutton.button)
         {
-        case Button1:  
-
-		    if (IsInRspArea(event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.zhpunc_img)
+        case Button1:  		
+			set_mouse_status(RELEASE);
+			if(IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.logo_img))
+				DrawMainWindow();
+		    else if (IsInRspArea(event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.zhpunc_img)
 						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.enpunc_img))
 						ChangePunc ();
 		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.half_corner_img)
@@ -630,9 +699,11 @@ void MyXEventHandler (XEvent * event)
 		  				ChangeLock ();
 			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.vkhide_img )
 						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.vkshow_img ) )
-			    		SwitchVK ();
+			   			SwitchVK ();
 			else if (!bCorner && IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.pinyin_img ))
-						SwitchIM (-1);
+			{		
+				SwitchIM (-1);
+			}
 
 		break;
 
@@ -686,7 +757,50 @@ void MyXEventHandler (XEvent * event)
     break;
 
 	case MotionNotify:
-		if(event->xany.window == mainMenu.menuWindow)
+		if(event->xany.window == mainWindow)
+		{
+			if(IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.logo_img))
+			{
+				ms_logo=MOTION;
+			}
+			else if (IsInRspArea(event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.zhpunc_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.enpunc_img))
+			{
+				ms_punc=MOTION;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.half_corner_img)
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.full_corner_img) )
+			{
+				ms_corner=MOTION;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lxoff_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.lxon_img ) )
+			{
+				ms_lx=MOTION;
+			}
+		    else if (IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.chs_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.cht_img ) )
+			{
+				ms_chs=MOTION;
+			}
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.unlock_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.lock_img ) )
+		  	{
+		  		ms_lock=MOTION;
+		  	}
+			else if (IsInRspArea (event->xbutton.x, event->xbutton.y, skin_config.skin_main_bar.vkhide_img )
+						||IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.vkshow_img ) )
+			{
+				ms_vk=MOTION;
+			}
+			else if (!bCorner && IsInRspArea (event->xbutton.x, event->xbutton.y,skin_config.skin_main_bar.pinyin_img ))
+			{		
+				ms_py=MOTION;
+			}
+			DrawMainWindow ();
+			set_mouse_status(RELEASE);
+		}
+		else if(event->xany.window == mainMenu.menuWindow)
 		{	
 			MainMenuEvent(event->xmotion.x,event->xmotion.y);
 		}

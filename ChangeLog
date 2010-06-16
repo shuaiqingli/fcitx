@@ -1,3 +1,21 @@
+2010-06-16: CSSlayer <wengxt@gmail.com>
+    * 彻底移除Xpm
+	* 添加 -ldl
+	* 修复多余的显示信息
+	* 默认字体使用Sans
+	* 默认主题小修改
+
+2010-06-16: t3swing <t3swing@gmail.com>
+    * 右键菜单支持自定义码表显示
+	* 系统托盘右键定位
+	* 标点提示修复
+	* 输入条箭头
+	* 状态条按钮鼠标悬停效果
+	* 虚拟键盘显示修复
+
+2010-06-07: CSSlayer <wengxt@gmail.com>
+    * 更加用户友好，不能加载皮肤时加载默认皮肤
+
 2010-06-05: CSSlayer <wengxt@gmail.com>
     * 系统托盘自适应大小
 

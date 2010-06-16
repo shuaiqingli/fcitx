@@ -274,7 +274,7 @@ void DrawInputWindow(void)
 	
 	for (i = 0; i < uMessageUp; i++)
 	{
-		//printf("messageUp:%s\n",messageUp[i].strMsg);
+//		printf("messageUp:%s\n",messageUp[i].strMsg);
 		strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp[i].strMsg) : messageUp[i].strMsg;
 		strcat(up_str,strGBKT);
 		
@@ -283,16 +283,28 @@ void DrawInputWindow(void)
 	}
 	
 	strGBKT=NULL;
-	
-	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[0].strMsg) : messageDown[0].strMsg;
-	strcpy(first_str,strGBKT);
-	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[1].strMsg) : messageDown[1].strMsg;
-	strcat(first_str,strGBKT);
-	strGBKT=NULL;
+
+    if ( uMessageDown <= 0)
+        strcpy(first_str, "");
+    else
+    {
+        strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[0].strMsg) : messageDown[0].strMsg;
+        strcpy(first_str,strGBKT);
+        if (bUseGBKT)
+            free(strGBKT);
+        if (uMessageDown >= 2)
+        {
+            strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[1].strMsg) : messageDown[1].strMsg;
+            strcat(first_str,strGBKT);
+            if (bUseGBKT)
+                free(strGBKT);
+        }
+        strGBKT=NULL;
+    }
 	
 	for (i = 2; i < uMessageDown; i++) 
 	{
-		//printf("%d:%s\n",i, messageDown[i].strMsg);
+//		printf("%d:%s\n",i, messageDown[i].strMsg);
 	   	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[i].strMsg) : messageDown[i].strMsg;
 	   	strcat(down_str,strGBKT);
 	   	
@@ -301,10 +313,9 @@ void DrawInputWindow(void)
 	}
   
 	draw_input_bar(up_str,first_str,down_str,&iInputWindowWidth);
-   //printf("%s: %s: %s\n",up_str,first_str,down_str);
+//  printf("%s: %s: %s\n",up_str,first_str,down_str);
 	XResizeWindow(dpy,inputWindow,iInputWindowWidth, iInputWindowHeight);	
 	XCopyArea (dpy, pm_input_bar, inputWindow, gc, 0, 0, iInputWindowWidth, iInputWindowHeight, 0, 0);
- 
 }
 
 void MoveInputWindow(CARD16 connect_id)

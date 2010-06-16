@@ -24,6 +24,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <X11/xpm.h>
+#include <cairo.h>
+#include <cairo-xlib.h>
 
 #ifdef _USE_XFT
 #include <ft2build.h>
@@ -32,7 +34,6 @@
 #endif
 
 #include "im/special/vk.h"
-#include "xpm/vk.xpm"
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
 #include "ui/InputWindow.h"
@@ -93,6 +94,7 @@ extern Property vk_prop;
 #endif
 
 char* sVKHotkey = NULL;
+static cairo_surface_t *cs;
 
 Bool CreateVKWindow (void)
 {
@@ -112,6 +114,8 @@ Bool CreateVKWindow (void)
     if (VKWindow == (Window) NULL)
 	return False;
 
+	cs=cairo_xlib_surface_create(dpy, VKWindow, DefaultVisual(dpy, 0), VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
+	
     XChangeWindowAttributes (dpy, VKWindow, attribmask, &attrib);
     XSelectInput (dpy, VKWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
 
@@ -145,19 +149,18 @@ void DrawVKWindow (void)
 {
     int             i;
     int             iPos;
-    int             rv;
-    XImage         *mask;
-    XpmAttributes   attrib;
+    char buf[PATH_MAX]={0};
+	cairo_t *cr;
+	cairo_surface_t *png_surface ;
 
-    attrib.valuemask = 0;
-    if (!pVKLogo) {
-	rv = XpmCreateImageFromData (dpy, vk_xpm, &pVKLogo, &mask, &attrib);
-	if (rv != XpmSuccess)
-	    fprintf (stderr, "Failed to read xpm file: VK::VKLogo\n");
-	    printf("aaaaaa\n");
-    }
-    XPutImage (dpy, VKWindow, VKWindowColor.backGC, pVKLogo, 0, 0, 0, 0, VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
+	snprintf(buf, PATH_MAX, "%s/skin/default/keyboard.png",PKGDATADIR);
+    buf[sizeof(buf) - 1] = '\0';
 
+	cr=cairo_create(cs);
+	png_surface = cairo_image_surface_create_from_png(buf);
+	cairo_set_source_surface(cr, png_surface, 0, 0);
+	cairo_paint(cr);
+	cairo_destroy(cr);  
     /* 显示字符 */
     /* 名称 */
 #ifdef _USE_XFT
@@ -573,26 +576,13 @@ void SwitchVK (void)
 #endif
 }
 
+/*
+*选择指定index的虚拟键盘
+*/
 void SelectVK(int vkidx)
-{
-	int             x, y;
-
-	x = iMainWindowX;
-	if ((x + VK_WINDOW_WIDTH) >= DisplayWidth (dpy, iScreen))
-	    x = DisplayWidth (dpy, iScreen) - VK_WINDOW_WIDTH - 1;
-	if (x < 0)
-	    x = 0;
-
-	y = iMainWindowY + MAINWND_HEIGHT + 2;
-	if ((y + VK_WINDOW_HEIGHT) >= DisplayHeight (dpy, iScreen))
-	    y = iMainWindowY - VK_WINDOW_HEIGHT - 2;
-	if (y < 0)
-	    y = 0;
-
-
-	XUnmapWindow (dpy, VKWindow);
+{	
+	bVK = False;
 	iCurrentVK=vkidx;
-	DrawVKWindow();
-	XMoveWindow (dpy, VKWindow, x, y);
-	DisplayVKWindow();
+	XUnmapWindow (dpy, VKWindow);
+	SwitchVK();
 }
