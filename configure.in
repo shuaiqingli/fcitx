@@ -217,6 +217,7 @@ AC_CONFIG_FILES([
            data/Makefile
            skin/Makefile
            skin/default/Makefile
+           skin/dark/Makefile
            skin/snow/Makefile
            png/Makefile
            lib/Makefile
