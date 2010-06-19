@@ -37,6 +37,7 @@
 #include "ui/InputWindow.h"
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
+#include "ui/font.h"
 #include "im/special/punc.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/sp.h"
@@ -820,6 +821,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
         			SetIM ();
         			if (!bUseDBus) {
+                        CreateFont();
         			    CalculateInputWindowHeight ();
         			}
 

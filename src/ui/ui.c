@@ -90,6 +90,8 @@ extern Atom     about_protocol_atom;
 extern Atom     about_kill_atom;
 //**********************************
 
+char strUserLocale[50] = "zh_CN.UTF-8";
+
 Bool InitX (void)
 {
     if ((dpy = XOpenDisplay ((char *) NULL)) == NULL) {

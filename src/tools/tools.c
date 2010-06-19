@@ -685,6 +685,12 @@ inline static int blur_an_ang(Configure *c, void *a, int isread)
 }
 
 Configure program_config[] = {
+    {
+        .name = "字体区域",
+        .value_type = CONFIG_STRING,
+        .value.str_value.string = strUserLocale,
+        .value.str_value.string_length = 50,
+    },
 #ifdef _ENABLE_RECORDING
     {
         .name = "记录文件",

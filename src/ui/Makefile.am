@@ -9,4 +9,5 @@ libui_a_SOURCES= InputWindow.c InputWindow.h\
 				 about.c about.h \
 				 ui.c ui.h \
 				 skin.c skin.h \
-				 MenuWindow.c MenuWindow.h 
+				 MenuWindow.c MenuWindow.h \
+				 font.c font.h

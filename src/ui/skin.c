@@ -788,6 +788,7 @@ void DisplaySkin(char * skinname)
 	XDestroyWindow(dpy, inputWindow);
 	
 	load_skin_config();
+    CreateFont();
 	CreateMainWindow ();
 	CreateInputWindow ();
 

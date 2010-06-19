@@ -45,6 +45,19 @@ else
     :
 fi
 
+PKG_CHECK_MODULES(FONTCONFIG, fontconfig, have_fontconfig=true, :)
+if test "x$have_fontconfig" = "xtrue"; then
+    AC_SUBST(FONTCONFIG_LIBS)
+    AC_SUBST(FONTCONFIG_CFLAGS)
+    :
+else
+    AC_MSG_ERROR([No fontconfig lib found!])
+    :
+fi
+
+CFLAGS="$CFLAGS $CAIRO_XLIB_CFLAGS $FONTCONFIG_CFLAGS"
+LIBS="$LIBS $CAIRO_XLIB_LIBS $FONTCONFIG_LIBS"
+
 
 # Option to enable the DEBUG
 AC_ARG_ENABLE(debug,
