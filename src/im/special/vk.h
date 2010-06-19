@@ -22,6 +22,7 @@
 
 #include <X11/Xlib.h>
 #include "core/ime.h"
+#include "ui/skin.h"
 
 #define VK_FILE	"vk.conf"
 
@@ -35,8 +36,15 @@ typedef struct {
      char            strName[MAX_IM_NAME + 1];
 } VKS;
 
+typedef struct VKWindow
+{
+    Window          window;
+    cairo_color_t fontColor;
+    int fontSize;
+    cairo_surface_t* surface;
+} VKWindow;
+
 Bool            CreateVKWindow (void);
-void            InitVKWindowColor (void);
 void            DisplayVKWindow (void);
 void            DrawVKWindow (void);
 char           *VKGetSymbol (char cChar);

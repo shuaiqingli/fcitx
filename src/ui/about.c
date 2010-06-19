@@ -25,29 +25,12 @@
 
 #include <ctype.h>
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#endif
 #include <iconv.h>
 #include <X11/Xatom.h>
 
 extern Display *dpy;
 extern int      iScreen;
 
-extern int      iVKWindowFontSize;
-
-#ifdef _USE_XFT
-extern XftFont *xftVKWindowFont;
-#else
-extern XFontSet fontSetVKWindow;
-#endif
-
-Window          aboutWindow = (Window)NULL;
-WINDOW_COLOR    AboutWindowColor = { NULL, NULL, {0, 220 << 8, 220 << 8, 220 << 8}
-};
-MESSAGE_COLOR   AboutWindowFontColor = { NULL, {0, 0, 0, 0}
-};
 int             ABOUT_WINDOW_WIDTH;
 
 Atom            about_protocol_atom = 0;
@@ -59,36 +42,28 @@ char            AboutEmail[] = "yuking_net@sohu.com";
 char            AboutCopyRight[] = "(c) 2005, Yuking";
 char            strTitle[100];
 
-int             iBackPixel;
+AboutWindow aboutWindow;
 
 Bool CreateAboutWindow (void)
 {
     strcpy (strTitle, AboutTitle);
     strcat (strTitle, " ");
     strcat (strTitle, FCITX_VERSION);
-    strcat (strTitle, "-");
-    strcat (strTitle, USE_XFT);
 
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(AboutWindowColor.backColor)))
-	iBackPixel = AboutWindowColor.backColor.pixel;
-    else
-	iBackPixel = WhitePixel (dpy, DefaultScreen (dpy));
+    aboutWindow.color.r = aboutWindow.color.g = aboutWindow.color.b = 220.0 / 256;
+    aboutWindow.fontColor.r = aboutWindow.fontColor.g = aboutWindow.fontColor.b = 0;
+    aboutWindow.fontSize = 11;
 
-#ifdef _USE_XFT
-    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, xftVKWindowFont) + 50;
-#else
-    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, fontSetVKWindow) + 50;
-#endif
-    aboutWindow =
-	XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2, ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)),
-			     iBackPixel);
-    if (aboutWindow == (Window) NULL)
+    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, aboutWindow.fontSize ) + 50;
+    aboutWindow.window =
+	XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2, ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), WhitePixel (dpy, DefaultScreen (dpy)));
+
+    aboutWindow.surface = cairo_xlib_surface_create(dpy, aboutWindow.window, DefaultVisual(dpy, 0), ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT); 
+    if (aboutWindow.window == None)
 	return False;
 
     InitWindowProperty ();
-    XSelectInput (dpy, aboutWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
-
-    InitAboutWindowColor ();
+    XSelectInput (dpy, aboutWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
 
     return True;
 }
@@ -100,13 +75,13 @@ void InitWindowProperty (void)
     Atom            about_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
     Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_TOOLBAR", False);
 
-    XSetTransientForHint (dpy, aboutWindow, DefaultRootWindow (dpy));
+    XSetTransientForHint (dpy, aboutWindow.window, DefaultRootWindow (dpy));
 
-    XChangeProperty (dpy, aboutWindow, about_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_toolbar, 1);
+    XChangeProperty (dpy, aboutWindow.window, about_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_toolbar, 1);
 
     about_protocol_atom = XInternAtom (dpy, "WM_PROTOCOLS", False);
     about_kill_atom = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols (dpy, aboutWindow, &about_kill_atom, 1);
+    XSetWMProtocols (dpy, aboutWindow.window, &about_kill_atom, 1);
 
 	char           *p;
 
@@ -116,46 +91,28 @@ void InitWindowProperty (void)
     tp.encoding = XA_STRING;
     tp.format = 16;
     tp.nitems = strlen (p);
-    XSetWMName (dpy, aboutWindow, &tp);
-}
-
-void InitAboutWindowColor (void)
-{
-    XGCValues       values;
-    int             iPixel;
-
-    AboutWindowFontColor.gc = XCreateGC (dpy, aboutWindow, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(AboutWindowFontColor.color)))
-	iPixel = AboutWindowFontColor.color.pixel;
-    else
-	iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, AboutWindowFontColor.gc, iPixel);
+    XSetWMName (dpy, aboutWindow.window, &tp);
 }
 
 void DisplayAboutWindow (void)
 {
-    XMapRaised (dpy, aboutWindow);
-    XMoveWindow (dpy, aboutWindow, (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2);
+    XMapRaised (dpy, aboutWindow.window);
+    XMoveWindow (dpy, aboutWindow.window, (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2);
 }
 
 void DrawAboutWindow (void)
 {
-#ifdef _USE_XFT
-    OutputString (aboutWindow, xftVKWindowFont, strTitle, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, xftVKWindowFont)) / 2, iVKWindowFontSize + 6 + 30, AboutWindowFontColor.color);
-#else
-    OutputString (aboutWindow, fontSetVKWindow, strTitle, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, fontSetVKWindow)) / 2, iVKWindowFontSize + 6 + 30, AboutWindowFontColor.gc);
-#endif
+    cairo_t *c = cairo_create(aboutWindow.surface);
+    cairo_set_source_rgb(c, aboutWindow.color.r, aboutWindow.color.g, aboutWindow.color.b);
+    cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(c);
 
-#ifdef _USE_XFT
-    OutputString (aboutWindow, xftVKWindowFont, AboutEmail, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, xftVKWindowFont)) / 2, iVKWindowFontSize + 6 + 60, AboutWindowFontColor.color);
-#else
-    OutputString (aboutWindow, fontSetVKWindow, AboutEmail, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, fontSetVKWindow)) / 2, iVKWindowFontSize + 6 + 60, AboutWindowFontColor.gc);
-#endif
+    OutputString (c, strTitle, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 30, &aboutWindow.fontColor);
 
-#ifdef _USE_XFT
-    OutputString (aboutWindow, xftVKWindowFont, AboutCopyRight, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, xftVKWindowFont)) / 2, iVKWindowFontSize + 6 + 80, AboutWindowFontColor.color);
-#else
-    OutputString (aboutWindow, fontSetVKWindow, AboutCopyRight, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, fontSetVKWindow)) / 2, iVKWindowFontSize + 6 + 80, AboutWindowFontColor.gc);
-#endif
+    OutputString (c, AboutEmail, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 60, &aboutWindow.fontColor);
+
+    OutputString (c, AboutCopyRight, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, aboutWindow.fontSize)) / 2,aboutWindow.fontSize + 6 + 80, &aboutWindow.fontColor);
+
+    cairo_destroy(c);
 }
 

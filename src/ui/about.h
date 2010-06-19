@@ -24,8 +24,19 @@
 #define _ABOUT_WINDOW_H
 
 #include <X11/Xlib.h>
+#include "ui/skin.h"
 
 #define ABOUT_WINDOW_HEIGHT	150
+
+typedef struct AboutWindow
+{
+    Window window;
+    cairo_surface_t* surface;
+    cairo_color_t color;
+    cairo_color_t fontColor;
+    int width;
+    int fontSize;
+} AboutWindow;
 
 Bool            CreateAboutWindow (void);
 void            InitWindowProperty (void);

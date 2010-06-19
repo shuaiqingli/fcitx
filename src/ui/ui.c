@@ -53,41 +53,8 @@
 Display        *dpy;
 int             iScreen;
 
-#ifdef _USE_XFT
-XftFont        *xftFont = (XftFont *) NULL;
-XftFont        *xftFontEn = (XftFont *) NULL;
-XftDraw        *xftDraw = (XftDraw *) NULL;
-XftFont        *xftMainWindowFont = (XftFont *) NULL;
-XftFont        *xftMainWindowFontEn = (XftFont *) NULL;
-XftFont        *xftVKWindowFont = (XftFont *) NULL;
-XftFont        *xftMenuFont = (XftFont *) NULL;
-
-Bool            bUseBold = True;
-int             iMainWindowFontSize = 9;
-int             iVKWindowFontSize = 11;
-int             iFontSize = 12;
-char            strUserLocale[50] = "zh_CN.UTF-8";
-#else
-XFontSet        fontSet = NULL;
-XFontSet        fontSetMainWindow = NULL;
-XFontSet        fontSetVKWindow = NULL;
-int             iMainWindowFontSize = 12;
-int             iVKWindowFontSize = 12;
-int             iFontSize = 16;
-Bool            bUseBold = True;
-char            strUserLocale[50] = "zh_CN.gbk";
-#endif
-
 GC              dimGC = (GC) NULL;
 GC              lightGC = (GC) NULL;
-
-#ifdef _USE_XFT
-char            strFontName[100] = "AR PL ShanHeiSun Uni";
-char            strFontEnName[100] = "Courier New";
-#else
-char            strFontName[100] = "*";
-char            strFontEnName[100] = "Courier";
-#endif
 
 extern Window   mainWindow;
 extern int      iMainWindowX;
@@ -95,16 +62,15 @@ extern int      iMainWindowY;
 extern Window   inputWindow;
 extern int      iInputWindowX;
 extern int      iInputWindowY;
-extern Window   VKWindow;
 extern int      iVKWindowX;
 extern int      iVKWindowY;
 extern Window   ximWindow;
+extern VKWindow vkWindow;
 extern WINDOW_COLOR mainWindowColor;
 extern WINDOW_COLOR inputWindowColor;
 extern WINDOW_COLOR VKWindowColor;
 extern HIDE_MAINWINDOW hideMainWindow;
 extern Bool bMainWindow_Hiden;
-extern int      MAINWND_WIDTH;
 extern Bool     bCompactMainWindow;
 extern INT8     iIMIndex;
 unsigned char   iCurrentVK ;
@@ -194,156 +160,7 @@ void InitGC (Window window)
     iPixel = BlackPixel (dpy, DefaultScreen (dpy));
     XSetForeground (dpy, inputWindowColor.backGC, iPixel);
 */
-    if (VKWindowColor.foreGC)
-    XFreeGC (dpy, VKWindowColor.foreGC);
-    VKWindowColor.foreGC = XCreateGC (dpy, window, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(VKWindowColor.foreColor)))
-    iPixel = VKWindowColor.foreColor.pixel;
-    else
-    iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, VKWindowColor.foreGC, iPixel);
-
-    if (VKWindowColor.backGC)
-    XFreeGC (dpy, VKWindowColor.backGC);
-    VKWindowColor.backGC = XCreateGC (dpy, window, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(VKWindowColor.backColor)))
-    iPixel = VKWindowColor.backColor.pixel;
-    else
-    iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, VKWindowColor.backGC, iPixel);
 }
-
-/*
- * 当locale为UTF-8时，setlocale(LC_CTYPE,"")会导致程序崩溃
- */
-/*void SetLocale(void)
-{
-    char *p;
-
-    p=getenv("LC_CTYPE");
-    if ( !p ) {
-        p=getenv("LC_ALL");
-        if ( !p)
-            p=getenv("LANG");
-    }
-
-    //试验发现，当locale为zh_CN.UTF-8时，setlocale必须设置这zh_CN.UTF-8而不能是zh_CN.utf-8
-    if ( p ) {
-        strcpy(strUserLocale,p);
-        p=strUserLocale;
-        while ( *p!='.' && *p )
-            p++;
-        while ( *p ) {
-            *p=toupper(*p);
-            p++;
-        }
-        setlocale(LC_CTYPE,strUserLocale);
-    }
-    else
-        setlocale(LC_CTYPE,"");
-}
-*/
-
-#ifdef _USE_XFT
-void CreateFont (void)
-{
-    //为了让界面能够正常显示，必须设置为中文模式
-    if (strUserLocale[0])
-    setlocale (LC_CTYPE, strUserLocale);
-
-    if (xftFont)
-    XftFontClose (dpy, xftFont);
-    xftFont = XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontName, XFT_SIZE, XftTypeDouble, (double) iFontSize, XFT_ANTIALIAS, XftTypeBool, True, NULL);
-
-    if (xftFontEn)
-    XftFontClose (dpy, xftFontEn);
-    xftFontEn = XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontEnName, XFT_SIZE, XftTypeDouble, (double) iFontSize, XFT_ANTIALIAS, XftTypeBool, True, NULL);
-
-    if (xftMainWindowFont)
-    XftFontClose (dpy, xftMainWindowFont);
-    xftMainWindowFont =
-    XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontName, XFT_SIZE, XftTypeDouble, (double) iMainWindowFontSize, XFT_ANTIALIAS, XftTypeBool, True, XFT_WEIGHT, XftTypeInteger, (bUseBold) ? XFT_WEIGHT_BOLD : XFT_WEIGHT_MEDIUM, NULL);
-
-    if (xftMainWindowFontEn)
-    XftFontClose (dpy, xftMainWindowFontEn);
-    xftMainWindowFontEn =
-    XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontEnName, XFT_SIZE, XftTypeDouble, (double) iMainWindowFontSize, XFT_ANTIALIAS, XftTypeBool, True, XFT_WEIGHT, XftTypeInteger, (bUseBold) ? XFT_WEIGHT_BOLD : XFT_WEIGHT_MEDIUM, NULL);
-
-    if (xftVKWindowFont)
-    XftFontClose (dpy, xftVKWindowFont);
-    xftVKWindowFont = XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontName, XFT_SIZE, XftTypeDouble, (double) iVKWindowFontSize, XFT_ANTIALIAS, XftTypeBool, True, NULL);
-
-    if (xftDraw)
-    XftDrawDestroy (xftDraw);
-    xftDraw = XftDrawCreate (dpy, inputWindow, DefaultVisual (dpy, DefaultScreen (dpy)), DefaultColormap (dpy, DefaultScreen (dpy)));
-    
-    if(xftMenuFont)
-    XftFontClose (dpy, xftMenuFont);
-    xftMenuFont = XftFontOpen (dpy, iScreen, XFT_FAMILY, XftTypeString, strFontName, XFT_SIZE, XftTypeDouble, 10.0, XFT_ANTIALIAS, XftTypeBool, 0, NULL);
-
-
-    setlocale (LC_CTYPE, "");
-}
-#else
-void CreateFont (void)
-{
-    char          **missing_charsets;
-    int             num_missing_charsets = 0;
-    char           *default_string;
-    char            strFont[256];
-
-    //为了让界面能够正常显示，必须设置为中文模式
-    if (strUserLocale[0])
-    setlocale (LC_CTYPE, strUserLocale);
-
-    if (bUseBold)
-    sprintf (strFont, "-*-%s-bold-r-normal--%d-*-*-*-*-*-*-*,-*-%s-bold-r-normal--%d-*-*-*-*-*-*-*", strFontEnName, iMainWindowFontSize, strFontName, iMainWindowFontSize);
-    else
-    sprintf (strFont, "-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*,-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*", strFontEnName, iMainWindowFontSize, strFontName, iMainWindowFontSize);
-    if (fontSetMainWindow)
-    XFreeFontSet (dpy, fontSetMainWindow);
-    fontSetMainWindow = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0) {
-    fprintf (stderr, "Error: Cannot Create Chinese Fonts:\n\t%s\nUsing Default ...\n", strFont);
-    iMainWindowFontSize = 14;
-    if (bUseBold)
-        sprintf (strFont, "-*-*-medium-r-normal--%d-*-*-*-*-*-*-*,-*-*-medium-r-normal--%d-*-*-*-*-*-*-*", iMainWindowFontSize, iMainWindowFontSize);
-    else
-        sprintf (strFont, "-*-*-bold-r-normal--%d-*-*-*-*-*-*-*,-*-*-bold-r-normal--%d-*-*-*-*-*-*-*", iMainWindowFontSize, iMainWindowFontSize);
-    fontSetMainWindow = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0)
-        fprintf (stderr, "Error: Cannot Create Chinese Fonts!\n\n");
-    }
-
-    sprintf (strFont, "-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*,-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*", strFontEnName, iFontSize, strFontName, iFontSize);
-    if (fontSet)
-    XFreeFontSet (dpy, fontSet);
-    fontSet = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0) {
-    fprintf (stderr, "Error: Cannot Create Chinese Fonts:\n\t%s\nUsing Default ...\n", strFont);
-    iFontSize = 16;
-    sprintf (strFont, "-*-*-medium-r-normal--%d-*-*-*-*-*-*-*,-*-*-medium-r-normal--%d-*-*-*-*-*-*-*", iFontSize, iFontSize);
-    fontSet = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0)
-        fprintf (stderr, "Error: Cannot Create Chinese Fonts!\n\n");
-    }
-
-    sprintf (strFont, "-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*,-*-%s-medium-r-normal--%d-*-*-*-*-*-*-*", strFontEnName, iVKWindowFontSize, strFontName, iVKWindowFontSize);
-    if (fontSetVKWindow)
-    XFreeFontSet (dpy, fontSetVKWindow);
-    fontSetVKWindow = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0) {
-    fprintf (stderr, "Error: Cannot Create Chinese Fonts:\n\t%s\nUsing Default ...\n", strFont);
-    iFontSize = 12;
-    sprintf (strFont, "-*-*-medium-r-normal--%d-*-*-*-*-*-*-*,-*-*-medium-r-normal--%d-*-*-*-*-*-*-*", iFontSize, iFontSize);
-    fontSetVKWindow = XCreateFontSet (dpy, strFont, &missing_charsets, &num_missing_charsets, &default_string);
-    if (num_missing_charsets > 0)
-        fprintf (stderr, "Error: Cannot Create Chinese Fonts!\n\n");
-    }
-
-    setlocale (LC_CTYPE, "");
-}
-#endif
 
 /*
  * 让指定的区域显示三维效果
@@ -412,7 +229,7 @@ void MyXEventHandler (XEvent * event)
         break;
     if (event->xexpose.window == mainWindow)
         DrawMainWindow ();
-    else if (event->xexpose.window == VKWindow)
+    else if (event->xexpose.window == vkWindow.window)
         DrawVKWindow ();
     else if (event->xexpose.window == inputWindow)
         DrawInputWindow ();
@@ -540,13 +357,13 @@ void MyXEventHandler (XEvent * event)
 #endif      	
        	
        	}
-        else if (event->xbutton.window == VKWindow) 
+        else if (event->xbutton.window == vkWindow.window) 
         {
         	if (!VKMouseKey (event->xbutton.x, event->xbutton.y))
         	{
         	    iVKWindowX = event->xbutton.x;
         	    iVKWindowY = event->xbutton.y;
-        	    MouseClick (&iVKWindowX, &iVKWindowY, VKWindow);
+        	    MouseClick (&iVKWindowX, &iVKWindowY, vkWindow.window);
         	    DrawVKWindow ();
         	}
         }
@@ -836,92 +653,60 @@ Bool IsInRspArea(int x0,int y0,skin_img_t img)
 	return IsInBox (x0,y0,img.response_x , img.response_y, img.response_x+img.response_w, img.response_y+img.response_h);
 }
 
-#ifdef _USE_XFT
-int StringWidth (char *str, XftFont * font)
+int StringWidth (char *str, int fontSize)
 {
-    XGlyphInfo      extents;
+    cairo_text_extents_t extents;
+    cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
+    cairo_t* c = cairo_create(surface);
+    cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(c, fontSize);
 
-    if (!font)
-    return 0;
+    cairo_text_extents(c, str, &extents);
 
-    XftTextExtentsUtf8 (dpy, font, (FcChar8 *) str, strlen (str), &extents);
-    if (font == xftMainWindowFont)
-    return extents.width;
+    int width = extents.width;
 
-    return extents.xOff;
+	cairo_destroy(c);
+    cairo_surface_destroy(surface);
+
+    return width;
 }
 
-int FontHeight (XftFont * font)
+int FontHeight ()
 {
-    XGlyphInfo      extents;
     char            str[] = "Ay中";
+    cairo_text_extents_t extents;
+    cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
+    cairo_t* c = cairo_create(surface);
+    cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(c, skin_config.skin_font.font_size);
 
-    if (!font)
-    return 0;
+    cairo_text_extents(c, str, &extents);
 
-    XftTextExtentsUtf8 (dpy, font, (FcChar8 *) str, strlen (str), &extents);
+    int height = extents.height;
 
-    return extents.height;
+	cairo_destroy(c);
+    cairo_surface_destroy(surface);
+    return height;
 }
-#else
-int StringWidth (char *str, XFontSet font)
-{
-    XRectangle      InkBox, LogicalBox;
-
-    if (!font || !str)
-    return 0;
-
-    Xutf8TextExtents (font, str, strlen (str), &InkBox, &LogicalBox);
-
-    return LogicalBox.width;
-}
-
-int FontHeight (XFontSet font)
-{
-    XRectangle      InkBox, LogicalBox;
-    char            str[] = "Ay中";
-
-    if (!font)
-    return 0;
-
-    Xutf8TextExtents (font, str, strlen (str), &InkBox, &LogicalBox);
-
-    return LogicalBox.height;
-}
-#endif
 
 /*
  * 以指定的颜色在窗口的指定位置输出字串
  */
-#ifdef _USE_XFT
-void OutputString (Window window, XftFont * font, char *str, int x, int y, XColor color)
+void OutputString (cairo_t* c, char *str, int fontSize, int x, int y, cairo_color_t* color)
 {
-    XftColor        xftColor;
-    XRenderColor    renderColor;
-
-    if (!font || !str)
+    if (!str)
     return;
 
-    renderColor.red = color.red;
-    renderColor.green = color.green;
-    renderColor.blue = color.blue;
-    renderColor.alpha = 0xFFFF;
+    cairo_save(c);
+    
+    cairo_set_source_rgb(c, color->r, color->g, color->b);
+    cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(c, fontSize);
+    cairo_move_to(c, x, y);
+    cairo_show_text(c, str);
 
-    XftColorAllocValue (dpy, DefaultVisual (dpy, DefaultScreen (dpy)), DefaultColormap (dpy, DefaultScreen (dpy)), &renderColor, &xftColor);
-    XftDrawChange (xftDraw, window);
-    XftDrawStringUtf8 (xftDraw, &xftColor, font, x, y, (FcChar8 *) str, strlen (str));
-
-    XftColorFree (dpy, DefaultVisual (dpy, DefaultScreen (dpy)), DefaultColormap (dpy, DefaultScreen (dpy)), &xftColor);
+    cairo_restore(c);
 }
-#else
-void OutputString (Window window, XFontSet font, char *str, int x, int y, GC gc)
-{
-    if (!font || !str)
-    return;
-
-    Xutf8DrawString (dpy, window, font, gc, x, y, str, strlen (str));
-}
-#endif
 
 Bool IsWindowVisible(Window window)
 {

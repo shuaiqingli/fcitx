@@ -40,11 +40,6 @@
 #include "ui/ui.h"
 #include "interface/DBus.h"
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#endif
-
 TABLE          *table;
 INT8            iTableIMIndex = 0;
 INT8            iTableCount;
@@ -97,13 +92,6 @@ extern INT8     iInternalVersion;
 
 extern Display *dpy;
 extern Window   inputWindow;
-
-#ifdef _USE_XFT
-extern XftFont *xftFont;
-extern XftFont *xftFontEn;
-#else
-extern XFontSet fontSet;
-#endif
 
 extern char     strCodeInput[];
 extern Bool     bIsDoInputOnly;
@@ -1569,43 +1557,23 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		else
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
-#ifdef _USE_XFT
 		if (pstr)
-		    iWidth += StringWidth (pstr, xftFontEn);
-		iWidth += StringWidth (strTemp, xftFontEn);
+		    iWidth += StringWidth (pstr, skin_config.skin_font.font_size);
+		iWidth += StringWidth (strTemp, skin_config.skin_font.font_size);
 		switch (tableCandWord[i].flag) {
 		case CT_NORMAL:
-		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, xftFont);
+		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, skin_config.skin_font.font_size);
 		    break;
 		case CT_AUTOPHRASE:
-		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, xftFont);
+		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_size);
 		default:
 		    ;
 		}
-		iWidth += StringWidth (" ", xftFontEn);
-#else
-		if (pstr)
-		    iWidth += StringWidth (pstr, fontSet);
-		iWidth += StringWidth (strTemp, fontSet);
-		switch (tableCandWord[i].flag) {
-		case CT_NORMAL:
-		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, fontSet);
-		    break;
-		case CT_AUTOPHRASE:
-		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, fontSet);
-		default:
-		    ;
-		}
-		iWidth += StringWidth (" ", fontSet);
-#endif
+		iWidth += StringWidth (" ", skin_config.skin_font.font_size);
 
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == 0) {
-#ifdef _USE_XFT
-			iWidth -= StringWidth (" ", xftFontEn);
-#else
-			iWidth -= StringWidth (" ", fontSet);
-#endif
+			iWidth -= StringWidth (" ", skin_config.skin_font.font_size);
 			if (iWidth > iFixedInputWindowWidth)
 			    i = 1;
 		    }
@@ -1646,24 +1614,13 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		else
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
-#ifdef _USE_XFT
-		iWidth += StringWidth (pstr, xftFontEn);
-		iWidth += StringWidth (strTemp, xftFontEn);
-		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, xftFont);
-		iWidth += StringWidth (" ", xftFontEn);
-#else
-		iWidth += StringWidth (pstr, fontSet);
-		iWidth += StringWidth (strTemp, fontSet);
-		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, fontSet);
-		iWidth += StringWidth (" ", fontSet);
-#endif
+		iWidth += StringWidth (pstr, skin_config.skin_font.font_size);
+		iWidth += StringWidth (strTemp, skin_config.skin_font.font_size);
+		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_size);
+		iWidth += StringWidth (" ", skin_config.skin_font.font_size);
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == (iCandWordCount - 1)) {
-#ifdef _USE_XFT
-			iWidth -= StringWidth (" ", xftFontEn);
-#else
-			iWidth -= StringWidth (" ", fontSet);
-#endif
+			iWidth -= StringWidth (" ", skin_config.skin_font.font_size);
 			if (iWidth <= iFixedInputWindowWidth)
 			    i = iCandWordCount;
 		    }

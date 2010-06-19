@@ -49,7 +49,6 @@
 
 extern Display *dpy;
 extern int      iScreen;
-extern int      MAINWND_WIDTH;
 extern int      iMainWindowX;
 extern int      iMainWindowY;
 extern int      iInputWindowX;
@@ -68,7 +67,6 @@ extern MESSAGE_COLOR inputWindowLineColor;
 extern MESSAGE_COLOR mainWindowLineColor;
 extern MESSAGE_COLOR cursorColor;
 extern WINDOW_COLOR VKWindowColor;
-extern MESSAGE_COLOR VKWindowFontColor;
 extern MESSAGE_COLOR VKWindowAlphaColor;
 extern ENTER_TO_DO enterToDo;
 extern char  skinType[];
@@ -107,7 +105,6 @@ extern HIDE_MAINWINDOW hideMainWindow;
 extern Bool     bCompactMainWindow;
 extern HIDE_MAINWINDOW hideMainWindow;
 extern int      iFontSize;
-extern int      iMainWindowFontSize;
 
 extern Bool     bUseGBKT;
 
@@ -135,9 +132,6 @@ extern Bool     bDisablePagingInLegend;
 
 extern int      i2ndSelectKey;
 extern int      i3rdSelectKey;
-
-extern char     strFontName[];
-extern char     strFontEnName[];
 
 extern ADJUSTORDER baseOrder;
 extern ADJUSTORDER phraseOrder;
@@ -691,39 +685,6 @@ inline static int blur_an_ang(Configure *c, void *a, int isread)
 }
 
 Configure program_config[] = {
-    {
-        .name = "显示字体(中)",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strFontName,
-        .value.str_value.string_length = 100,   /* FIXME: 不应在此硬编码字符串的长度，下同 */
-    },
-    {
-        .name = "显示字体(英)",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strFontEnName,
-        .value.str_value.string_length = 100,
-    },
-    {
-        .name = "显示字体大小",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &iFontSize,
-    },
-    {
-        .name = "主窗口字体大小",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &iMainWindowFontSize,
-    },
-    {
-        .name = "字体区域",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strUserLocale,
-        .value.str_value.string_length = 50,
-    },
-    {
-        .name = "使用粗体",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bUseBold,
-    },
 #ifdef _ENABLE_RECORDING
     {
         .name = "记录文件",
@@ -1328,8 +1289,8 @@ inline static int get_main_window_offset_x(Configure *c, void *a, int isread)
         iMainWindowX = atoi(a);
         if(iMainWindowX < 0)
             iMainWindowX = 0;
-        else if((iMainWindowX + MAINWND_WIDTH) > DisplayWidth(dpy, iScreen))
-            iMainWindowX = DisplayWidth(dpy, iScreen) - MAINWND_WIDTH;
+        else if((iMainWindowX) > DisplayWidth(dpy, iScreen))
+            iMainWindowX = DisplayWidth(dpy, iScreen) - 1;
     }else
         fprintf((FILE *)a, "%s=%d\n", c->name, iMainWindowX);
 
@@ -1343,8 +1304,8 @@ inline static int get_main_window_offset_y(Configure *c, void *a, int isread)
         iMainWindowY = atoi(a);
         if(iMainWindowY < 0)
             iMainWindowY = 0;
-        else if((iMainWindowY + MAINWND_HEIGHT) > DisplayHeight(dpy, iScreen))
-            iMainWindowY = DisplayHeight(dpy, iScreen) - MAINWND_HEIGHT;
+        else if((iMainWindowY) > DisplayHeight(dpy, iScreen))
+            iMainWindowY = DisplayHeight(dpy, iScreen) - 1;
     }else
         fprintf((FILE *)a, "%s=%d\n", c->name, iMainWindowY);
 

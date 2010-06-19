@@ -40,15 +40,11 @@
 #include <X11/extensions/Xrender.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include "ui.h"
 #include "MainWindow.h"
 #include "InputWindow.h"
 #include "core/IC.h"
-#include "ui/ui.h"
 #include "core/ime.h"
 #include "tools/tools.h"
-#include "ui/ui.h"
-#include "im/special/vk.h"
 
 #define SIZEX 800
 #define SIZEY 200

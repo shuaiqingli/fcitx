@@ -146,10 +146,6 @@ int main (int argc, char *argv[])
 	*/
 		load_skin_config();
 
-    /*创建字体。实际上，就是根据用户的设置，使用xft读取字体的相关信息。
-     * xft是x11提供的处理字体的相关函数集
-     */
-    CreateFont ();
     //根据字体计算输入窗口的高度
     CalculateInputWindowHeight ();
     /*加载配置文件，这个配置文件不是用户配置的，而是用于记录fctix的运行状态的，
@@ -269,5 +265,5 @@ void Usage ()
 
 void Version ()
 {
-    printf ("fcitx version: %s-%s\n", FCITX_VERSION, USE_XFT);
+    printf ("fcitx version: %s\n", FCITX_VERSION);
 }

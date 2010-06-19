@@ -69,7 +69,7 @@ extern Display *dpy;
 extern int      iScreen;
 extern Window   mainWindow;
 extern Window   inputWindow;
-extern Window   VKWindow;
+extern VKWindow   vkWindow;
 
 extern int      iMainWindowX;
 extern int      iMainWindowY;
@@ -207,7 +207,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	}
 	else {
 	    CloseInputWindow();
-	    XUnmapWindow (dpy, VKWindow);
+	    XUnmapWindow (dpy, vkWindow.window);
 	}
     }
     else {
@@ -215,7 +215,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	    IMPreeditEnd (ims, (XPointer) call_data);
 
 	CloseInputWindow();
-	XUnmapWindow (dpy, VKWindow);
+	XUnmapWindow (dpy, vkWindow.window);
 
     if (!bUseDBus) {
 #ifdef _ENABLE_TRAY
@@ -267,7 +267,7 @@ Bool MyUnsetFocusHandler (IMChangeICStruct * call_data)
 {
     if (call_data->connect_id==connect_id) {
 	CloseInputWindow();
-	XUnmapWindow (dpy, VKWindow);
+	XUnmapWindow (dpy, vkWindow.window);
     }
     
     return True;
@@ -277,7 +277,7 @@ Bool MyCloseHandler (IMOpenStruct * call_data)
 {
     CloseInputWindow();
     
-    XUnmapWindow (dpy, VKWindow);
+    XUnmapWindow (dpy, vkWindow.window);
 
     DestroyConnectID (call_data->connect_id);
 
@@ -315,7 +315,7 @@ Bool MyDestroyICHandler (IMChangeICStruct * call_data)
 {
     if (CurrentIC == (IC *) FindIC (call_data->icid)) {
 	CloseInputWindow();
-	XUnmapWindow (dpy, VKWindow);
+	XUnmapWindow (dpy, vkWindow.window);
     }
 
     DestroyIC (call_data);

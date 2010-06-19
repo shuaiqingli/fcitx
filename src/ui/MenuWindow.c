@@ -23,10 +23,6 @@
 
 #include <ctype.h>
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#endif
 #include <iconv.h>
 #include <X11/Xatom.h>
 #include <X11/xpm.h>
@@ -37,29 +33,6 @@ extern int   iMainWindowX;
 extern int   iMainWindowY;
 
 extern int      iScreen;
-
-extern int      iVKWindowFontSize;
-
-#ifdef _USE_XFT
-extern XftFont *xftMainWindowFont;
-extern XftFont *xftMainWindowFontEn;
-extern XftFont        *xftMenuFont;
-#else
-extern XFontSet fontSetMainWindow;
-#endif
-
-#ifdef _USE_XFT
-extern XftFont *xftFont;
-extern XftFont *xftFontEn;
-#else
-extern XFontSet fontSet;
-#endif
-
-#ifdef _USE_XFT
-extern XftFont *xftVKWindowFont;
-#else
-extern XFontSet fontSetVKWindow;
-#endif
 
 xlibMenu mainMenu,imMenu,vkMenu,skinMenu; 
 					
@@ -420,7 +393,6 @@ void MainMenuEvent(int x,int y)
 	{
 	//显示皮肤菜单
 		case 2:
-			//skinMenu.menuFont=xftMenuFont ;
 			skinMenu.useItemCount=skinCount;
 			for(j=0;j<skinCount;j++)
 			{
@@ -471,7 +443,6 @@ void MainMenuEvent(int x,int y)
 			DisplayXlibMenu(dpy,&imMenu);	
 			break;
 		case 4:
-			//vkMenu.menuFont=xftMenuFont ;
 			vkMenu.pos_x=mainMenu.pos_x;
 			vkMenu.pos_y=mainMenu.pos_y;
 		

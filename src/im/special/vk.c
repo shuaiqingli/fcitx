@@ -27,12 +27,6 @@
 #include <cairo.h>
 #include <cairo-xlib.h>
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#include <iconv.h>
-#endif
-
 #include "im/special/vk.h"
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
@@ -42,14 +36,7 @@
 #include "tools/tools.h"
 #include "interface/DBus.h"
 
-Window          VKWindow;
-WINDOW_COLOR    VKWindowColor = { NULL, NULL, {0, 220 << 8, 220 << 8, 220 << 8}
-};
-MESSAGE_COLOR   VKWindowAlphaColor = { NULL, {0, 80 << 8, 0, 0}
-};
-MESSAGE_COLOR   VKWindowFontColor = { NULL, {0, 0, 0, 0}
-};
-XImage         *pVKLogo = NULL;
+VKWindow vkWindow;
 
 int             iVKWindowX = 0;
 int             iVKWindowY = 0;
@@ -66,14 +53,6 @@ Bool            bVKCaps = False;
 
 extern Display *dpy;
 extern int      iScreen;
-
-extern int      iVKWindowFontSize;
-
-#ifdef _USE_XFT
-extern XftFont *xftVKWindowFont;
-#else
-extern XFontSet fontSetVKWindow;
-#endif
 
 extern char     strStringGet[];
 extern Bool     bVK;
@@ -94,55 +73,35 @@ extern Property vk_prop;
 #endif
 
 char* sVKHotkey = NULL;
-static cairo_surface_t *cs;
 
 Bool CreateVKWindow (void)
 {
     XSetWindowAttributes attrib;
     unsigned long   attribmask;
-    int             iBackPixel;
 
     attrib.override_redirect = True;
     attribmask = CWOverrideRedirect;
 
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(VKWindowColor.backColor)))
-	iBackPixel = VKWindowColor.backColor.pixel;
-    else
-	iBackPixel = WhitePixel (dpy, DefaultScreen (dpy));
+    vkWindow.fontSize = 12;
+    vkWindow.fontColor.r = vkWindow.fontColor.g = vkWindow.fontColor.b = 0;
 
-    VKWindow = XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), 0, 0, VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), iBackPixel);
-    if (VKWindow == (Window) NULL)
+    vkWindow.window = XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), 0, 0, VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), WhitePixel (dpy, DefaultScreen (dpy)));
+    if (vkWindow.window == (Window) NULL)
 	return False;
 
-	cs=cairo_xlib_surface_create(dpy, VKWindow, DefaultVisual(dpy, 0), VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
+	vkWindow.surface=cairo_xlib_surface_create(dpy, vkWindow.window, DefaultVisual(dpy, 0), VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
 	
-    XChangeWindowAttributes (dpy, VKWindow, attribmask, &attrib);
-    XSelectInput (dpy, VKWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
+    XChangeWindowAttributes (dpy, vkWindow.window, attribmask, &attrib);
+    XSelectInput (dpy, vkWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
 
-    InitVKWindowColor ();
     LoadVKMapFile ();
 
     return True;
 }
 
-void InitVKWindowColor (void)
-{
-    XGCValues       values;
-    int             iPixel;
-
-    if (VKWindowFontColor.gc)
-	XFreeGC (dpy, VKWindowFontColor.gc);
-    VKWindowFontColor.gc = XCreateGC (dpy, VKWindow, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(VKWindowFontColor.color)))
-	iPixel = VKWindowFontColor.color.pixel;
-    else
-	iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, VKWindowFontColor.gc, iPixel);
-}
-
 void DisplayVKWindow (void)
 {
-    XMapRaised (dpy, VKWindow);
+    XMapRaised (dpy, vkWindow.window);
 }
 
 void DrawVKWindow (void)
@@ -156,77 +115,50 @@ void DrawVKWindow (void)
 	snprintf(buf, PATH_MAX, "%s/skin/default/keyboard.png",PKGDATADIR);
     buf[sizeof(buf) - 1] = '\0';
 
-	cr=cairo_create(cs);
+	cr=cairo_create(vkWindow.surface);
 	png_surface = cairo_image_surface_create_from_png(buf);
 	cairo_set_source_surface(cr, png_surface, 0, 0);
 	cairo_paint(cr);
-	cairo_destroy(cr);  
     /* 显示字符 */
     /* 名称 */
-#ifdef _USE_XFT
-    OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strName, (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, xftVKWindowFont)) / 2, iVKWindowFontSize + 6, VKWindowFontColor.color);
-#else
-    OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strName, (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, fontSetVKWindow)) / 2, iVKWindowFontSize + 6, VKWindowFontColor.gc);
-#endif
+    OutputString (cr, vks[iCurrentVK].strName, vkWindow.fontSize , (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, skin_config.skin_font.font_size)) / 2, vkWindow.fontSize + 6, &vkWindow.fontColor);
 
     /* 第一排 */
     iPos = 13;
     for (i = 0; i < 13; i++) {
-#ifdef _USE_XFT
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][1], iPos, 39, VKWindowFontColor.color);
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 52, VKWindowFontColor.color);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 39, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 52, &vkWindow.fontColor);
 	iPos += 24;
-#else
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][1], iPos, 39, VKWindowFontColor.gc);
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 52, VKWindowFontColor.gc);
-	iPos += 24;
-#endif
     }
     /* 第二排 */
     iPos = 48;
     for (i = 13; i < 26; i++) {
-#ifdef _USE_XFT
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][1], iPos, 67, VKWindowFontColor.color);
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 80, VKWindowFontColor.color);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 67, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 80, &vkWindow.fontColor);
 	iPos += 24;
-#else
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][1], iPos, 67, VKWindowFontColor.gc);
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 80, VKWindowFontColor.gc);
-	iPos += 24;
-#endif
     }
     /* 第三排 */
     iPos = 55;
     for (i = 26; i < 37; i++) {
-#ifdef _USE_XFT
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][1], iPos, 95, VKWindowFontColor.color);
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 108, VKWindowFontColor.color);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 95, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
 	iPos += 24;
-#else
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][1], iPos, 95, VKWindowFontColor.gc);
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 108, VKWindowFontColor.gc);
-	iPos += 24;
-#endif
     }
     if (bVKCaps)
-	Draw3DEffect (VKWindow, 5, 85, 38, 25, _3D_LOWER);
+	Draw3DEffect (vkWindow.window, 5, 85, 38, 25, _3D_LOWER);
 
     /* 第四排 */
     iPos = 72;
     for (i = 37; i < 47; i++) {
-#ifdef _USE_XFT
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][1], iPos, 123, VKWindowFontColor.color);
-	OutputString (VKWindow, xftVKWindowFont, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 136, VKWindowFontColor.color);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 123, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 136, &vkWindow.fontColor);
 	iPos += 24;
-#else
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][1], iPos, 123, VKWindowFontColor.gc);
-	OutputString (VKWindow, fontSetVKWindow, vks[iCurrentVK].strSymbol[i][0], iPos - 5, 136, VKWindowFontColor.gc);
-	iPos += 24;
-#endif
     }
     
     if (bShiftPressed)
-	Draw3DEffect (VKWindow, 5, 113, 56, 25, _3D_LOWER);
+	Draw3DEffect (vkWindow.window, 5, 113, 56, 25, _3D_LOWER);
+	
+    cairo_destroy(cr);  
 }
 
 /*
@@ -550,13 +482,13 @@ void SwitchVK (void)
 	if (bUseDBus)
 		y = 0;
 	else
-		y = iMainWindowY + MAINWND_HEIGHT + 2;
+		y = iMainWindowY + skin_config.skin_main_bar.mbbg_img.height + 2;
 	if ((y + VK_WINDOW_HEIGHT) >= DisplayHeight (dpy, iScreen))
 	    y = iMainWindowY - VK_WINDOW_HEIGHT - 2;
 	if (y < 0)
 	    y = 0;
 
-	XMoveWindow (dpy, VKWindow, x, y);
+	XMoveWindow (dpy, vkWindow.window, x, y);
 	DisplayVKWindow ();
 	CloseInputWindow();
 
@@ -564,7 +496,7 @@ void SwitchVK (void)
 	    SetIMState (True);
     }
     else
-	XUnmapWindow (dpy, VKWindow);
+	XUnmapWindow (dpy, vkWindow.window);
 
     SwitchIM (-2);
 
@@ -583,6 +515,6 @@ void SelectVK(int vkidx)
 {	
 	bVK = False;
 	iCurrentVK=vkidx;
-	XUnmapWindow (dpy, VKWindow);
+	XUnmapWindow (dpy, vkWindow.window);
 	SwitchVK();
 }

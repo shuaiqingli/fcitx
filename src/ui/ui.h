@@ -21,11 +21,8 @@
 #define _UI_H
 
 #include <X11/Xlib.h>
-
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#endif
+#include <cairo.h>
+#include "ui/skin.h"
 
 #define LIGHT_COLOR	0xffff
 #define BACK_COLOR	0x0000
@@ -57,21 +54,14 @@ typedef struct {
 Bool            InitX (void);
 void            Draw3DEffect (Window window, int x, int y, int width, int height, _3D_EFFECT effect);
 void            InitGC (Window window);
-void            CreateFont (void);
 void            MyXEventHandler (XEvent * event);
 Bool            IsInBox (int x0, int y0, int x1, int y1, int x2, int y2);
 
 /*void		SetLocale (void);*/
 
-#ifdef _USE_XFT
-void            OutputString (Window window, XftFont * font, char *str, int x, int y, XColor);
-int             StringWidth (char *str, XftFont * font);
-int             FontHeight (XftFont * font);
-#else
-void            OutputString (Window window, XFontSet font, char *str, int x, int y, GC gc);
-int             StringWidth (char *str, XFontSet font);
-int             FontHeight (XFontSet font);
-#endif
+void OutputString (cairo_t* c, char *str, int fontSize, int x, int y, cairo_color_t* color);
+int             StringWidth (char *str, int fontSize);
+int             FontHeight ();
 
 Bool            MouseClick (int *x, int *y, Window window);
 Bool		IsWindowVisible(Window window);

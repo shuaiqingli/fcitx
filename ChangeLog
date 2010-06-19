@@ -1,3 +1,8 @@
+2010-06-19: CSSlayer <wengxt@gmail.com>
+    * 移除Xft
+	* 移除一些不再起作用的选项
+	* 默认字体改成serif
+
 2010-06-16: CSSlayer <wengxt@gmail.com>
     * 彻底移除Xpm
 	* 添加 -ldl

@@ -30,11 +30,6 @@
 #include <ctype.h>
 #include <time.h>
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#endif
-
 #include "core/xim.h"
 #include "core/ime.h"
 #include "core/IC.h"
@@ -174,14 +169,13 @@ extern XIMTriggerKey *Trigger_Keys;
 extern Window   mainWindow;
 extern int      iCursorPos;
 
-extern Window   VKWindow;
+extern VKWindow   vkWindow;
 extern VKS      vks[];
 extern unsigned char iCurrentVK;
 extern Bool     bVK;
 
 extern Window   aboutWindow;
 
-extern int      MAINWND_WIDTH;
 extern Bool     bCompactMainWindow;
 extern Bool     bShowVK;
 
@@ -216,12 +210,6 @@ extern Property gbkt_prop;
 extern Property legend_prop;
 #endif
 
-
-#ifdef _USE_XFT
-extern XftFont *xftMainWindowFont;
-#else
-extern XFontSet fontSetMainWindow;
-#endif
 
 #ifdef _ENABLE_RECORDING
 extern FILE	*fpRecord;
@@ -276,7 +264,7 @@ void CloseIM (IMForwardEventStruct * call_data)
 {
     CloseInputWindow();
     
-    XUnmapWindow (dpy, VKWindow);
+    XUnmapWindow (dpy, vkWindow.window);
 
     IMPreeditEnd (ims, (XPointer) call_data);
     SetConnectID (call_data->connect_id, IS_CLOSED);
@@ -317,7 +305,7 @@ void ChangeIMState (CARD16 _connect_id)
 
     CloseInputWindow();
     }
-    XUnmapWindow (dpy, VKWindow);
+    XUnmapWindow (dpy, vkWindow.window);
     
     if (!bUseDBus) {
     if (hideMainWindow != HM_HIDE)
@@ -820,7 +808,6 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    InitGC (inputWindow);
         			    InitMainWindowColor ();
         			    InitInputWindowColor ();
-        			    InitVKWindowColor ();
         			}
         			else {
         			    XUnmapWindow(dpy, mainWindow);
@@ -833,7 +820,6 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
         			SetIM ();
         			if (!bUseDBus) {
-        			    CreateFont ();
         			    CalculateInputWindowHeight ();
         			}
 
@@ -1236,14 +1222,6 @@ void SwitchIM (INT8 index)
     str = im[iIMIndex].strName;
 
     if (!bUseDBus) {
-#ifdef _USE_XFT
-    MAINWND_WIDTH = ((bCompactMainWindow) ? _MAINWND_WIDTH_COMPACT : _MAINWND_WIDTH) + StringWidth (str, xftMainWindowFont) + 4;
-#else
-    MAINWND_WIDTH = ((bCompactMainWindow) ? _MAINWND_WIDTH_COMPACT : _MAINWND_WIDTH) + StringWidth (str, fontSetMainWindow) + 4;
-#endif
-    if (!bShowVK && bCompactMainWindow)
-        MAINWND_WIDTH -= 24;
-
 	XResizeWindow (dpy, mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);
     DrawMainWindow ();
     }

@@ -29,13 +29,6 @@
 #include <X11/xpm.h>
 #include <X11/Xatom.h>
 
-#ifdef _USE_XFT
-#include <ft2build.h>
-#include <X11/Xft/Xft.h>
-#include <iconv.h>
-#endif
-
-
 #include "ui/InputWindow.h"
 #include "ui/ui.h"
 #include "core/ime.h"
@@ -316,6 +309,7 @@ void DrawInputWindow(void)
 //  printf("%s: %s: %s\n",up_str,first_str,down_str);
 	XResizeWindow(dpy,inputWindow,iInputWindowWidth, iInputWindowHeight);	
 	XCopyArea (dpy, pm_input_bar, inputWindow, gc, 0, 0, iInputWindowWidth, iInputWindowHeight, 0, 0);
+    XFreeGC(dpy, gc);
 }
 
 void MoveInputWindow(CARD16 connect_id)

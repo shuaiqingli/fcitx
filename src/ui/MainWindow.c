@@ -35,7 +35,6 @@
 #include "MainWindow.h"
 
 Window          mainWindow = (Window) NULL;
-int             MAINWND_WIDTH = _MAINWND_WIDTH;
 
 int             iMainWindowX = MAINWND_STARTX;
 int             iMainWindowY = MAINWND_STARTY;
@@ -59,7 +58,6 @@ extern CARD16   connect_id;
 
 extern Bool     bUseGBKT;
 
-extern VKS      vks[];
 extern unsigned char iCurrentVK;
 
 GC main_win_gc;
@@ -107,7 +105,6 @@ Bool CreateMainWindow (void)
 	gc = XCreateGC(dpy,pm_main_bar, GCForeground, &xgv);
 	XFillRectangle(dpy, pm_main_bar, gc, 0, 0,skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);	
 	cs_main_bar=cairo_xlib_surface_create(dpy, pm_main_bar, vs, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);	
-	//cs_main_bar=cairo_xlib_surface_create(dpy, mainWindow, vs, MAINWND_WIDTH, MAINWND_HEIGHT);
 
 	main_win_gc = XCreateGC( dpy, mainWindow, 0, NULL );
 	XChangeWindowAttributes (dpy, mainWindow, attribmask, &attrib);	
