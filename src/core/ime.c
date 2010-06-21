@@ -700,7 +700,6 @@ void ProcessKey (IMForwardEventStruct * call_data)
         					//strcat (messageUp[0].strMsg, "  ");
         					strcpy (messageUp[1].strMsg, strCodeInput);
         					messageUp[1].type = MSG_INPUT;
-        					iCursorPos += iCodeInputCount;
         				    }
 
         				    if (retVal != IRV_DISPLAY_CANDWORDS) {

@@ -108,7 +108,7 @@ extern Property legend_prop;
 #endif
 
 #ifdef _DEBUG
-char            strUserLocale[100];
+extern char     strUserLocale[];
 char            strXModifiers[100];
 #endif
 
@@ -643,16 +643,23 @@ Bool InitXIM (char *imname)
 	}
     }
 
-    ims = IMOpenIM (dpy, IMModifiers, "Xi18n", IMServerWindow, ximWindow, IMServerName, imname, IMLocale, strLocale, IMServerTransport, "X/", IMInputStyles, input_styles, NULL);
+    ims = IMOpenIM (dpy,
+            IMModifiers, "Xi18n",
+            IMServerWindow, ximWindow,
+            IMServerName, imname,
+            IMLocale, strLocale,
+            IMServerTransport, "X/",
+            IMInputStyles, input_styles,
+            IMEncodingList, encodings,
+            IMProtocolHandler, MyProtoHandler,
+            IMFilterEventMask, KeyPressMask | KeyReleaseMask,
+            IMOnKeysList, on_keys,
+            NULL);
 
     if (ims == (XIMS) NULL) {
 	fprintf (stderr, "Start FCITX error. Another XIM daemon named %s is running?\n", imname);
 	return False;
     }
-
-    IMSetIMValues (ims, IMEncodingList, encodings, IMProtocolHandler, MyProtoHandler, NULL);
-    IMSetIMValues (ims, IMFilterEventMask, KeyPressMask | KeyReleaseMask, NULL);
-    IMSetIMValues (ims, IMOnKeysList, on_keys, NULL);
 
     return True;
 }

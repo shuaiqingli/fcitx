@@ -27,7 +27,8 @@
  * 
  * 
  */
-#include "skin.h"
+#include "ui/skin.h"
+#include "ui/font.h"
 
 
 //定义全局皮肤配置结构
@@ -79,6 +80,7 @@ char  skin_type[64];
 skin_dir_t skin_buf[10];
 char skin_path[PATH_MAX];
 extern Display  *dpy;
+extern int iCursorPos;
 
 
 void ltrim( char *str)
@@ -589,7 +591,7 @@ void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse)
 
 void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth)
 {
-
+    char p[MESSAGE_MAX_LENGTH];
 	cairo_text_extents_t extents;
 	int png_width,png_height;
 	int repaint_times=0,remain_width=0;
@@ -600,6 +602,7 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	int cursor_pos=0;
 	int up_len,down_len;
 	int down_str_pos;
+    int iChar = iCursorPos;
 
 	resize_pos=skin_config.skin_input_bar.resize_pos;
 	resize_w=(skin_config.skin_input_bar.resize_w==0)?20:skin_config.skin_input_bar.resize_w;
@@ -607,7 +610,11 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	
 	cairo_text_extents(c2,up_str,&extents);
 	up_len=(int)extents.width;
-	cursor_pos=up_len+skin_config.skin_font.font_size;	
+
+    strncpy(p, up_str, iChar);
+    p[iChar] = '\0';
+	cairo_text_extents(c2,p,&extents);
+	cursor_pos=skin_config.skin_input_bar.layout_left + (int)extents.width + 2;	
 
 	cairo_text_extents(c3,first_str,&extents);
 	down_len= (int)extents.width;
