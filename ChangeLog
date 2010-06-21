@@ -1,7 +1,11 @@
+2010-06-21: CSSlayer <wengxt@gmail.com>
+    * 再次尝试解决字体问题
+    * 由系统判断默认字体
+
 2010-06-19: CSSlayer <wengxt@gmail.com>
     * 移除Xft
-	* 移除一些不再起作用的选项
-	* 尝试解决字体问题
+    * 移除一些不再起作用的选项
+    * 尝试解决字体问题
 
 2010-06-16: CSSlayer <wengxt@gmail.com>
     * 彻底移除Xpm

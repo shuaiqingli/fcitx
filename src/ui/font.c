@@ -19,29 +19,38 @@ void CreateFont()
 {
     FcFontSet	*fs;
     FcPattern   *pat;
-    FcResult	result;
+    FcObjectSet *os;
+
+    char locale[3];
 
     if (strUserLocale[0])
+    {
+        strncpy(locale, strUserLocale, 2);
         setlocale (LC_CTYPE, strUserLocale);
+    }
     else
+    {
+        strcpy(locale, "zh");
         setlocale (LC_CTYPE, "zh_CN.UTF-8");
+    }
+    locale[2]='\0';
 reloadfont:
     if (strcmp(skin_config.skin_font.font_zh, "") == 0)
-        pat = FcPatternCreate ();
+    {
+        FcChar8 strpat[9];
+        sprintf((char*)strpat, ":lang=%s", locale);
+        pat = FcNameParse(strpat);
+    }
     else
     {
         pat = FcNameParse ((FcChar8*)skin_config.skin_font.font_zh);
     }
-    FcConfigSubstitute (0, pat, FcMatchPattern);
-    FcDefaultSubstitute (pat);
-    fs = FcFontSetCreate ();
     
-    FcPattern   *match;
-    match = FcFontMatch (0, pat, &result);
-    if (match)
-        FcFontSetAdd (fs, match);
-    else
-        goto nofont;
+    os = FcObjectSetBuild(FC_FAMILY, FC_STYLE, (char*)0);
+    fs = FcFontList(0, pat, os);
+    if (os)
+        FcObjectSetDestroy(os);
+    
     FcPatternDestroy(pat);
 
     if (!fs || fs->nfont <= 0)
@@ -63,6 +72,8 @@ nofont:
         strcpy(skin_config.skin_font.font_zh, "");
         if (pat)
             FcPatternDestroy(pat);
+        if (os)
+            FcObjectSetDestroy(os);
         if (fs)
             FcFontSetDestroy(fs);
 
