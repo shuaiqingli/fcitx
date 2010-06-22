@@ -38,8 +38,6 @@ extern int iCandWordCount;
 extern int iCurrentCandPage;
 extern int iMaxCandWord;
 extern char strCodeInput[];
-extern uint uMessageDown;
-extern MESSAGE         messageDown[];
 extern char strStringGet[];
 
 int PhraseCmp(const void* a, const void* b)
@@ -154,7 +152,7 @@ INPUT_RETURN_VALUE QuickPhraseDoInput (int iKey)
     else {
         strcpy (strStringGet, quickPhraseCandWords[iKey-1]->strPhrase);
         retVal = IRV_GET_CANDWORDS;
-        uMessageDown = 0;
+        SetMessageCount(&messageDown, 0);
     }
     }
     else if (iKey==' ') {
@@ -163,7 +161,7 @@ INPUT_RETURN_VALUE QuickPhraseDoInput (int iKey)
     else {
         strcpy (strStringGet, quickPhraseCandWords[0]->strPhrase);
         retVal = IRV_GET_CANDWORDS;
-        uMessageDown = 0;
+        SetMessageCount(&messageDown, 0);
     }
     }
     else
@@ -200,7 +198,7 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
 
     iCandPageCount = (iLastQuickPhrase - iFirstQuickPhrase) / iMaxCandWord;
     if ( !currentQuickPhrase || strncmp(strCodeInput,currentQuickPhrase[0]->strCode,iInputLen) ) {
-        uMessageDown = 0;
+        SetMessageCount(&messageDown, 0);
         currentQuickPhrase = NULL;
         return IRV_DISPLAY_MESSAGE;
     }
@@ -233,24 +231,20 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
     if (!iCandWordCount)
         return IRV_DISPLAY_MESSAGE;
 
-    uMessageDown = 0;
+    SetMessageCount(&messageDown, 0);
     strTemp[1]='\0';
 
     for (i = 0; i < iCandWordCount; i++) {
     strTemp[0] = i + 1 + '0';
     if (i == 9)
         strTemp[0] = '0';
-    strcpy (messageDown[uMessageDown].strMsg, strTemp);
-    messageDown[uMessageDown++].type = MSG_INDEX;
-
-    strcpy (messageDown[uMessageDown].strMsg, quickPhraseCandWords[i]->strPhrase);
-    messageDown[uMessageDown++].type = ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER);
+    AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
+    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), quickPhraseCandWords[i]->strPhrase);
 
     //编码提示
-    strcpy (messageDown[uMessageDown].strMsg, quickPhraseCandWords[i]->strCode + iInputLen);
+    AddMessageAtLast(&messageDown, MSG_CODE, quickPhraseCandWords[i]->strCode + iInputLen);
     if (i != (iCandWordCount - 1))
-        strcat (messageDown[uMessageDown].strMsg, " ");
-    messageDown[uMessageDown++].type = MSG_CODE;
+        MessageConcatLast(&messageDown, " ");
     }
 
     return IRV_DISPLAY_CANDWORDS;

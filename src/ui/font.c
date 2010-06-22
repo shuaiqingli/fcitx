@@ -17,22 +17,16 @@ void InitFont()
 
 void CreateFont()
 {
-    FcFontSet	*fs;
-    FcPattern   *pat;
-    FcObjectSet *os;
+    FcFontSet	*fs = NULL;
+    FcPattern   *pat = NULL;
+    FcObjectSet *os = NULL;
 
     char locale[3];
 
     if (strUserLocale[0])
-    {
         strncpy(locale, strUserLocale, 2);
-        setlocale (LC_CTYPE, strUserLocale);
-    }
     else
-    {
         strcpy(locale, "zh");
-        setlocale (LC_CTYPE, "zh_CN.UTF-8");
-    }
     locale[2]='\0';
 reloadfont:
     if (strcmp(skin_config.skin_font.font_zh, "") == 0)
@@ -50,8 +44,10 @@ reloadfont:
     fs = FcFontList(0, pat, os);
     if (os)
         FcObjectSetDestroy(os);
+    os = NULL;
     
     FcPatternDestroy(pat);
+    pat = NULL;
 
     if (!fs || fs->nfont <= 0)
         goto nofont;
@@ -62,6 +58,8 @@ reloadfont:
     strcpy(skin_config.skin_font.font_zh, (const char*) family);
 
     FcFontSetDestroy(fs);
+
+    fprintf(stderr, "your current font is: %s\n", skin_config.skin_font.font_zh);
 
     setlocale (LC_CTYPE, "");
     return;

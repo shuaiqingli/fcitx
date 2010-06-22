@@ -32,10 +32,6 @@ extern int      iCandWordCount;
 extern int      iCandPageCount;
 extern int	iCurrentCandPage;
 extern char     strStringGet[];
-extern MESSAGE  messageUp[];
-extern uint     uMessageUp;
-extern MESSAGE  messageDown[];
-extern uint     uMessageDown;
 extern Bool	bPointAfterNumber;
     
 char     strQWHZ[3];
@@ -70,7 +66,7 @@ INPUT_RETURN_VALUE DoQWInput(int iKey)
 		    retVal = IRV_CLEAN;
 		else {
 		    iCandPageCount = 0;
-		    uMessageDown = 0;
+		    SetMessageCount(&messageDown, 0);
 		    retVal = IRV_DISPLAY_CANDWORDS;
 		}
 	}
@@ -86,11 +82,10 @@ INPUT_RETURN_VALUE DoQWInput(int iKey)
 	else
 		return IRV_TO_PROCESS;
 	
-	uMessageUp = 1;	
-    	strcpy (messageUp[0].strMsg, strCodeInput);
-    	messageUp[0].type = MSG_INPUT;
+    SetMessageCount(&messageUp, 0);
+    AddMessageAtLast(&messageUp, MSG_INPUT, strCodeInput);
 	if ( iCodeInputCount!=3 )
-		uMessageDown = 0;
+		SetMessageCount(&messageDown, 0);
 		
 	return retVal;
 }
@@ -100,7 +95,7 @@ char *QWGetCandWord (int iIndex)
 	if ( !iCandPageCount )
 		return NULL;
 		
-	uMessageDown =0;
+	SetMessageCount(&messageDown, 0);
 	if ( iIndex==-1 )
 		iIndex=9;
 	return GetQuWei((strCodeInput[0] - '0') * 10 + strCodeInput[1] - '0',iCurrentCandPage * 10+iIndex+1);
@@ -140,24 +135,20 @@ INPUT_RETURN_VALUE QWGetCandWords (SEARCH_MODE mode)
 	
     iWei = iCurrentCandPage * 10;
 
-    uMessageDown = 0;
+    SetMessageCount(&messageDown, 0);
     for (i = 0; i < 10; i++) {
 	strTemp[0] = i + 1 + '0';
 	if (i == 9)
 		strTemp[0] = '0';
-	strcpy (messageDown[uMessageDown].strMsg, strTemp);
-	messageDown[uMessageDown++].type = MSG_INDEX;	
-	
-	strcpy (messageDown[uMessageDown].strMsg, GetQuWei (iQu, iWei + i + 1));
+    AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
+    AddMessageAtLast(&messageDown, (i)? MSG_OTHER:MSG_FIRSTCAND, GetQuWei (iQu, iWei + i + 1));
 	if (i != 9)
-		strcat (messageDown[uMessageDown].strMsg, " ");
-	messageDown[uMessageDown++].type = (i)? MSG_OTHER:MSG_FIRSTCAND;	
+        MessageConcatLast(&messageDown, " ");
     }    
     
     strCodeInput[2]=iCurrentCandPage+'0';
-    uMessageUp = 1;	
-    strcpy (messageUp[0].strMsg, strCodeInput);
-    messageUp[0].type = MSG_INPUT;
+    SetMessageCount(&messageUp, 0);
+    AddMessageAtLast(&messageUp, MSG_INPUT, strCodeInput);
     
     return IRV_DISPLAY_CANDWORDS;
 }

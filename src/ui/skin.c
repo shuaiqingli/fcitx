@@ -29,6 +29,9 @@
  */
 #include "ui/skin.h"
 #include "ui/font.h"
+#ifdef _ENABLE_TRAY
+#include "ui/TrayWindow.h"
+#endif
 
 
 //定义全局皮肤配置结构
@@ -81,7 +84,7 @@ skin_dir_t skin_buf[10];
 char skin_path[PATH_MAX];
 extern Display  *dpy;
 extern int iCursorPos;
-
+extern CARD16 connect_id;
 
 void ltrim( char *str)
 {
@@ -503,6 +506,8 @@ void distroy_img()
 	distroy_a_img(&input);
 	distroy_a_img(&prev);
 	distroy_a_img(&next);
+    distroy_a_img(&trayActive);
+    distroy_a_img(&trayInactive);
 }
 
 static cairo_t *c ,*c1,*c2,*c3,*c4,*c5;
@@ -801,6 +806,13 @@ void DisplaySkin(char * skinname)
 
 	DrawMainWindow ();
 	DrawInputWindow ();
+#ifdef _ENABLE_TRAY
+    load_tray_img();
+    if (ConnectIDGetState (connect_id) == IS_CHN)
+        DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
+    else
+        DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
+#endif
 	
 	XMapRaised(dpy,mainWindow);
 }

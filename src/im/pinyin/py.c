@@ -55,7 +55,7 @@ char            strFindString[MAX_USER_INPUT + 1];
 ParsePYStruct   findMap;
 int             iPYInsertPoint = 0;
 
-char            strPYLegendSource[MAX_WORDS_USER_INPUT * 2 + 1] = "\0";
+char            strPYLegendSource[MAX_WORDS_USER_INPUT * UTF8_MAX_LENGTH + 1] = "\0";
 char            strPYLegendMap[MAX_WORDS_USER_INPUT * 2 + 1] = "\0";
 PyBase         *pyBaseForLengend;
 PYLegendCandWord PYLegendCandWords[MAX_CAND_WORD];
@@ -64,7 +64,7 @@ PY_SELECTED     pySelected[MAX_WORDS_USER_INPUT + 1];
 uint            iPYSelected = 0;
 
 PYCandWord      PYCandWords[MAX_CAND_WORD];
-char            strPYAuto[MAX_WORDS_USER_INPUT * 2 + 1];
+char            strPYAuto[MAX_WORDS_USER_INPUT * UTF8_MAX_LENGTH + 1];
 char            strPYAutoMap[MAX_WORDS_USER_INPUT * 2 + 1];
 Bool            bPYCreateAuto = True;
 Bool            bPYSaveAutoAsPhrase = False;
@@ -106,10 +106,6 @@ extern char     strCodeInput[];
 extern int      iCursorPos;
 
 extern int      iMaxCandWord;
-extern MESSAGE  messageUp[];
-extern uint     uMessageUp;
-extern MESSAGE  messageDown[];
-extern uint     uMessageDown;
 
 extern char     strStringGet[];
 extern Bool     bIsDoInputOnly;
@@ -659,9 +655,8 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 		bIsPYDelUserPhr = True;
 		bIsDoInputOnly = True;
 
-		uMessageUp = 1;
-		strcpy (messageUp[0].strMsg, "选择标号的用户词组将被删除(ESC取消)");
-		messageUp[0].type = MSG_TIPS;
+        SetMessageCount(&messageUp, 0);
+        AddMessageAtLast(&messageUp, MSG_TIPS, "选择标号的用户词组将被删除(ESC取消)");
 		bShowCursor = False;
 
 		return IRV_DISPLAY_MESSAGE;
@@ -672,9 +667,8 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 		bIsPYAddFreq = True;
 		bIsDoInputOnly = True;
 
-		uMessageUp = 1;
-		sprintf (messageUp[0].strMsg, "选择标号的字将进入 %s 的常用字表(ESC取消)", strFindString);
-		messageUp[0].type = MSG_TIPS;
+        SetMessageCount(&messageUp, 0);
+        AddMessageAtLast(&messageUp, MSG_TIPS, "选择标号的字将进入 %s 的常用字表(ESC取消)", strFindString);
 		bShowCursor = False;
 
 		return IRV_DISPLAY_MESSAGE;
@@ -689,16 +683,16 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 
 		if (!val)
 		    return IRV_DO_NOTHING;
-		else if (val == 1)
-		    sprintf (messageUp[0].strMsg, "按 1 删除 %s 的常用字(ESC取消)", strFindString);
+
+        SetMessageCount(&messageUp, 0);
+		if (val == 1)
+            AddMessageAtLast(&messageUp, MSG_TIPS, "按 1 删除 %s 的常用字(ESC取消)", strFindString);
 		else
-		    sprintf (messageUp[0].strMsg, "按 1-%d 删除 %s 的常用字(ESC取消)", val, strFindString);
+            AddMessageAtLast(&messageUp, MSG_TIPS, "按 1-%d 删除 %s 的常用字(ESC取消)", val, strFindString);
 
 		bIsPYDelFreq = True;
 		bIsDoInputOnly = True;
 
-		uMessageUp = 1;
-		messageUp[0].type = MSG_TIPS;
 		bShowCursor = False;
 
 		return IRV_DISPLAY_MESSAGE;
@@ -785,7 +779,7 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 			    strncpy (strStringGet, pPhrase, clen);
 			    strStringGet[clen] = '\0';
 			}
-			uMessageDown = 0;
+            SetMessageCount(&messageDown, 0);
 			return IRV_GET_CANDWORDS;
 		    }
 		}
@@ -834,20 +828,15 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
     }
 
     if (val == IRV_DISPLAY_CANDWORDS) {
+    SetMessageCount(&messageUp, 0);
 	if (iPYSelected) {
-	    uMessageUp = 1;
-	    messageUp[0].strMsg[0] = '\0';
+        AddMessageAtLast(&messageUp, MSG_OTHER, "");
 	    for (i = 0; i < iPYSelected; i++)
-		strcat (messageUp[0].strMsg, pySelected[i].strHZ);
-	    messageUp[0].type = MSG_OTHER;
+		strcat (LAST_MESSAGE(messageUp).strMsg, pySelected[i].strHZ);
 	}
-	else
-	    uMessageUp = 0;
 
 	for (i = 0; i < findMap.iHZCount; i++) {
-	    strcpy (messageUp[uMessageUp].strMsg, findMap.strPYParsed[i]);
-	    strcat (messageUp[uMessageUp].strMsg, " ");
-	    messageUp[uMessageUp++].type = MSG_CODE;
+        AddMessageAtLast(&messageUp, MSG_CODE, "%s ", findMap.strPYParsed[i]);
 	}
 
 	return PYGetCandWords (SM_FIRST);
@@ -948,7 +937,7 @@ INPUT_RETURN_VALUE PYGetCandWords (SEARCH_MODE mode)
     int             iVal;
 
     if (findMap.iMode == PARSE_ERROR) {
-	uMessageDown = 0;
+    SetMessageCount(&messageDown, 0);
 	iCandPageCount = 0;
 	iCandWordCount = 0;
 
@@ -1026,7 +1015,8 @@ void PYCreateCandString (void)
 {
     char            str[3];
     char           *pBase = NULL, *pPhrase;
-    int             iType, iVal;
+    int             iVal;
+    MSG_TYPE        iType;
 
     if (bPointAfterNumber) {
 	str[1] = '.';
@@ -1034,20 +1024,24 @@ void PYCreateCandString (void)
     }
     else
 	str[1] = '\0';
-    uMessageDown = 0;
+    SetMessageCount(&messageDown, 0);
 
     for (iVal = 0; iVal < iCandWordCount; iVal++) {
 	if (iVal == 9)
 	    str[0] = '0';
 	else
 	    str[0] = iVal + 1 + '0';
-	strcpy (messageDown[uMessageDown].strMsg, str);
-	messageDown[uMessageDown++].type = MSG_INDEX;
+    AddMessageAtLast(&messageDown, MSG_INDEX, "%s", str);
 
 	iType = MSG_OTHER;
-	if (PYCandWords[iVal].iWhich == PY_CAND_AUTO) {
-	    strcpy (messageDown[uMessageDown].strMsg, strPYAuto);
+	if (PYCandWords[iVal].iWhich == PY_CAND_AUTO)
 	    iType = MSG_TIPS;
+	if (PYCandWords[iVal].iWhich != PY_CAND_AUTO && iVal == iYCDZ)
+	    iType = MSG_FIRSTCAND;
+
+    AddMessageAtLast(&messageDown, iType, "");
+	if (PYCandWords[iVal].iWhich == PY_CAND_AUTO) {
+        MessageConcatLast(&messageDown, strPYAuto);
 	}
 	else {
 	    pPhrase = NULL;
@@ -1069,18 +1063,14 @@ void PYCreateCandString (void)
 		pBase = PYCandWords[iVal].cand.freq.hz->strHZ;
 		break;
 	    }
-	    strcpy (messageDown[uMessageDown].strMsg, pBase);
+        MessageConcatLast(&messageDown, pBase);
 	    if (pPhrase)
-		strcat (messageDown[uMessageDown].strMsg, pPhrase);
+            MessageConcatLast(&messageDown, pPhrase);
 	}
 
 	if (iVal != (iCandWordCount - 1)) {
-	    strcat (messageDown[uMessageDown].strMsg, " ");
+        MessageConcatLast(&messageDown, " ");
 	}
-	if (PYCandWords[iVal].iWhich != PY_CAND_AUTO && iVal == iYCDZ)
-	    iType = MSG_FIRSTCAND;
-
-	messageDown[uMessageDown++].type = (MSG_TYPE) iType;
     }
 }
 
@@ -1356,39 +1346,39 @@ char           *PYGetCandWord (int iIndex)
 	iNewFreqCount = 0;
     }
 
-    strcpy (messageDown[uMessageDown].strMsg, pBase);
+    SetMessageText(&messageDown, messageDown.msgCount, pBase);
     if (pPhrase)
-	strcat (messageDown[uMessageDown].strMsg, pPhrase);
+        MessageConcat(&messageDown, messageDown.msgCount, pPhrase);
     strcpy (strHZString, pBase);
     if (pPhrase)
-	strcat (strHZString, pPhrase);
+        strcat (strHZString, pPhrase);
     iLen = utf8_strlen (strHZString);
     if (iLen == findMap.iHZCount || PYCandWords[iIndex].iWhich == PY_CAND_SYMBOL) {
-	strPYAuto[0] = '\0';
-	for (iLen = 0; iLen < iPYSelected; iLen++)
-	    strcat (strPYAuto, pySelected[iLen].strHZ);
-	strcat (strPYAuto, strHZString);
-	ParsePY (strCodeInput, &findMap, PY_PARSE_INPUT_USER);
-	strHZString[0] = '\0';
-	for (i = 0; i < iPYSelected; i++)
-	    strcat (strHZString, pySelected[i].strMap);
-	if (pBaseMap)
-	    strcat (strHZString, pBaseMap);
-	if (pPhraseMap)
-	    strcat (strHZString, pPhraseMap);
-	if (bAddNewPhrase && (utf8_strlen (strPYAuto) <= (MAX_PY_PHRASE_LENGTH)))
-	    PYAddUserPhrase (strPYAuto, strHZString);
-	uMessageDown = 0;
-	uMessageUp = 0;
-	if (bUseLegend) {
-	    strcpy (strPYLegendSource, strPYAuto);
-	    strcpy (strPYLegendMap, strHZString);
-	    PYGetLegendCandWords (SM_FIRST);
-	    iPYInsertPoint = 0;
-	    strFindString[0] = '\0';
-	}
-
-	return strPYAuto;
+        strPYAuto[0] = '\0';
+        for (iLen = 0; iLen < iPYSelected; iLen++)
+            strcat (strPYAuto, pySelected[iLen].strHZ);
+        strcat (strPYAuto, strHZString);
+        ParsePY (strCodeInput, &findMap, PY_PARSE_INPUT_USER);
+        strHZString[0] = '\0';
+        for (i = 0; i < iPYSelected; i++)
+            strcat (strHZString, pySelected[i].strMap);
+        if (pBaseMap)
+            strcat (strHZString, pBaseMap);
+        if (pPhraseMap)
+            strcat (strHZString, pPhraseMap);
+        if (bAddNewPhrase && (utf8_strlen (strPYAuto) <= (MAX_PY_PHRASE_LENGTH)))
+            PYAddUserPhrase (strPYAuto, strHZString);
+        SetMessageCount(&messageDown, 0);
+        SetMessageCount(&messageUp, 0);
+        if (bUseLegend) {
+            strcpy (strPYLegendSource, strPYAuto);
+            strcpy (strPYLegendMap, strHZString);
+            PYGetLegendCandWords (SM_FIRST);
+            iPYInsertPoint = 0;
+            strFindString[0] = '\0';
+        }
+        
+        return strPYAuto;
     }
 
     //此时进入自造词状态
@@ -2839,24 +2829,22 @@ INPUT_RETURN_VALUE PYGetLegendCandWords (SEARCH_MODE mode)
 	;
     }
 
-    uMessageUp = 2;
-    strcpy (messageUp[0].strMsg, "联想：");
-    messageUp[0].type = MSG_TIPS;
-    strcpy (messageUp[1].strMsg, strPYLegendSource);
-    messageUp[1].type = MSG_INPUT;
+    SetMessageCount(&messageUp, 0);
+    AddMessageAtLast(&messageUp, MSG_TIPS, "联想：");
+    AddMessageAtLast(&messageUp, MSG_INPUT, strPYLegendSource);
     strTemp[1] = '\0';
-    uMessageDown = 0;
+    SetMessageCount(&messageDown, 0);
     for (i = 0; i < iLegendCandWordCount; i++) {
 	strTemp[0] = i + 1 + '0';
 	if (i == 9)
 	    strTemp[0] = '0';
-	strcpy (messageDown[uMessageDown].strMsg, strTemp);
-	messageDown[uMessageDown++].type = MSG_INDEX;
-	strcpy (messageDown[uMessageDown].strMsg, PYLegendCandWords[i].phrase->strPhrase + PYLegendCandWords[i].iLength);
+
+    AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
+    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER),
+            PYLegendCandWords[i].phrase->strPhrase + PYLegendCandWords[i].iLength);
 	if (i != (iLegendCandWordCount - 1)) {
-	    strcat (messageDown[uMessageDown].strMsg, " ");
+        MessageConcatLast(&messageDown, " ");
 	}
-	messageDown[uMessageDown++].type = ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER);
     }
 
     bIsInLegend = (iLegendCandWordCount != 0);

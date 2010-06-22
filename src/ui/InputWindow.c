@@ -51,12 +51,8 @@ uint            iInputWindowDownWidth = INPUTWND_WIDTH;
 uint            INPUTWND_START_POS_UP = 8;
 
 // *************************************************************
-MESSAGE         messageUp[32];	//输入条上部分显示的内容
-uint            uMessageUp = 0;
-
-// *************************************************************
-MESSAGE         messageDown[32];	//输入条下部分显示的内容
-uint            uMessageDown = 0;
+Messages        messageUp;
+Messages        messageDown;
 
 XImage         *pNext = NULL, *pPrev = NULL;
 
@@ -173,7 +169,7 @@ void DisplayInputWindow (void)
 #endif
     CalInputWindow();
     MoveInputWindow(connect_id);
-    if (uMessageUp || uMessageDown)
+    if (MESSAGE_IS_NOT_EMPTY)
 	{
 		if (!bUseDBus)
 			XMapRaised (dpy, inputWindow);
@@ -191,8 +187,8 @@ void InitInputWindowColor (void)
 
 void ResetInputWindow (void)
 {
-    uMessageDown = 0;
-    uMessageUp = 0;
+    SetMessageCount(&messageUp, 0);
+    SetMessageCount(&messageDown, 0);
 }
 
 void CalInputWindow (void)
@@ -202,21 +198,14 @@ void CalInputWindow (void)
     fprintf (stderr, "CAL InputWindow\n");
 #endif
 
-    if (!uMessageUp && !uMessageDown) {
+    if (MESSAGE_IS_EMPTY) {
 	bShowCursor = False;
 	if (bShowVersion) {
-	    uMessageUp = 1;
-	    strcpy (messageUp[0].strMsg, "FCITX ");
-	    strcat (messageUp[0].strMsg, FCITX_VERSION);
-	    messageUp[0].type = MSG_TIPS;
+        AddMessageAtLast(&messageUp, MSG_TIPS, "FCITX " FCITX_VERSION);
 	}
 
 #ifdef _DEBUG
-	uMessageDown = 1;
-	strcpy (messageDown[0].strMsg, strUserLocale);
-	strcat (messageDown[0].strMsg, " - ");
-	strcat (messageDown[0].strMsg, strXModifiers);
-	messageDown[0].type = MSG_CODE;
+    AddMessageAtLast(&messageDown, MSG_CODE, "%s - %s", strUserLocale, strXModifiers);
 #else
 	//显示打字速度
 	if (bStartRecordType && bShowUserSpeed) {
@@ -226,32 +215,24 @@ void CalInputWindow (void)
 	    if (((int) timePassed) == 0)
 		timePassed = 1.0;
 
-	    uMessageDown = 6;
-	    strcpy (messageDown[0].strMsg, "打字速度：");
-	    messageDown[0].type = MSG_OTHER;
-	    sprintf (messageDown[1].strMsg, "%d", (int) (iHZInputed * 60 / timePassed));
-	    messageDown[1].type = MSG_CODE;
-	    strcpy (messageDown[2].strMsg, "/分  用时：");
-	    messageDown[2].type = MSG_OTHER;
-	    sprintf (messageDown[3].strMsg, "%d", (int) timePassed);
-	    messageDown[3].type = MSG_CODE;
-	    strcpy (messageDown[4].strMsg, "秒  字数：");
-	    messageDown[4].type = MSG_OTHER;
-	    sprintf (messageDown[5].strMsg, "%u", iHZInputed);
-	    messageDown[5].type = MSG_CODE;
+        SetMessageCount(&messageDown, 0);
+        AddMessageAtLast(&messageDown, MSG_OTHER, "打字速度：");
+        AddMessageAtLast(&messageDown, MSG_CODE, "%d", (int) (iHZInputed * 60 / timePassed));
+        AddMessageAtLast(&messageDown, MSG_OTHER, "/分  用时：");
+        AddMessageAtLast(&messageDown, MSG_CODE, "%d", (int) timePassed);
+        AddMessageAtLast(&messageDown, MSG_OTHER, "秒  字数：");
+        AddMessageAtLast(&messageDown, MSG_CODE, "%u", iHZInputed);
 	}
 #endif
     }
 
 #ifdef _ENABLE_RECORDING
     if ( bRecording && fpRecord ) {
-	if ( uMessageUp > 0 ) {
-	    if ( messageUp[uMessageUp-1].type==MSG_RECORDING )
-	        uMessageUp --;
+	if ( messageUp.msgCount > 0 ) {
+	    if ( MESSAGE_TYPE_IS(LAST_MESSAGE(messageUp), MSG_RECORDING) )
+	        DecMessageCount(&messageUp);
 	}
-	strcpy(messageUp[uMessageUp].strMsg,"  [记录模式]");
-	messageUp[uMessageUp].type = MSG_RECORDING;
-	uMessageUp ++;
+    AddMessageAtLast(&messageUp, MSG_RECORDING, "[记录模式]");
     }
 #endif
 }
@@ -265,10 +246,10 @@ void DrawInputWindow(void)
 	char * strGBKT=NULL;
 	GC gc = XCreateGC( dpy, inputWindow, 0, NULL );
 	
-	for (i = 0; i < uMessageUp; i++)
+	for (i = 0; i < messageUp.msgCount; i++)
 	{
 //		printf("messageUp:%s\n",messageUp[i].strMsg);
-		strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp[i].strMsg) : messageUp[i].strMsg;
+		strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp.msg[i].strMsg) : messageUp.msg[i].strMsg;
 		strcat(up_str,strGBKT);
 		
 		if (bUseGBKT)
@@ -277,17 +258,17 @@ void DrawInputWindow(void)
 	
 	strGBKT=NULL;
 
-    if ( uMessageDown <= 0)
+    if ( messageDown.msgCount <= 0)
         strcpy(first_str, "");
     else
     {
-        strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[0].strMsg) : messageDown[0].strMsg;
+        strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[0].strMsg) : messageDown.msg[0].strMsg;
         strcpy(first_str,strGBKT);
         if (bUseGBKT)
             free(strGBKT);
-        if (uMessageDown >= 2)
+        if (messageDown.msgCount >= 2)
         {
-            strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[1].strMsg) : messageDown[1].strMsg;
+            strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[1].strMsg) : messageDown.msg[1].strMsg;
             strcat(first_str,strGBKT);
             if (bUseGBKT)
                 free(strGBKT);
@@ -295,10 +276,10 @@ void DrawInputWindow(void)
         strGBKT=NULL;
     }
 	
-	for (i = 2; i < uMessageDown; i++) 
+	for (i = 2; i < messageDown.msgCount; i++) 
 	{
 //		printf("%d:%s\n",i, messageDown[i].strMsg);
-	   	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown[i].strMsg) : messageDown[i].strMsg;
+	   	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[i].strMsg) : messageDown.msg[i].strMsg;
 	   	strcat(down_str,strGBKT);
 	   	
 	   	if (bUseGBKT)
@@ -400,3 +381,42 @@ void CloseInputWindow()
 #endif
 }
 
+void AddMessageAtLast(Messages* message, MSG_TYPE type, char *fmt, ...)
+{
+
+    if (message->msgCount < MAX_MESSAGE_COUNT)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        SetMessageV(message, message->msgCount, type, fmt, ap);
+        va_end(ap);
+        message->msgCount ++;
+    }
+}
+
+void SetMessage(Messages* message, int position, MSG_TYPE type, char* fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    SetMessageV(message, position, type, fmt, ap);
+    va_end(ap);
+}
+
+void SetMessageV(Messages* message, int position, MSG_TYPE type,char* fmt, va_list ap)
+{
+    if (position < MAX_MESSAGE_COUNT)
+    {
+        vsnprintf(message->msg[position].strMsg, MESSAGE_MAX_LENGTH, fmt, ap);
+        message->msg[position].type = type;
+    }
+}
+
+void MessageConcatLast(Messages* message, char* text)
+{
+    strncat(message->msg[message->msgCount - 1].strMsg, text, MESSAGE_MAX_LENGTH);
+}
+
+void MessageConcat(Messages* message, int position, char* text)
+{
+    strncat(message->msg[position].strMsg, text, MESSAGE_MAX_LENGTH);
+}

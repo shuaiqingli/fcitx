@@ -155,10 +155,6 @@ extern XIMS     ims;
 extern Display *dpy;
 extern ChnPunc *chnPunc;
 
-extern MESSAGE  messageUp[];
-extern uint     uMessageUp;
-extern MESSAGE  messageDown[];
-extern uint     uMessageDown;
 extern Bool     bShowPrev;
 extern Bool     bShowNext;
 extern Bool     bShowCursor;
@@ -383,7 +379,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     retVal = IRV_TO_PROCESS;
 
 #ifdef _DEBUG
-    printf ("KeyRelease=%d  iKeyState=%d  KEYCODE=%d  KEYSYM=%d  keyCount=%d  iKey=%d\n", (call_data->event.type == KeyRelease), iKeyState, keysym, kev->keycode, keyCount, iKey);
+    printf ("KeyRelease=%d  iKeyState=%d  KEYCODE=%d  KEYSYM=%d  keyCount=%d  iKey=%d\n", (call_data->event.type == KeyRelease), iKeyState, (int) keysym, kev->keycode, keyCount, iKey);
 #endif
 
     /* Added by hubert_star AT forum.ubuntu.com.cn */
@@ -445,7 +441,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
             }
             else {
         	strcpy (strStringGet, " ");
-        	uMessageDown = 0;
+        	SetMessageCount(&messageDown, 0);
         	retVal = IRV_GET_CANDWORDS;
             }
 
@@ -467,7 +463,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
             }
             else {
         	strcpy (strStringGet, "　");
-        	uMessageDown = 0;
+        	SetMessageCount(&messageDown, 0);
         	retVal = IRV_GET_CANDWORDS;
             }
 
@@ -620,7 +616,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    if ((iKey == ' ') && (iCodeInputCount == 0)) {
         				strcpy (strStringGet, "；");
         				retVal = IRV_ENG;
-        				uMessageUp = uMessageDown = 0;
+                        SetMessageCount(&messageDown, 0);
+                        SetMessageCount(&messageUp, 0);
         				iInCap = 0;
         			    }
         			    else {
@@ -684,40 +681,33 @@ void ProcessKey (IMForwardEventStruct * call_data)
         					retVal = IRV_DISPLAY_MESSAGE;
         				}
 
-        				uMessageUp = 1;
+        				SetMessageCount(&messageUp, 0);
         				if (iInCap == 2) {
         				    if (semicolonToDo == K_SEMICOLON_ENG) {
-        					strcpy (messageUp[0].strMsg, "英文输入 ");
-        					iCursorPos += strlen("英文输入 ");
+                                AddMessageAtLast(&messageUp, MSG_TIPS, "英文输入 ");
+                                iCursorPos += strlen("英文输入 ");
         				    }
         				    else {
-        					strcpy (messageUp[0].strMsg, "自定义输入 ");
-        					iCursorPos += strlen("自定义输入 ");
+                                AddMessageAtLast(&messageUp, MSG_TIPS, "自定义输入 ");
+                                iCursorPos += strlen("自定义输入 ");
         				    }
 
         				    if (iCodeInputCount) {
-        					uMessageUp = 2;
-        					//strcat (messageUp[0].strMsg, "  ");
-        					strcpy (messageUp[1].strMsg, strCodeInput);
-        					messageUp[1].type = MSG_INPUT;
+                                AddMessageAtLast(&messageUp, MSG_INPUT, strCodeInput);
         				    }
 
         				    if (retVal != IRV_DISPLAY_CANDWORDS) {
+        					SetMessageCount(&messageDown, 0);
         					if (iCodeInputCount)
-        					    strcpy (messageDown[0].strMsg, "按 Enter 输入英文");
+                                AddMessageAtLast(&messageDown, MSG_TIPS, "按 Enter 输入英文");
         					else
-        					    strcpy (messageDown[0].strMsg, "空格输入；Enter输入;");
-        					uMessageDown = 1;
-        					messageDown[0].type = MSG_TIPS;
+                                AddMessageAtLast(&messageDown, MSG_TIPS, "空格输入；Enter输入;");
         				    }
-        				    messageUp[0].type = MSG_TIPS;
         				}
         				else {
-        				    uMessageDown = 1;
-        				    messageDown[0].type = MSG_TIPS;
-        				    strcpy (messageUp[0].strMsg, strCodeInput);
-        				    strcpy (messageDown[0].strMsg, "按 Enter 输入英文");
-        				    messageUp[0].type = MSG_INPUT;
+                            SetMessageCount(&messageDown, 0);
+                            AddMessageAtLast(&messageDown, MSG_TIPS, "按 Enter 输入英文");
+                            AddMessageAtLast(&messageUp, MSG_INPUT, strCodeInput);
         				}
         			    }
         			}
@@ -739,7 +729,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         				    if (pstr)
         					strcpy (strStringGet, pstr);
         				    strcat (strStringGet, pPunc);
-        				    uMessageDown = uMessageUp = 0;
+        				    SetMessageCount(&messageDown, 0);
+        				    SetMessageCount(&messageUp, 0);
 
         				    retVal = IRV_PUNC;
         				}
@@ -767,7 +758,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         					    if (pstr)
         						strcpy (strStringGet, pstr);
         					    iLen = strlen (strStringGet);
-        					    uMessageDown = uMessageUp = 0;
+                                SetMessageCount(&messageDown, 0);
+                                SetMessageCount(&messageUp, 0);
         					    strStringGet[iLen] = iKey;
         					    strStringGet[iLen + 1] = '\0';
         					    retVal = IRV_ENG;
@@ -845,7 +837,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    else
         				strcpy (strStringGet, strCodeInput);
         			    retVal = IRV_PUNC;
-        			    uMessageUp = uMessageDown = 0;
+                        SetMessageCount(&messageDown, 0);
+                        SetMessageCount(&messageUp, 0);
         			    iInCap = 0;
         			}
         			else if (!iCodeInputCount)
@@ -859,7 +852,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         				retVal = IRV_CLEAN;
         				break;
         			    case K_ENTER_SEND:
-        				uMessageDown = uMessageUp = 0;
+                        SetMessageCount(&messageDown, 0);
+                        SetMessageCount(&messageUp, 0);
         				strcpy (strStringGet, strCodeInput);
         				retVal = IRV_ENG;
         				break;
@@ -904,9 +898,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
             }
             else if (IsHotKey (iKey, hkSaveAll)) {
         	SaveIM();
-        	uMessageDown = 1;
-        	strcpy(messageDown[0].strMsg,"词库已保存");
-        	messageDown[0].type = MSG_TIPS;
+            SetMessageCount(&messageDown, 0);
+            AddMessageAtLast(&messageDown, MSG_TIPS, "词库已保存");
         	retVal = IRV_DISPLAY_MESSAGE;
             }
             else if (IsHotKey (iKey, hkVK) ) 
@@ -963,13 +956,10 @@ void ProcessKey (IMForwardEventStruct * call_data)
     break;
     case IRV_DISPLAY_LAST:
     bShowNext = bShowPrev = False;
-    uMessageUp = 1;
-    messageUp[0].strMsg[0] = strCodeInput[0];
-    messageUp[0].strMsg[1] = '\0';
-    messageUp[0].type = MSG_INPUT;
-    uMessageDown = 1;
-    strcpy (messageDown[0].strMsg, strStringGet);
-    messageDown[0].type = MSG_TIPS;
+    SetMessageCount(&messageUp, 0);
+    AddMessageAtLast(&messageUp, MSG_INPUT, "%c", strCodeInput[0]);
+    SetMessageCount(&messageDown, 0);
+    AddMessageAtLast(&messageDown, MSG_TIPS, strStringGet);
     DisplayInputWindow ();
 
     break;
@@ -1012,7 +1002,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         DoPhraseTips ();
     iHZInputed += (int) (utf8_strlen (strStringGet));	
 
-    if (bVK || (!uMessageDown && (!bPhraseTips || (bPhraseTips && !lastIsSingleHZ))))
+    if (bVK || (!messageDown.msgCount && (!bPhraseTips || (bPhraseTips && !lastIsSingleHZ))))
         CloseInputWindow();
     else {
         DisplayInputWindow ();
@@ -1031,7 +1021,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     case IRV_PUNC:
     iHZInputed += (int) (utf8_strlen (strStringGet));	//粗略统计字数
     ResetInput ();
-    if (!uMessageDown)
+    if (!messageDown.msgCount)
         CloseInputWindow();
     case IRV_GET_CANDWORDS_NEXT:
     SendHZtoClient (call_data, strStringGet);

@@ -35,6 +35,8 @@
 #include <sys/wait.h>
 #endif
 
+#include <execinfo.h>
+
 #include "core/ime.h"
 #include "core/MyErrorsHandlers.h"
 #include "tools/tools.h"
@@ -54,7 +56,9 @@ void SetMyExceptionHandler (void)
     int             signo;
 
     for (signo = SIGHUP; signo < SIGUNUSED; signo++)
-    	signal (signo, OnException);
+    {
+        signal (signo, OnException);
+    }
 }
 
 void OnException (int signo)
@@ -78,6 +82,24 @@ void OnException (int signo)
     
     if ( signo!=SIGSEGV && signo!=SIGCONT)
         SaveIM();
+
+    void *array[10];
+    size_t size;
+    char **strings = NULL;
+    size_t i;
+    
+    size = backtrace (array, 10);
+    strings = backtrace_symbols (array, size);
+   
+    if (strings)
+    {
+        printf ("Obtained %zd stack frames.\n", size);
+        
+        for (i = 0; i < size; i++)
+            printf ("%s\n", strings[i]);
+        
+        free (strings);
+    }
     
     switch (signo) {
     case SIGHUP:

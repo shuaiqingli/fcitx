@@ -9,11 +9,6 @@
 extern IM *im;
 extern INT8 iIMIndex;
 
-extern MESSAGE  messageUp[];
-extern uint     uMessageUp;
-extern MESSAGE  messageDown[];
-extern uint     uMessageDown;
-
 extern INT8 iState;
 extern Bool bChnPunc;
 extern Bool bCorner;

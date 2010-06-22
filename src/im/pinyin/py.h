@@ -147,7 +147,7 @@ typedef struct PYCANDINDEX {
 
 typedef struct {
     char            strPY[(MAX_PY_LENGTH + 1) * MAX_PY_PHRASE_LENGTH + 1];
-    char            strHZ[MAX_PY_PHRASE_LENGTH * 2 + 1];
+    char            strHZ[MAX_PY_PHRASE_LENGTH * UTF8_MAX_LENGTH + 1];
     char            strMap[MAX_PY_PHRASE_LENGTH * 2 + 1];
 } PY_SELECTED;
 

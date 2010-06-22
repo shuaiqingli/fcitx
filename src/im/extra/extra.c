@@ -28,10 +28,6 @@ extern INT8 iIMCount;
 extern INT8 iIMIndex;
 extern INT8 iInCap;
 
-extern MESSAGE  messageUp[];
-extern uint     uMessageUp;
-extern MESSAGE  messageDown[];
-extern uint     uMessageDown;
 extern Bool	bPointAfterNumber;
 extern int      iCursorPos;
 
@@ -105,34 +101,24 @@ static void DisplayEIM(EXTRA_IM *im)
 	}
 	else strTemp[1]='\0';
 
-	uMessageDown = 0;
+	SetMessageCount(&messageDown, 0);
 	for (i = 0; i < im->CandWordCount; i++)
 	{
 		strTemp[0] = i + 1 + '0';
 		if (i == 9) strTemp[0] = '0';
-		strcpy(messageDown[uMessageDown].strMsg, strTemp);
-		messageDown[uMessageDown++].type = MSG_INDEX;
+        AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
 
-		strcpy(messageDown[uMessageDown].strMsg, im->CandTable[i]);
-		messageDown[uMessageDown].type = (i!=im->SelectIndex)? MSG_OTHER:MSG_FIRSTCAND;
+        AddMessageAtLast(&messageDown, (i!=im->SelectIndex)? MSG_OTHER:MSG_FIRSTCAND, im->CandTable[i]);
 		if(im->CodeTips && im->CodeTips[i] && im->CodeTips[i][0])
-		{
-			uMessageDown++;
-			strcpy(messageDown[uMessageDown].strMsg,im->CodeTips[i]);
-			messageDown[uMessageDown].type=MSG_CODE;
-		}
+            AddMessageAtLast(&messageDown, MSG_CODE, im->CodeTips[i]);
 		if (i != 9)
-			strcat (messageDown[uMessageDown].strMsg, " ");
-		uMessageDown++;
+            MessageConcatLast(&messageDown, " ");
 	}
 
-	uMessageUp=0;
+	SetMessageCount(&messageUp, 0);
 	if(im->StringGet[0] || im->CodeInput[0])
 	{
-		uMessageUp = 1;
-		strcpy (messageUp[0].strMsg, im->StringGet);
-		strcat (messageUp[0].strMsg, im->CodeInput);
-		messageUp[0].type = MSG_INPUT;
+        AddMessageAtLast(&messageUp, MSG_INPUT, "%s%s", im->StringGet, im->CodeInput);
 
 		bShowCursor=True;
 		iCodeInputCount=strlen(im->CodeInput);
@@ -195,8 +181,8 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 		}
 		else
 		{
-			uMessageDown=0;
-			uMessageUp=0;
+			SetMessageCount(&messageDown, 0);
+			SetMessageCount(&messageUp, 0);
 		}
 	}
 	else if(ret==IRV_DO_NOTHING && (eim->CandWordCount ||
@@ -221,8 +207,8 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 		{
 			iCodeInputCount=strlen(strCodeInput);
 			strcpy(strStringGet,strCodeInput);
-			uMessageDown=0;
-			uMessageUp=0;
+			SetMessageCount(&messageDown, 0);
+			SetMessageCount(&messageUp, 0);
 			ret=IRV_GET_CANDWORDS;
 		}
 		else if(key==' ')
@@ -230,8 +216,8 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 			if(!eim->CodeInput[0])
 				return IRV_TO_PROCESS;
 			strcpy(strStringGet,eim->GetCandWord(eim->SelectIndex));
-			uMessageDown=0;
-			uMessageUp=0;
+			SetMessageCount(&messageDown, 0);
+			SetMessageCount(&messageUp, 0);
 			ret=IRV_GET_CANDWORDS;
 		}
 		else if(key>='0' && key<= '9')
@@ -246,8 +232,8 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 				else return IRV_TO_PROCESS;
 			}
 			strcpy(strStringGet,eim->GetCandWord(index));
-			uMessageDown=0;
-			uMessageUp=0;
+			SetMessageCount(&messageDown, 0);
+			SetMessageCount(&messageUp, 0);
 			ret=IRV_GET_CANDWORDS;
 		}
 		else if(key==VK_UP)
@@ -309,8 +295,8 @@ static char *ExtraGetCandWord(int index)
 	if(!eim) return 0;
 	if(eim->GetCandWord)
 	{
-		uMessageDown=0;
-		uMessageUp=0;
+		SetMessageCount(&messageDown, 0);
+        SetMessageCount(&messageUp, 0);
 		return eim->GetCandWord(index);
 	}
 	return 0;

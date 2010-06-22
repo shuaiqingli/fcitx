@@ -31,6 +31,7 @@
 #define _INPUT_WINDOW_H
 
 #include <X11/Xlib.h>
+#include <stdarg.h>
 #include "IMdkit.h"
 #include "tools/utf8.h"
 
@@ -66,6 +67,30 @@ typedef struct {
     MSG_TYPE        type;
 } MESSAGE;
 
+#define MAX_MESSAGE_COUNT 33
+typedef struct Messages {
+    MESSAGE msg[33];
+    uint msgCount;
+} Messages;
+
+extern Messages        messageUp;
+extern Messages        messageDown;
+
+#define MESSAGE_IS_NOT_EMPTY (messageUp.msgCount || messageDown.msgCount)
+#define MESSAGE_IS_EMPTY (!MESSAGE_IS_NOT_EMPTY)
+#define MESSAGE_TYPE_IS(msg, t) ((msg).type == (t))
+#define LAST_MESSAGE(m) ((m).msg[(m).msgCount - 1])
+#define DecMessageCount(m) \
+    do { \
+        if ((m)->msgCount > 0) \
+            ((m)->msgCount--); \
+    } while(0)
+#define SetMessageCount(m,s) \
+    do { \
+        if ((s) <= MAX_MESSAGE_COUNT && s >= 0) \
+            ((m)->msgCount = (s)); \
+    } while(0)
+
 Bool            CreateInputWindow (void);
 void            DisplayInputWindow (void);
 void		DrawInputWindow (void);
@@ -78,4 +103,11 @@ void            DisplayMessageDown (void);
 void            ResetInputWindow (void);
 void		MoveInputWindow(CARD16 connect_id);
 void            CloseInputWindow(void);
+
+void AddMessageAtLast(Messages* message, MSG_TYPE type, char *fmt, ...);
+void SetMessage(Messages* message, int position, MSG_TYPE type, char* fmt, ...);
+#define SetMessageText(m, p, fmt) SetMessage((m), (p), (m)->msg[(p)].type, (fmt))
+void MessageConcat(Messages* message, int position, char* text);
+void MessageConcatLast(Messages* message, char* text);
+void SetMessageV(Messages* message, int position, MSG_TYPE type, char* fmt, va_list ap);
 #endif

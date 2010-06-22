@@ -34,7 +34,6 @@
 #include <cairo.h>
 #include <cairo-xlib.h>
 #include <X11/Xlib.h>
-#include <X11/Xft/Xft.h>
 
 #define MENU_WINDOW_WIDTH	120
 #define MENU_WINDOW_HEIGHT	200

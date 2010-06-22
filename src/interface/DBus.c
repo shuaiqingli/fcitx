@@ -816,7 +816,7 @@ void updateMessages()
 {
     bShowPrev = bShowNext = False;
 
-    int n = uMessageDown;
+    int n = messageDown.msgCount;
     int nLabels = 0;
     int nTexts = 0;
     char *label[33];
@@ -826,16 +826,16 @@ void updateMessages()
 
     if (n) {
         for (i=0;i<n;i++) {
-            debug_dbus("Type: %d Text: %s\n",messageDown[i].type,messageDown[i].strMsg);
+            debug_dbus("Type: %d Text: %s\n",messageDown.msg[i].type,messageDown.msg[i].strMsg);
 
-            if (messageDown[i].type == MSG_INDEX) {
+            if (messageDown.msg[i].type == MSG_INDEX) {
                 if (nLabels) {
                     text[nTexts++] = bUseGBKT ? ConvertGBKSimple2Tradition(cmb) : strdup(cmb);
                 }
-                label[nLabels++] = strdup(messageDown[i].strMsg);
+                label[nLabels++] = strdup(messageDown.msg[i].strMsg);
                 strcpy(cmb,"");
             } else {
-                strcat(cmb,(messageDown[i].strMsg));
+                strcat(cmb,(messageDown.msg[i].strMsg));
             }
         }
         text[nTexts++] = bUseGBKT ? ConvertGBKSimple2Tradition(cmb) : strdup(cmb);
@@ -880,14 +880,14 @@ void updateMessages()
         KIMShowLookupTable(False);
     }
     
-    n = uMessageUp;
+    n = messageUp.msgCount;
     char aux[MESSAGE_MAX_LENGTH] = "";
     char empty[MESSAGE_MAX_LENGTH] = "";
     if (n) {
         char* strGBKT;
         // FIXME: buffer overflow
         for (i=0;i<n;i++) {
-            strcat(aux,messageUp[i].strMsg);
+            strcat(aux,messageUp.msg[i].strMsg);
             debug_dbus("updateMesssages Up:%s\n", aux);
         }
         if (bShowCursor)
@@ -1216,18 +1216,18 @@ int calKIMCursorPos()
 
     iChar = iCursorPos;
 
-    for (i = 0; i < uMessageUp ; i++) {
+    for (i = 0; i < messageUp.msgCount ; i++) {
         if (bShowCursor && iChar) {
-            p1 = pivot = messageUp[i].strMsg;
+            p1 = pivot = messageUp.msg[i].strMsg;
             while (*p1 && p1 < pivot + iChar) {
                 p1 = p1 + utf8_char_len(p1);
                 iCount ++;
             }
-            if (strlen (messageUp[i].strMsg) > iChar) {
+            if (strlen (messageUp.msg[i].strMsg) > iChar) {
             iChar = 0;
             }
             else {
-                iChar -= strlen (messageUp[i].strMsg);
+                iChar -= strlen (messageUp.msg[i].strMsg);
             }
         }
     }
