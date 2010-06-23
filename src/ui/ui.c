@@ -44,6 +44,7 @@
 #include "im/special/vk.h"
 #include "core/IC.h"
 #include "tools/tools.h"
+#include "tools/utf8.h"
 #include "im/pinyin/sp.h"
 #include "ui/about.h"
 #include "ui/TrayWindow.h"
@@ -655,17 +656,14 @@ Bool IsInRspArea(int x0,int y0,skin_img_t img)
 	return IsInBox (x0,y0,img.response_x , img.response_y, img.response_x+img.response_w, img.response_y+img.response_h);
 }
 
-int StringWidth (char *str, int fontSize)
+int StringWidth (char *str, char* font, int fontSize)
 {
-    cairo_text_extents_t extents;
     cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
     cairo_t* c = cairo_create(surface);
-    cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_select_font_face(c, font, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size(c, fontSize);
 
-    cairo_text_extents(c, str, &extents);
-
-    int width = extents.width;
+    int width = StringWidthWithContext (c, str);
 
 	cairo_destroy(c);
     cairo_surface_destroy(surface);
@@ -673,28 +671,44 @@ int StringWidth (char *str, int fontSize)
     return width;
 }
 
-int FontHeight ()
+int StringWidthWithContext (cairo_t *c, char *str)
 {
-    char            str[] = "Ay中";
+    if (!utf8_check_string(str))
+        return 0;
     cairo_text_extents_t extents;
+    cairo_text_extents(c, str, &extents);
+    int width = extents.width;
+    return width;
+}
+
+int FontHeight (char *font)
+{
     cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
     cairo_t* c = cairo_create(surface);
-    cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_select_font_face(c, font, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size(c, skin_config.skin_font.font_size);
 
-    cairo_text_extents(c, str, &extents);
-
-    int height = extents.height;
+    int height = FontHeightWithContext(c);
 
 	cairo_destroy(c);
     cairo_surface_destroy(surface);
     return height;
 }
 
+int FontHeightWithContext (cairo_t *c)
+{
+    char            str[] = "Ay中";
+    cairo_text_extents_t extents;
+    cairo_text_extents(c, str, &extents);
+
+    int height = extents.height;
+    return height;
+}
+
 /*
  * 以指定的颜色在窗口的指定位置输出字串
  */
-void OutputString (cairo_t* c, char *str, int fontSize, int x, int y, cairo_color_t* color)
+void OutputString (cairo_t* c, char *str, char *font, int fontSize, int x, int y, cairo_color_t* color)
 {
     if (!str)
     return;
@@ -704,10 +718,17 @@ void OutputString (cairo_t* c, char *str, int fontSize, int x, int y, cairo_colo
     cairo_set_source_rgb(c, color->r, color->g, color->b);
     cairo_select_font_face(c, skin_config.skin_font.font_zh, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(c, fontSize);
-    cairo_move_to(c, x, y);
-    cairo_show_text(c, str);
+    OutputStringWithContext (c, str, x, y);
 
     cairo_restore(c);
+}
+
+void OutputStringWithContext (cairo_t *c, char *str, int x, int y)
+{
+    if (!utf8_check_string(str))
+        return;
+    cairo_move_to(c, x, y);
+    cairo_show_text(c, str);
 }
 
 Bool IsWindowVisible(Window window)

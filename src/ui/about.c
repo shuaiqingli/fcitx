@@ -54,7 +54,7 @@ Bool CreateAboutWindow (void)
     aboutWindow.fontColor.r = aboutWindow.fontColor.g = aboutWindow.fontColor.b = 0;
     aboutWindow.fontSize = 11;
 
-    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, aboutWindow.fontSize ) + 50;
+    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, skin_config.skin_font.font_zh, aboutWindow.fontSize ) + 50;
     aboutWindow.window =
 	XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2, ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), WhitePixel (dpy, DefaultScreen (dpy)));
 
@@ -107,11 +107,11 @@ void DrawAboutWindow (void)
     cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
     cairo_paint(c);
 
-    OutputString (c, strTitle, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 30, &aboutWindow.fontColor);
+    OutputString (c, strTitle, skin_config.skin_font.font_zh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, skin_config.skin_font.font_zh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 30, &aboutWindow.fontColor);
 
-    OutputString (c, AboutEmail, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 60, &aboutWindow.fontColor);
+    OutputString (c, AboutEmail, skin_config.skin_font.font_zh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, skin_config.skin_font.font_zh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 60, &aboutWindow.fontColor);
 
-    OutputString (c, AboutCopyRight, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, aboutWindow.fontSize)) / 2,aboutWindow.fontSize + 6 + 80, &aboutWindow.fontColor);
+    OutputString (c, AboutCopyRight, skin_config.skin_font.font_zh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, skin_config.skin_font.font_zh, aboutWindow.fontSize)) / 2,aboutWindow.fontSize + 6 + 80, &aboutWindow.fontColor);
 
     cairo_destroy(c);
 }

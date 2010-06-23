@@ -121,27 +121,27 @@ void DrawVKWindow (void)
 	cairo_paint(cr);
     /* 显示字符 */
     /* 名称 */
-    OutputString (cr, vks[iCurrentVK].strName, vkWindow.fontSize , (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, skin_config.skin_font.font_size)) / 2, vkWindow.fontSize + 6, &vkWindow.fontColor);
+    OutputString (cr, vks[iCurrentVK].strName, skin_config.skin_font.font_zh, vkWindow.fontSize , (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, skin_config.skin_font.font_zh, skin_config.skin_font.font_size)) / 2, vkWindow.fontSize + 6, &vkWindow.fontColor);
 
     /* 第一排 */
     iPos = 13;
     for (i = 0; i < 13; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 39, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 52, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 39, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 52, &vkWindow.fontColor);
 	iPos += 24;
     }
     /* 第二排 */
     iPos = 48;
     for (i = 13; i < 26; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 67, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 80, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 67, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 80, &vkWindow.fontColor);
 	iPos += 24;
     }
     /* 第三排 */
     iPos = 55;
     for (i = 26; i < 37; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 95, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 95, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
 	iPos += 24;
     }
     if (bVKCaps)
@@ -150,8 +150,8 @@ void DrawVKWindow (void)
     /* 第四排 */
     iPos = 72;
     for (i = 37; i < 47; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], vkWindow.fontSize, iPos, 123, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], vkWindow.fontSize, iPos - 5, 136, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 123, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 136, &vkWindow.fontColor);
 	iPos += 24;
     }
     

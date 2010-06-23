@@ -3,6 +3,19 @@
 #define CONT(i)   ISUTF8_CB(in[i])
 #define VAL(i, s) ((in[i]&0x3f) << s)
 
+#define UTF8_LENGTH(Char)              \
+  ((Char) < 0x80 ? 1 :                 \
+   ((Char) < 0x800 ? 2 :               \
+    ((Char) < 0x10000 ? 3 :            \
+     ((Char) < 0x200000 ? 4 :          \
+      ((Char) < 0x4000000 ? 5 : 6)))))
+
+#define UNICODE_VALID(Char)                   \
+    ((Char) < 0x110000 &&                     \
+     (((Char) & 0xFFFFF800) != 0xD800) &&     \
+     ((Char) < 0xFDD0 || (Char) > 0xFDEF) &&  \
+     ((Char) & 0xFFFE) != 0xFFFE)
+
 size_t
 utf8_strlen(const char *s)
 {
@@ -78,7 +91,7 @@ utf8_get_char(const char *in, int *chr)
     if ( (in[0]&0xfe) == 0xfc && CONT(1) && CONT(2) && CONT(3) && CONT(4) && CONT(5) )
     {
         *chr = ((in[0]&0x1) << 30)|VAL(1,24)|VAL(2,18)|VAL(3,12)|VAL(4,6)|VAL(5,0);
-        return (char *)in+4;
+        return (char *)in+6;
     }
     
     *chr = *in;
@@ -123,6 +136,93 @@ char* utf8_get_nth_char(char* s, unsigned int n)
     }
 
     return s;
+}
+
+int
+utf8_get_char_extended (const char *s,
+        int max_len)
+{
+    const unsigned char*p = (const unsigned char*)s;
+    int i, len;
+    unsigned int wc = (unsigned char) *p;
+    
+    if (wc < 0x80) {
+        return wc;
+    } else if (wc < 0xc0) {
+        return (unsigned int)-1;
+    } else if (wc < 0xe0) {
+        len = 2;
+        wc &= 0x1f;
+    } else if (wc < 0xf0) {
+        len = 3;
+        wc &= 0x0f;
+    } else if (wc < 0xf8) {
+        len = 4;
+        wc &= 0x07;
+    } else if (wc < 0xfc) {
+        len = 5;
+        wc &= 0x03;
+    } else if (wc < 0xfe) {
+        len = 6;
+        wc &= 0x01;
+    } else {
+        return (unsigned int)-1;
+    }
+    
+    if (max_len >= 0 && len > max_len) {
+        for (i = 1; i < max_len; i++) {
+            if ((((unsigned char *)p)[i] & 0xc0) != 0x80)
+                return (unsigned int)-1;
+        }
+        return (unsigned int)-2;
+    }
+    
+    for (i = 1; i < len; ++i) {
+        unsigned int ch = ((unsigned char *)p)[i];
+        
+        if ((ch & 0xc0) != 0x80) {
+            if (ch)
+                return (unsigned int)-1;
+            else
+                return (unsigned int)-2;
+        }
+        wc <<= 6;
+        wc |= (ch & 0x3f);
+    }
+    
+    if (UTF8_LENGTH(wc) != len)
+        return (unsigned int)-1;
+    
+    return wc;
+}
+
+int utf8_get_char_validated (const char *p,
+        int max_len)
+{
+    int result;
+    
+    if (max_len == 0)
+        return -2;
+    
+    result = utf8_get_char_extended (p, max_len);
+    if (result & 0x80000000)
+        return result;
+    else if (!UNICODE_VALID (result))
+        return -1;
+    else
+        return result;
+}
+int utf8_check_string(char *s)
+{
+    while(*s)
+    {
+        int chr;
+    
+        if (utf8_get_char_validated(s, 6) < 0)
+            return 0;
+        s = utf8_get_char(s, &chr);
+    }
+    return 1;    
 }
 
 /* Modeline for ViM {{{

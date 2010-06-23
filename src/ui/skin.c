@@ -27,6 +27,7 @@
  * 
  * 
  */
+#include "ui/ui.h"
 #include "ui/skin.h"
 #include "ui/font.h"
 #ifdef _ENABLE_TRAY
@@ -597,7 +598,6 @@ void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse)
 void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth)
 {
     char p[MESSAGE_MAX_LENGTH];
-	cairo_text_extents_t extents;
 	int png_width,png_height;
 	int repaint_times=0,remain_width=0;
 	int input_bar_len=0;
@@ -613,20 +613,20 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	resize_w=(skin_config.skin_input_bar.resize_w==0)?20:skin_config.skin_input_bar.resize_w;
 	flag=skin_config.skin_input_bar.resize;
 	
-	cairo_text_extents(c2,up_str,&extents);
-	up_len=(int)extents.width;
+	up_len=StringWidthWithContext(c2 ,up_str);
 
-    strncpy(p, up_str, iChar);
-    p[iChar] = '\0';
-	cairo_text_extents(c2,p,&extents);
-	cursor_pos=skin_config.skin_input_bar.layout_left + (int)extents.width + 2;	
+    if (bShowCursor)
+    {
+        strncpy(p, up_str, iChar);
+        p[iChar] = '\0';
+        cursor_pos=skin_config.skin_input_bar.layout_left
+            + StringWidthWithContext(c2, p) + 2;	
+    }
 
-	cairo_text_extents(c3,first_str,&extents);
-	down_len= (int)extents.width;
+	down_len= StringWidthWithContext(c3 ,first_str);
 	down_str_pos=down_len+10;
 	
-	cairo_text_extents(c4,down_str,&extents);
-	down_len+= (int)extents.width;
+	down_len+= StringWidthWithContext(c4, down_str);
 	
 	input_bar_len=(up_len<down_len)?down_len:up_len;
 	input_bar_len+=skin_config.skin_input_bar.layout_left+skin_config.skin_input_bar.layout_right;
@@ -749,14 +749,11 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 		cairo_paint(c);
 	}
 	
-	cairo_move_to(c2,skin_config.skin_input_bar.layout_left,skin_config.skin_input_bar.input_pos);
-	cairo_show_text(c2, up_str); 
+    OutputStringWithContext(c2, up_str, skin_config.skin_input_bar.layout_left, skin_config.skin_input_bar.input_pos );
 
- 	cairo_move_to(c3, skin_config.skin_input_bar.layout_left,skin_config.skin_input_bar.output_pos);
-	cairo_show_text(c3, first_str);
-	
-	cairo_move_to(c4, skin_config.skin_input_bar.layout_left+down_str_pos,skin_config.skin_input_bar.output_pos);
-	cairo_show_text(c4, down_str);
+    OutputStringWithContext(c3 , first_str, skin_config.skin_input_bar.layout_left,skin_config.skin_input_bar.output_pos);
+
+    OutputStringWithContext(c4, down_str, skin_config.skin_input_bar.layout_left+down_str_pos,skin_config.skin_input_bar.output_pos);
 	
 	//画光标
 	if(bShowCursor )

@@ -1542,22 +1542,22 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
 		if (pstr)
-		    iWidth += StringWidth (pstr, skin_config.skin_font.font_size);
-		iWidth += StringWidth (strTemp, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (pstr, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth (strTemp, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 		switch (tableCandWord[i].flag) {
 		case CT_NORMAL:
-		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 		    break;
 		case CT_AUTOPHRASE:
-		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 		default:
 		    ;
 		}
-		iWidth += StringWidth (" ", skin_config.skin_font.font_size);
+		iWidth += StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == 0) {
-			iWidth -= StringWidth (" ", skin_config.skin_font.font_size);
+			iWidth -= StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 			if (iWidth > iFixedInputWindowWidth)
 			    i = 1;
 		    }
@@ -1598,13 +1598,13 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		else
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
-		iWidth += StringWidth (pstr, skin_config.skin_font.font_size);
-		iWidth += StringWidth (strTemp, skin_config.skin_font.font_size);
-		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_size);
-		iWidth += StringWidth (" ", skin_config.skin_font.font_size);
+		iWidth += StringWidth (pstr, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth (strTemp, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == (iCandWordCount - 1)) {
-			iWidth -= StringWidth (" ", skin_config.skin_font.font_size);
+			iWidth -= StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
 			if (iWidth <= iFixedInputWindowWidth)
 			    i = iCandWordCount;
 		    }

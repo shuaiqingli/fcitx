@@ -1,3 +1,7 @@
+2010-06-24: CSSlayer <wengxt@gmail.com>
+    * 修复一个文字显示错误(Issue 244)
+    * 现在所有的文字显示之前都会经过UTF-8有效性检验，避免cairo画笔失效
+
 2010-06-22: CSSlayer <wengxt@gmail.com>
     * 修复一个由于记录模式带来的bug（输入过长时溢出）
     * 修复拼音输入时输入过长溢出的问题

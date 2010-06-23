@@ -91,21 +91,6 @@ int CreateXlibMenu(Display * dpy,xlibMenu * Menu)
     return True;
 }
 
-int GetFontHeitht(xlibMenu * Menu)
-{
-	cairo_t * cr;
-	cairo_text_extents_t extents;
-	
-	cr=cairo_create(Menu->menu_cs);
-	cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
-	cairo_select_font_face(cr, Menu->font,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(cr, Menu->font_size);
-	cairo_text_extents(cr,"测试",&extents);
-	
-	cairo_destroy(cr);
-	
-	return (int)(extents.height);
-}
 void GetMenuHeight(Display * dpy,xlibMenu * Menu)
 {
 	int i=0;
@@ -113,7 +98,7 @@ void GetMenuHeight(Display * dpy,xlibMenu * Menu)
 	int fontheight=0;
 
 	winheight = 8+8;//菜单头和尾都空8个pixel
-	fontheight=GetFontHeitht(Menu);
+	fontheight=FontHeight(Menu->font);
 	for(i=0;i<Menu->useItemCount;i++)
 	{
 		//printf("%d %d %x %x %x %s\n",winheight,Menu->width,Menu->bgcolor,Menu->charcolor,Menu->charselectcolor,Menu->shell[i].tipstr);
@@ -133,7 +118,7 @@ void DrawXlibMenu(Display * dpy,xlibMenu * Menu)
 	int fontheight;
 	int pos_y=0;
 
-	fontheight=GetFontHeitht(Menu);
+	fontheight=FontHeight(Menu->font);
 
 	GetMenuHeight(dpy,Menu);
 	//printf("%d %d\n",Menu->height,Menu->useItemCount);
@@ -258,7 +243,7 @@ int selectShellIndex(xlibMenu * Menu,int y)
 	int winheight=8;
 	int fontheight;
 	
-	fontheight=GetFontHeitht(Menu);
+	fontheight=FontHeight(Menu->font);
 	for(i=0;i<Menu->useItemCount;i++)
 	{
 		if( Menu->shell[i].type == menushell)
