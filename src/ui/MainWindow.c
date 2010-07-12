@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include <X11/xpm.h>
 #include <X11/Xatom.h>
 #include "ui/ui.h"
 #include "ui/skin.h"

@@ -20,4 +20,4 @@ fcitx_LDADD=../../lib/libXimd.a \
 			../ui/libui.a \
 			../interface/libinterface.a
 
-fcitx_LDFLAGS = -ldl
+fcitx_LDFLAGS = -ldl -lpthread

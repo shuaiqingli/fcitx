@@ -23,7 +23,6 @@
 
 #include <limits.h>
 #include <ctype.h>
-#include <X11/xpm.h>
 #include <cairo.h>
 #include <cairo-xlib.h>
 

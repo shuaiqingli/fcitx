@@ -214,10 +214,6 @@ extern Bool	bRecording;
 extern Bool     bWrittenRecord;
 #endif
 
-#ifdef _ENABLE_TRAY
-extern TrayWindow tray;
-#endif
-
 char *sCornerTrans[] = {
     "　", "！", "＂", "＃", "￥", "％", "＆", "＇", "（", "）", "＊", "＋", "，", "－", "．", "／", 
     "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", "：", "；", "＜", "＝", "＞", "？",

@@ -1,6 +1,8 @@
 #ifndef _TRAY_H_
 #define _TRAY_H_
 
+#ifdef _ENABLE_TRAY
+
 #include "TrayWindow.h"
 
 int InitTray(Display* dpy, TrayWindow* win);
@@ -23,5 +25,7 @@ void TraySendOpcode( Display* dpy, Window dock,  TrayWindow* tray, long message,
 #define ATOM_SYSTEM_TRAY_OPCODE 2
 #define ATOM_ORIENTATION 3
 #define ATOM_VISUAL 4
+
+#endif
 
 #endif

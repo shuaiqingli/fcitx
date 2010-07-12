@@ -81,10 +81,6 @@ extern HIDE_MAINWINDOW hideMainWindow;
 
 extern void* remoteThread(void*);
 
-#ifdef _ENABLE_TRAY
-extern TrayWindow tray;
-#endif
-
 extern pthread_rwlock_t plock;
 
 int main (int argc, char *argv[])

@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <X11/xpm.h>
 #include <cairo.h>
 #include <cairo-xlib.h>
 #include <X11/extensions/Xrender.h>
