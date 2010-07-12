@@ -89,7 +89,7 @@ Bool CreateVKWindow (void)
     if (vkWindow.window == (Window) NULL)
 	return False;
 
-	vkWindow.surface=cairo_xlib_surface_create(dpy, vkWindow.window, DefaultVisual(dpy, 0), VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
+	vkWindow.surface=cairo_xlib_surface_create(dpy, vkWindow.window, DefaultVisual(dpy, iScreen), VK_WINDOW_WIDTH, VK_WINDOW_HEIGHT);
 	
     XChangeWindowAttributes (dpy, vkWindow.window, attribmask, &attrib);
     XSelectInput (dpy, vkWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
@@ -144,8 +144,6 @@ void DrawVKWindow (void)
 	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
 	iPos += 24;
     }
-    if (bVKCaps)
-	Draw3DEffect (vkWindow.window, 5, 85, 38, 25, _3D_LOWER);
 
     /* 第四排 */
     iPos = 72;
@@ -155,9 +153,6 @@ void DrawVKWindow (void)
 	iPos += 24;
     }
     
-    if (bShiftPressed)
-	Draw3DEffect (vkWindow.window, 5, 113, 56, 25, _3D_LOWER);
-	
     cairo_destroy(cr);  
 }
 

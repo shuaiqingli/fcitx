@@ -68,6 +68,7 @@ int             FontHeightWithContext (cairo_t *c);
 
 Bool            MouseClick (int *x, int *y, Window window);
 Bool		IsWindowVisible(Window window);
+void InitWindowAttribute(Visual** vs, Colormap *cmap, XSetWindowAttributes *attrib, unsigned long *attribmask, int* depth);
 
 /*
 int             FillImageByXPMData (XImage * pImage, char **apcData);

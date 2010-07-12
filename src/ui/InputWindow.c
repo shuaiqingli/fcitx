@@ -119,16 +119,9 @@ Bool CreateInputWindow (void)
     CalculateInputWindowHeight ();   
 	scr=DefaultScreen(dpy);
    	vs=find_argb_visual (dpy, scr);
-   	cmap = XCreateColormap (dpy, RootWindow(dpy, scr),vs, AllocNone);
-   	
-    attrib.override_redirect = True;//False;
-	attrib.background_pixel = 0;
-	attrib.border_pixel = 0;
-	attrib.colormap =cmap;
-	attribmask = (CWBackPixel|CWBorderPixel|CWOverrideRedirect |CWColormap); 
-	depth = 32;
+    InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
 	
-	inputWindow=XCreateWindow (dpy, RootWindow(dpy, scr),iInputWindowX, iInputWindowY, INPUT_BAR_MAX_LEN, iInputWindowHeight, 0, depth,InputOutput, vs,attribmask, &attrib);
+    inputWindow=XCreateWindow (dpy, RootWindow(dpy, scr),iInputWindowX, iInputWindowY, INPUT_BAR_MAX_LEN, iInputWindowHeight, 0, depth,InputOutput, vs,attribmask, &attrib);
 
 	if(mainWindow == (Window)NULL)
 		return False;

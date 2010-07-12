@@ -58,7 +58,7 @@ Bool CreateAboutWindow (void)
     aboutWindow.window =
 	XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2, ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), WhitePixel (dpy, DefaultScreen (dpy)));
 
-    aboutWindow.surface = cairo_xlib_surface_create(dpy, aboutWindow.window, DefaultVisual(dpy, 0), ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT); 
+    aboutWindow.surface = cairo_xlib_surface_create(dpy, aboutWindow.window, DefaultVisual(dpy, iScreen), ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT); 
     if (aboutWindow.window == None)
 	return False;
 

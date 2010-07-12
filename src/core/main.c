@@ -188,9 +188,6 @@ int main (int argc, char *argv[])
     if (!bUseDBus)
 	CreateAboutWindow ();	//创建关于窗口
 
-    //处理颜色，即候选词窗口的颜色，也就是我们在配置文件中定义的那些颜色信息
-    InitGC (inputWindow);
-
     //将本程序加入到输入法组，告诉系统，使用我输入字符
     SetIM ();
 

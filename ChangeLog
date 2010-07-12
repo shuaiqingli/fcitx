@@ -1,3 +1,6 @@
+2010-07-13: CSSlayer <wengxt@gmail.com>
+    * 修复在XVnc等X Server环境下无法启动的问题
+
 2010-06-26: CSSlayer <wengxt@gmail.com>
     * 修改dark皮肤的小显示问题
 	* 更新默认皮肤的背景

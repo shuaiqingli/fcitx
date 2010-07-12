@@ -54,9 +54,6 @@
 Display        *dpy;
 int             iScreen;
 
-GC              dimGC = (GC) NULL;
-GC              lightGC = (GC) NULL;
-
 extern Window   mainWindow;
 extern int      iMainWindowX;
 extern int      iMainWindowY;
@@ -104,96 +101,6 @@ Bool InitX (void)
     iScreen = DefaultScreen (dpy);
 
     return True;
-}
-
-void InitGC (Window window)
-{
-    XGCValues       values;
-    XColor          color;
-    int             iPixel;
-
-    if (lightGC)
-    XFreeGC (dpy, lightGC);
-    lightGC = XCreateGC (dpy, window, 0, &values);
-    color.red = LIGHT_COLOR;
-    color.green = LIGHT_COLOR;
-    color.blue = LIGHT_COLOR;
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &color))
-    iPixel = color.pixel;
-    else
-    iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, lightGC, iPixel);
-
-    if (dimGC)
-    XFreeGC (dpy, dimGC);
-    dimGC = XCreateGC (dpy, window, 0, &values);
-    color.red = DIM_COLOR;
-    color.green = DIM_COLOR;
-    color.blue = DIM_COLOR;
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &color))
-    iPixel = color.pixel;
-    else
-    iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, dimGC, iPixel);
-
-/*    if (mainWindowColor.backGC)
-    XFreeGC (dpy, mainWindowColor.backGC);
-    mainWindowColor.backGC = XCreateGC (dpy, window, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(mainWindowColor.backColor)))
-    iPixel = mainWindowColor.backColor.pixel;
-    else
-    iPixel = WhitePixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, mainWindowColor.backGC, iPixel);
-
-    if (inputWindowColor.foreGC)
-    XFreeGC (dpy, inputWindowColor.foreGC);
-    inputWindowColor.foreGC = XCreateGC (dpy, window, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(inputWindowColor.foreColor)))
-    iPixel = inputWindowColor.foreColor.pixel;
-    else
-    iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, inputWindowColor.foreGC, iPixel);
-
-    if (inputWindowColor.backGC)
-    XFreeGC (dpy, inputWindowColor.backGC);
-    inputWindowColor.backGC = XCreateGC (dpy, window, 0, &values);
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(inputWindowColor.backColor)))
-    iPixel = inputWindowColor.backColor.pixel;
-    else
-    iPixel = BlackPixel (dpy, DefaultScreen (dpy));
-    XSetForeground (dpy, inputWindowColor.backGC, iPixel);
-*/
-}
-
-/*
- * 让指定的区域显示三维效果
- * effect:
- *  _3D_UPPER:显示为凸出效果
- *  _3D_LOWER:显示为凹下效果
- */
-void Draw3DEffect (Window window, int x, int y, int width, int height, _3D_EFFECT effect)
-{
-    if (effect == _3D_UPPER) {
-    XDrawLine (dpy, window, lightGC, x, y, x + width - 1, y);
-    XDrawLine (dpy, window, lightGC, x, y, x, y + height - 1);
-    XDrawLine (dpy, window, dimGC, x + width - 1, y, x + width - 1, y + height - 1);
-    XDrawLine (dpy, window, dimGC, x, y + height - 1, x + width - 1, y + height - 1);
-    }
-    else if (effect == _3D_LOWER) {
-    XDrawLine (dpy, window, lightGC, x, y, x + width - 1, y);
-    XDrawLine (dpy, window, lightGC, x, y, x, y + height - 1);
-    XDrawLine (dpy, window, dimGC, x + width - 1, y, x + width - 1, y + height - 1);
-    XDrawLine (dpy, window, dimGC, x, y + height - 1, x + width - 1, y + height - 1);
-
-    XDrawLine (dpy, window, dimGC, x + 1, y + 1, x + width - 2, y + 1);
-    XDrawLine (dpy, window, dimGC, x + 1, y + 1, x + 1, y + height - 2);
-    XDrawLine (dpy, window, lightGC, x + 1, y + height - 2, x + width - 2, y + height - 2);
-    XDrawLine (dpy, window, lightGC, x + width - 2, y + 1, x + width - 2, y + height - 2);
-    }
-    else {          //   _3D_FLAT
-    XDrawRectangle (dpy, window, dimGC, x, y, width - 1, height - 1);
-    return;
-    }
 }
 
 /*
@@ -773,4 +680,31 @@ Bool MouseClick (int *x, int *y, Window window)
     *y = evtGrabbed.xmotion.y_root - *y;
 
     return bMoved;
+}
+
+void
+InitWindowAttribute(Visual** vs, Colormap *cmap, XSetWindowAttributes *attrib, unsigned long *attribmask, int* depth)
+{
+    if (*vs)
+    {
+        *cmap = XCreateColormap (dpy, RootWindow(dpy, iScreen),*vs, AllocNone);
+        
+        attrib->override_redirect = True;//False;
+        attrib->background_pixel = 0;
+        attrib->border_pixel = 0;
+        attrib->colormap = *cmap;
+        *attribmask = (CWBackPixel|CWBorderPixel|CWOverrideRedirect |CWColormap); 
+        *depth = 32;
+    }
+    else
+    {
+        *cmap = DefaultColormap (dpy, iScreen);
+        *vs = DefaultVisual (dpy, iScreen);
+        attrib->override_redirect = True;//False;
+        attrib->background_pixel = WhitePixel (dpy, iScreen);
+        attrib->border_pixel = BlackPixel (dpy, iScreen);
+        *attribmask = (CWBackPixel |
+                CWBorderPixel | CWOverrideRedirect);
+        *depth = DefaultDepth (dpy, iScreen);
+    }
 }

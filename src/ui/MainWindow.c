@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <X11/xpm.h>
 #include <X11/Xatom.h>
+#include "ui/ui.h"
 #include "ui/skin.h"
 #include "MainWindow.h"
 
@@ -59,6 +60,7 @@ extern CARD16   connect_id;
 extern Bool     bUseGBKT;
 
 extern unsigned char iCurrentVK;
+extern int iScreen;
 
 GC main_win_gc;
 Pixmap pm_main_bar;
@@ -68,7 +70,6 @@ Bool CreateMainWindow (void)
 	int depth;
 	Colormap cmap;
 	Visual * vs;
-	int scr;
 	XSetWindowAttributes attrib;
     unsigned long	attribmask;
 	GC gc;
@@ -77,29 +78,21 @@ Bool CreateMainWindow (void)
 
 	load_main_img();
 	    
-	scr=DefaultScreen(dpy);
-   	vs=find_argb_visual (dpy, scr);
-   	cmap = XCreateColormap (dpy, RootWindow(dpy, scr),vs, AllocNone);
-   	
-    attrib.override_redirect = True;//False;
-	attrib.background_pixel = 0;
-	attrib.border_pixel = 0;
-	attrib.colormap =cmap;
-	attribmask = (CWBackPixel|CWBorderPixel|CWOverrideRedirect |CWColormap);
-	depth = 32;
-	
+   	vs=find_argb_visual (dpy, iScreen);
+
+    InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
 	mainWindow=XCreateWindow (dpy, 
-							RootWindow(dpy, scr),
-							iMainWindowX,
-							iMainWindowY,
-							 skin_config.skin_main_bar.mbbg_img.width, 
-							 skin_config.skin_main_bar.mbbg_img.height,
-							 0, depth,InputOutput, vs,attribmask, &attrib);
+							  RootWindow(dpy, iScreen),
+							  iMainWindowX,
+							  iMainWindowY,
+							  skin_config.skin_main_bar.mbbg_img.width, 
+							  skin_config.skin_main_bar.mbbg_img.height,
+							  0, depth,InputOutput, vs,attribmask, &attrib);
 
 	if(mainWindow == (Window)NULL)
 		return False;
 		
-	xgv.foreground = WhitePixel(dpy, scr);
+	xgv.foreground = WhitePixel(dpy, iScreen);
 	//创建pixmap缓冲区,创建主cs
 	pm_main_bar = XCreatePixmap(dpy,mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height, depth);
 	gc = XCreateGC(dpy,pm_main_bar, GCForeground, &xgv);

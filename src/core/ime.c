@@ -797,7 +797,6 @@ void ProcessKey (IMForwardEventStruct * call_data)
 #endif
         			    if (!aboutWindow)
         				CreateAboutWindow();
-        			    InitGC (inputWindow);
         			    InitMainWindowColor ();
         			    InitInputWindowColor ();
         			}

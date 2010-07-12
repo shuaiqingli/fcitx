@@ -83,7 +83,7 @@ int CreateXlibMenu(Display * dpy,xlibMenu * Menu)
 	attribmask = CWOverrideRedirect;
 	XChangeWindowAttributes (dpy, Menu->menuWindow, attribmask, &attrib);
 	
-	Menu->menu_cs=cairo_xlib_surface_create(dpy, Menu->menuWindow, DefaultVisual(dpy, 0), MENU_WINDOW_WIDTH, MENU_WINDOW_HEIGHT);
+	Menu->menu_cs=cairo_xlib_surface_create(dpy, Menu->menuWindow, DefaultVisual(dpy, iScreen), MENU_WINDOW_WIDTH, MENU_WINDOW_HEIGHT);
 	
     XSelectInput (dpy, Menu->menuWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
     //XFlush( dpy);
