@@ -51,7 +51,7 @@ Bool            bPYOtherDictLoaded = False;
 PyFreq         *pyFreq = NULL, *pCurFreq = NULL;
 uint            iPYFreqCount = 0;
 
-char            strFindString[MAX_USER_INPUT + 1];
+char            strFindString[MAX_USER_INPUT + 2];
 ParsePYStruct   findMap;
 int             iPYInsertPoint = 0;
 
@@ -530,10 +530,13 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 	else if (iKey == (XK_BackSpace & 0x00FF) || iKey == CTRL_H) {
 	    if (iPYInsertPoint) {
 		val = ((iPYInsertPoint > 1) && (strFindString[iPYInsertPoint - 2] == PY_SEPARATOR)) ? 2 : 1;
-		strcpy (strFindString + iPYInsertPoint - val, strFindString + iPYInsertPoint);
+		int len = strlen(strFindString + iPYInsertPoint), i = 0;
+		/* 这里使用<=而不是<是因为还有'\0'需要拷贝 */
+		for (i = 0; i <= len ;i ++)
+			strFindString[i + iPYInsertPoint - val] = strFindString[i + iPYInsertPoint];
 		ParsePY (strFindString, &findMap, PY_PARSE_INPUT_USER);
+		iPYInsertPoint-=val;
 		val = IRV_DISPLAY_CANDWORDS;
-		iPYInsertPoint--;
 
 		if (!strlen (strFindString)) {
 		    if (!iPYSelected)
@@ -556,7 +559,11 @@ INPUT_RETURN_VALUE DoPYInput (int iKey)
 		if (iPYInsertPoint == strlen (strFindString))
 		    return IRV_DO_NOTHING;
 		val = (strFindString[iPYInsertPoint + 1] == PY_SEPARATOR) ? 2 : 1;
-		strcpy (strFindString + iPYInsertPoint, strFindString + iPYInsertPoint + val);
+		int len = strlen(strFindString + iPYInsertPoint + val), i = 0;
+		/* 这里使用<=而不是<是因为还有'\0'需要拷贝 */
+		for (i = 0; i <= len ;i ++)
+			strFindString[i + iPYInsertPoint]  = strFindString[i + iPYInsertPoint + val];
+
 		ParsePY (strFindString, &findMap, PY_PARSE_INPUT_USER);
 		if (!strlen (strFindString))
 		    return IRV_CLEAN;
