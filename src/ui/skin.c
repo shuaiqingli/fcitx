@@ -30,11 +30,12 @@
 #include "ui/ui.h"
 #include "ui/skin.h"
 #include "ui/font.h"
+#include <pthread.h>
 #ifdef _ENABLE_TRAY
 #include "ui/TrayWindow.h"
 #endif
 
-
+extern pthread_rwlock_t plock;
 //定义全局皮肤配置结构
 skin_config_t skin_config;
 
@@ -126,73 +127,75 @@ int GetPrivateProfileString(FILE * fptmp,char *SelectName, char *KeyName,char *D
     char chBuf1[256],chBuf[256],chMsg[256],ch;
     char *pchBegin;
 	FILE * fp=fptmp;
+
+    pthread_rwlock_wrlock(&plock);
     pchBegin = NULL;
     sprintf(chBuf,"[%s]",SelectName);
 	
-    fseek(fp,0L,SEEK_SET);
+    rewind(fp);
 
     while (1) {
-			if( feof(fp) ) {
-				strcpy(ReturnString,DefaultString);
-			//	fclose(fp) ;
-				return -1;
-			}
-			
-			memset(chBuf1,'\0',256);
-			fgets(chBuf1,sizeof(chBuf1),fp);
-       
-      // 过滤注释
-      if (chBuf1[0] == '#') continue;
-       
-		
-      // 段名
-			pchBegin = strstr( chBuf1, chBuf );
-      if( pchBegin == NULL )
-				continue;
-			else 
-				break;
-		}
+        if( feof(fp) ) {
+            strcpy(ReturnString,DefaultString);
+            return -1;
+        }
+        
+        memset(chBuf1,'\0',sizeof(chBuf1));
+        fgets(chBuf1,sizeof(chBuf1) - 1,fp);
+        
+        // 过滤注释
+        if (chBuf1[0] == '#') continue;
+        
+        // 段名
+        pchBegin = strstr( chBuf1, chBuf );
+        if( pchBegin == NULL )
+            continue;
+        else 
+            break;
+    }
 
     pchBegin = NULL;
     
     while (1) {
-			if( feof(fp) ) {
-				strcpy(ReturnString,DefaultString);
-			//	fclose(fp) ;
-				return -1;
-			}
-	
-			memset(chBuf1,'\0',256);
-			fgets(chBuf1,sizeof(chBuf1),fp);
+        if( feof(fp) ) {
+            strcpy(ReturnString,DefaultString);
+            //	fclose(fp) ;
+            return -1;
+        }
         
-      // 过滤注释
-      if (chBuf1[0] == '#') continue;
-      	trim(chBuf1);
-      // 关键字名 
-			pchBegin = strstr( chBuf1, KeyName );
+        memset(chBuf1,'\0',256);
+        fgets(chBuf1,sizeof(chBuf1),fp);
+        
+        // 过滤注释
+        if (chBuf1[0] == '#') continue;
+        trim(chBuf1);
+        // 关键字名 
+        pchBegin = strstr( chBuf1, KeyName );
 
-			if( pchBegin == NULL )
-				continue;
+        if( pchBegin == NULL )
+            continue;
 		if( memcmp(KeyName,chBuf1,strlen(KeyName)) != 0)
-				continue;
-			ch = pchBegin[strlen(KeyName)];
-			if ( ch!=' ' && ch!='=' )
-	    	continue;
-			
-			pchBegin = NULL;
-			pchBegin = strstr( chBuf1, "=" );
+            continue;
+        ch = pchBegin[strlen(KeyName)];
+        if ( ch!=' ' && ch!='=' )
+            continue;
+        
+        pchBegin = NULL;
+        pchBegin = strstr( chBuf1, "=" );
 
-			if( pchBegin == NULL )
-				continue;
-			else
-				break;
-		}
-    
+        if( pchBegin == NULL )
+            continue;
+        else
+            break;
+    }
     
     strcpy( chMsg, pchBegin+1 ); 
     trim(chMsg) ;
-    memcpy(ReturnString,chMsg,Size);
-    ReturnString[Size] = '\0';
+    int len = strlen(chMsg);
+    len = len > Size?Size:len;
+    strncpy(ReturnString,chMsg, len);
+    ReturnString[Size - 1] = '\0';
+    pthread_rwlock_unlock(&plock);
 
     return 0;
 }

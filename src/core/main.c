@@ -136,7 +136,13 @@ int main (int argc, char *argv[])
 #ifdef _ENABLE_DBUS
     if (bUseDBus && !InitDBus ())
 	exit (5);
+    dbus_threads_init_default();
 #endif
+	
+	if (pthread_rwlock_init(&plock,NULL) != 0) {
+      fprintf(stderr,"lock init failed\n");
+      exit(-1);
+    }
 
 	/**
 	*  加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
@@ -215,15 +221,6 @@ int main (int argc, char *argv[])
 #ifdef _ENABLE_RECORDING
     OpenRecording(True);
 #endif
-
-#ifdef _ENABLE_DBUS
-    dbus_threads_init_default();
-#endif
-	
-	if (pthread_rwlock_init(&plock,NULL) != 0) {
-      fprintf(stderr,"lock init failed\n");
-      exit(-1);
-    }
 
     pthread_create(&pid, NULL, remoteThread, NULL);
 

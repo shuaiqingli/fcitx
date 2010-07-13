@@ -1,4 +1,5 @@
 2010-07-13: CSSlayer <wengxt@gmail.com>
+    * 修复一个内存访问越界的Bug
     * 修复Issue 259
     * 修复在XVnc等X Server环境下无法启动的问题
 	* 修复两个disable选项时的编译问题
