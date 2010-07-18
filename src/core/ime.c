@@ -94,6 +94,7 @@ SEMICOLON_TO_DO semicolonToDo = K_SEMICOLON_QUICKPHRASE;
 Bool            bEngAfterCap = True;
 Bool            bConvertPunc = True;
 Bool            bDisablePagingInLegend = True;
+Bool            bSendTextWhenSwitchEng = False;
 
 Bool            bVK = False;
 
@@ -407,17 +408,16 @@ void ProcessKey (IMForwardEventStruct * call_data)
                 ChangVK();
         }
         else if (kev->keycode == switchKey && keyReleased == KR_CTRL && !bDoubleSwitchKey) {
-            /* 按下临时英文键会把已经输入的英文送到客户程序中，但实际使用发现，这种方式不具人性化
-             * if (iCodeInputCount) {
-        	strcpy (strStringGet, strCodeInput);
-        	retVal = IRV_ENG;
+            retVal = IRV_DONOT_PROCESS;
+            if (bSendTextWhenSwitchEng)
+            {
+                if (iCodeInputCount) {
+                    strcpy (strStringGet, strCodeInput);
+                    retVal = IRV_ENG;
+                }
             }
-            else
-        	retVal = IRV_TO_PROCESS;
-            */
             keyReleased = KR_OTHER;
             ChangeIMState (call_data->connect_id);
-            retVal = IRV_DONOT_PROCESS;
             }
         else if ((kev->keycode == i2ndSelectKey && keyReleased == KR_2ND_SELECTKEY)
         	 || (iKey == (i2ndSelectKey ^ 0xFF) && keyReleased == KR_2ND_SELECTKEY_OTHER)) {

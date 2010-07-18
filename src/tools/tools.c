@@ -129,6 +129,7 @@ extern char     strNameOfQuwei[];
 
 extern Bool     bFullPY;
 extern Bool     bDisablePagingInLegend;
+extern Bool     bSendTextWhenSwitchEng;
 
 extern int      i2ndSelectKey;
 extern int      i3rdSelectKey;
@@ -749,6 +750,11 @@ Configure output_config[] = {
         .name = "联想方式禁止翻页",
         .value_type = CONFIG_INTEGER,
         .value.integer = &bDisablePagingInLegend,
+    },
+    {
+        .name = "切换临时英文时将已有英文输入",
+        .value_type = CONFIG_INTEGER,
+        .value.integer = &bSendTextWhenSwitchEng
     },
     {
         .name = NULL,

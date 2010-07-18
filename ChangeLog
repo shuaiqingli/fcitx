@@ -1,3 +1,6 @@
+2010-07-18: CSSlayer <wengxt@gmail.com>
+    * 增加一个选项，在按下临时英文键时可以将已经输入的英文直接输入
+
 2010-07-13: CSSlayer <wengxt@gmail.com>
     * 合并Skin Dark 0.5，感谢Jarryson
     * 修复一个内存访问越界的Bug
