@@ -232,7 +232,7 @@ int main (int argc, char *argv[])
 #ifdef _ENABLE_TRAY
     tray.window = (Window) NULL;
     if (!bUseDBus) {
-	CreateTrayWindow ();		//创建系统托盘窗口
+        CreateTrayWindow ();		//创建系统托盘窗口
     	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);	//显示托盘图标
     }
 #endif

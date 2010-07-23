@@ -22,6 +22,8 @@ extern CARD16 connect_id;
 Bool CreateTrayWindow() {
     XTextProperty tp;
     char   strWindowName[]="Fcitx Tray Window";
+    if ( !bUseTrayIcon )
+            return;
 
     InitTray(dpy, &tray);
 
@@ -77,6 +79,9 @@ Bool CreateTrayWindow() {
 }
 
 void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
+    if ( !bUseTrayIcon )
+            return;
+
 	cairo_t *c;
 	cairo_surface_t *png_surface ;
     skin_img_t* skinImg;
