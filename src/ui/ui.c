@@ -615,6 +615,8 @@ IsInRspArea(int x0, int y0, skin_img_t img)
 int
 StringWidth(char *str, char *font, int fontSize)
 {
+    if (!str || str[0] == 0)
+        return 0;
     cairo_surface_t *surface =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
     cairo_t        *c = cairo_create(surface);
@@ -633,6 +635,8 @@ StringWidth(char *str, char *font, int fontSize)
 int
 StringWidthWithContext(cairo_t * c, char *str)
 {
+    if (!str || str[0] == 0)
+        return 0;
     if (!utf8_check_string(str))
         return 0;
     cairo_text_extents_t extents;
@@ -676,7 +680,7 @@ void
 OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
              int y, cairo_color_t * color)
 {
-    if (!str)
+    if (!str || str[0] == 0)
         return;
 
     cairo_save(c);
@@ -694,6 +698,8 @@ OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
 void
 OutputStringWithContext(cairo_t * c, char *str, int x, int y)
 {
+    if (!str || str[0] == 0)
+        return;
     if (!utf8_check_string(str))
         return;
     cairo_move_to(c, x, y);

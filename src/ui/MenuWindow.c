@@ -192,8 +192,7 @@ void DisplayText(Display * dpy,xlibMenu * Menu,int shellindex,int line_y)
 		cairo_select_font_face(cr, Menu->font,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_set_font_size(cr, Menu->font_size);
 	
-		cairo_move_to(cr, 20,line_y+Menu->font_size);
-		cairo_show_text(cr, Menu->shell[shellindex].tipstr ); 
+        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 20,line_y+Menu->font_size);
 	
 		if(Menu->shell[shellindex].next == 1)
 		{	
@@ -217,8 +216,7 @@ void DisplayText(Display * dpy,xlibMenu * Menu,int shellindex,int line_y)
 		cairo_select_font_face(cr, Menu->font,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_set_font_size(cr, Menu->font_size);
 	
-		cairo_move_to(cr, 20,line_y+Menu->font_size);
-		cairo_show_text(cr, Menu->shell[shellindex].tipstr ); 
+        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 20,line_y+Menu->font_size);
 		
 		if(Menu->shell[shellindex].next == 1)
 		{			
