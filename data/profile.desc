@@ -28,12 +28,12 @@ Description=Use Chinese Punctuation
 Type=Boolean
 DefaultValue=True
 
-[Profile/CursorFollow]
+[Profile/TrackCursor]
 Description=Input Window Shows at the position of cursor
 Type=Boolean
 DefaultValue=True
 
-[Profile/Legend]
+[Profile/UseLegend]
 Description=Prompt the phrases after input
 Type=Boolean
 DefaultValue=False
