@@ -36,13 +36,14 @@ typedef struct AboutWindow
     cairo_color_t fontColor;
     int width;
     int fontSize;
+    Atom     about_protocol_atom;
+    Atom     about_kill_atom;
 } AboutWindow;
 
+extern AboutWindow aboutWindow;
+
 Bool            CreateAboutWindow (void);
-void            InitWindowProperty (void);
-void            InitAboutWindowColor (void);
 void            DisplayAboutWindow (void);
 void            DrawAboutWindow (void);
-void            setIcon (void);
 
 #endif

@@ -18,7 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "ui/about.h"
+#include "ui/AboutWindow.h"
 #include "ui/ui.h"
 #include "core/xim.h"
 #include "version.h"
@@ -33,9 +33,6 @@ extern int      iScreen;
 
 int             ABOUT_WINDOW_WIDTH;
 
-Atom            about_protocol_atom = 0;
-Atom            about_kill_atom = 0;
-
 char            AboutCaption[] = "关于 - FCITX";
 char            AboutTitle[] = "小企鹅中文输入法";
 char            AboutEmail[] = "yuking_net@sohu.com";
@@ -43,6 +40,7 @@ char            AboutCopyRight[] = "(c) 2005, Yuking";
 char            strTitle[100];
 
 AboutWindow aboutWindow;
+static void            InitAboutWindowProperty (void);
 
 Bool CreateAboutWindow (void)
 {
@@ -62,13 +60,13 @@ Bool CreateAboutWindow (void)
     if (aboutWindow.window == None)
 	return False;
 
-    InitWindowProperty ();
+    InitAboutWindowProperty ();
     XSelectInput (dpy, aboutWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
 
     return True;
 }
 
-void InitWindowProperty (void)
+void InitAboutWindowProperty (void)
 {
     XTextProperty   tp;
 
@@ -79,9 +77,9 @@ void InitWindowProperty (void)
 
     XChangeProperty (dpy, aboutWindow.window, about_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_toolbar, 1);
 
-    about_protocol_atom = XInternAtom (dpy, "WM_PROTOCOLS", False);
-    about_kill_atom = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols (dpy, aboutWindow.window, &about_kill_atom, 1);
+    aboutWindow.about_protocol_atom = XInternAtom (dpy, "WM_PROTOCOLS", False);
+    aboutWindow.about_kill_atom = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols (dpy, aboutWindow.window, &aboutWindow.about_kill_atom, 1);
 
 	char           *p;
 
@@ -115,4 +113,3 @@ void DrawAboutWindow (void)
 
     cairo_destroy(c);
 }
-

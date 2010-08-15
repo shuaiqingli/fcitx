@@ -64,7 +64,8 @@
 #include "im/special/punc.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/sp.h"
-#include "ui/about.h"
+#include "ui/AboutWindow.h"
+#include "ui/MessageWindow.h"
 #include "im/special/QuickPhrase.h"
 #include "im/special/AutoEng.h"
 #include "tools/util.h"
@@ -183,6 +184,7 @@ int main (int argc, char *argv[])
 	CreateImMenuWindow();   //创建输入法选择菜单窗口
 	CreateSkinMenuWindow(); //创建皮肤选择菜单窗口
 	CreateVKMenuWindow();	//创建软键盘布局选择菜单窗口
+	CreateMessageWindow();	//创建软键盘布局选择菜单窗口
 
     if (!bUseDBus)
 	CreateAboutWindow ();	//创建关于窗口

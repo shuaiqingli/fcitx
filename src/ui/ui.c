@@ -39,6 +39,7 @@
 #include "core/xim.h"
 #include "core/MyErrorsHandlers.h"
 #include "ui/MainWindow.h"
+#include "ui/MessageWindow.h"
 #include "ui/InputWindow.h"
 #include "ui/MenuWindow.h"
 #include "im/special/vk.h"
@@ -46,16 +47,16 @@
 #include "tools/tools.h"
 #include "tools/utf8.h"
 #include "im/pinyin/sp.h"
-#include "ui/about.h"
+#include "ui/AboutWindow.h"
 #include "ui/TrayWindow.h"
 #include "ui/skin.h"
 #include "core/ime.h"
 #include "fcitx-config/profile.h"
 #include "tools/util.h"
+#include "ui/AboutWindow.h"
 
 Display        *dpy;
 int             iScreen;
-
 extern Window   mainWindow;
 extern Window   inputWindow;
 extern int      iVKWindowX;
@@ -74,9 +75,6 @@ extern Bool     bVK;
 extern Bool     bIsDisplaying;
 
 // added by yunfan
-extern Window   aboutWindow;
-extern Atom     about_protocol_atom;
-extern Atom     about_kill_atom;
 // **********************************
 
 char            strUserLocale[50] = "zh_CN.UTF-8";
@@ -116,9 +114,9 @@ MyXEventHandler(XEvent * event)
 #endif
         break;
     case ClientMessage:
-        if ((event->xclient.message_type == about_protocol_atom)
-            && ((Atom) event->xclient.data.l[0] == about_kill_atom)) {
-            XUnmapWindow(dpy, aboutWindow);
+        if ((event->xclient.message_type == aboutWindow.about_protocol_atom)
+            && ((Atom) event->xclient.data.l[0] == aboutWindow.about_kill_atom)) {
+            XUnmapWindow(dpy, aboutWindow.window);
             DrawMainWindow();
         }
 #ifdef _ENABLE_TRAY
@@ -161,9 +159,11 @@ MyXEventHandler(XEvent * event)
         }
 #endif
         // added by yunfan
-        else if (event->xexpose.window == aboutWindow)
+        else if (event->xexpose.window == aboutWindow.window)
             DrawAboutWindow();
         // ******************************
+        else if (event->xexpose.window == messageWindow.window)
+            DrawMessageWindow(NULL, NULL, 0);
         break;
     case DestroyNotify:
 #ifdef _ENABLE_TRAY
@@ -285,9 +285,13 @@ MyXEventHandler(XEvent * event)
                     DrawVKWindow();
                 }
             }
+            else if (event->xbutton.window == messageWindow.window)
+            {
+                XUnmapWindow(dpy, messageWindow.window);
+            }
             // added by yunfan
-            else if (event->xbutton.window == aboutWindow) {
-                XUnmapWindow(dpy, aboutWindow);
+            else if (event->xbutton.window == aboutWindow.window) {
+                XUnmapWindow(dpy, aboutWindow.window);
                 DrawMainWindow();
             } else if (event->xbutton.window == mainMenu.menuWindow) {
                 int             i;
@@ -694,8 +698,10 @@ OutputStringWithContext(cairo_t * c, char *str, int x, int y)
         return;
     if (!utf8_check_string(str))
         return;
+    cairo_save(c);
     cairo_move_to(c, x, y);
     cairo_show_text(c, str);
+    cairo_restore(c);
 }
 
 Bool

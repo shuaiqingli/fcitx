@@ -5,8 +5,9 @@ noinst_LIBRARIES=libui.a
 libui_a_SOURCES= InputWindow.c InputWindow.h\
 				 MainWindow.c MainWindow.h \
 				 TrayWindow.c TrayWindow.h \
+				 MessageWindow.c MessageWindow.h \
 				 tray.c tray.h \
-				 about.c about.h \
+				 AboutWindow.c AboutWindow.h \
 				 ui.c ui.h \
 				 skin.c skin.h \
 				 MenuWindow.c MenuWindow.h \

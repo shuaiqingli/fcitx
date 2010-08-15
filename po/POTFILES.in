@@ -9,7 +9,8 @@ src/ui/MainWindow.c
 src/ui/skin.c
 src/ui/font.c
 src/ui/TrayWindow.c
-src/ui/about.c
+src/ui/AboutWindow.c
+src/ui/MessageWindow.c
 src/fcitx-config/configfile.c
 src/fcitx-config/profile.c
 src/fcitx-config/fcitx-config.c

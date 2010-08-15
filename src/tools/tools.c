@@ -140,6 +140,7 @@ extern Bool     bShowInputWindowTriggering;
 
 extern char     strUserLocale[];
 extern Bool     bUseBold;
+extern Bool     bHintWindow;
 
 extern int      iOffsetX;
 extern int      iOffsetY;
@@ -777,6 +778,11 @@ Configure interface_config[] = {
         .name = "显示版本",
         .value_type = CONFIG_INTEGER,
         .value.integer = &bShowVersion,
+    },
+    {
+        .name = "是否显示提示窗口",
+        .value_type = CONFIG_INTEGER,
+        .value.integer = &bHintWindow,
     },
  		{
         .name = "皮肤类型",

@@ -33,7 +33,7 @@
 #include "core/xim.h"
 #include "core/ime.h"
 #include "core/IC.h"
-#include "ui/about.h"
+#include "ui/AboutWindow.h"
 #include "ui/InputWindow.h"
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
@@ -162,8 +162,6 @@ extern VKWindow   vkWindow;
 extern VKS      vks[];
 extern unsigned char iCurrentVK;
 extern Bool     bVK;
-
-extern Window   aboutWindow;
 
 extern Bool     bShowVK;
 
@@ -779,7 +777,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			        DrawTrayWindow (INACTIVE_ICON,0,0,tray.size, tray.size);
         			    }
 #endif
-        			    if (!aboutWindow)
+        			    if (!aboutWindow.window)
         				CreateAboutWindow();
         			    InitMainWindowColor ();
         			    InitInputWindowColor ();

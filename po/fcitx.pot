@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx 4.0 beta1\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-08-15 13:53+0800\n"
+"POT-Creation-Date: 2010-08-15 21:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -139,11 +139,11 @@ msgstr ""
 msgid "X error %i on opcode send"
 msgstr ""
 
-#: src/ui/ui.c:88
+#: src/ui/ui.c:86
 msgid "FCITX can only run under X"
 msgstr ""
 
-#: src/ui/ui.c:130
+#: src/ui/ui.c:128
 msgid "XEvent--Expose"
 msgstr ""
 
@@ -181,7 +181,7 @@ msgstr ""
 msgid "your current font is: %s"
 msgstr ""
 
-#: src/ui/font.c:82
+#: src/ui/font.c:80
 msgid "no valid font."
 msgstr ""
 
@@ -374,33 +374,50 @@ msgstr ""
 msgid "Fatal:"
 msgstr ""
 
-#: src/core/xim.c:492
+#: src/core/xim.c:493
 msgid "Recording file must be an absolute path."
 msgstr ""
 
-#: src/core/xim.c:525
+#: src/core/xim.c:526
 #, c-format
 msgid "Sending %s  icid=%d connectid=%d\n"
 msgstr ""
 
-#: src/core/xim.c:587
+#: src/core/xim.c:588
 msgid "Can't Create imWindow"
 msgstr ""
 
-#: src/core/xim.c:597
+#: src/core/xim.c:598
 msgid "XMODIFIERS Error."
 msgstr ""
 
-#: src/core/xim.c:602
+#: src/core/xim.c:603
 msgid "Please set XMODIFIERS."
 msgstr ""
 
-#: src/core/xim.c:653
+#: src/core/xim.c:613
+msgid "Please check your environment varibles."
+msgstr ""
+
+#: src/core/xim.c:614
+msgid ""
+"You need to set environment varibles below to make fcitx work correctly."
+msgstr ""
+
+#: src/core/xim.c:620
+msgid "You can set those variables in ~/.bashrc ."
+msgstr ""
+
+#: src/core/xim.c:621
+msgid "Setting Hint"
+msgstr ""
+
+#: src/core/xim.c:671
 #, c-format
 msgid "Start FCITX error. Another XIM daemon named %s is running?"
 msgstr ""
 
-#: src/core/xim.c:933
+#: src/core/xim.c:951
 #, c-format
 msgid "Set icid=%d(connect_id=%d) to %d"
 msgstr ""

@@ -30,6 +30,7 @@
 #include "core/IC.h"
 #include "tools/tools.h"
 #include "ui/MainWindow.h"
+#include "ui/MessageWindow.h"
 #include "ui/InputWindow.h"
 #ifdef _ENABLE_TRAY
 #include "ui/TrayWindow.h"
@@ -40,6 +41,8 @@
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"
 #include "tools/util.h"
+
+#define CHECK_ENV(env, value) (!getenv(env) || (0 != strcmp(getenv(env), (value))))
 
 CONNECT_ID     *connectIDsHead = (CONNECT_ID *) NULL;
 ICID	       *icidsHead = (ICID *) NULL;
@@ -65,8 +68,7 @@ char 		strRecordingPath[PATH_MAX]="";		//空字串表示使用默认的路径~/.
 
 extern IM      *im;
 
-extern Display *dpy;
-extern int      iScreen;
+extern Display *dpy;extern int      iScreen;
 extern Window   mainWindow;
 extern Window   inputWindow;
 extern VKWindow   vkWindow;
@@ -79,6 +81,7 @@ extern uint     uMessageDown;
 extern uint     uMessageUp;
 extern Bool     bVK;
 extern HIDE_MAINWINDOW hideMainWindow;
+Bool     bHintWindow;
 
 //计算打字速度
 extern Bool     bStartRecordType;
@@ -601,6 +604,27 @@ Bool InitXIM (char *imname)
         else {
             FcitxLog(WARNING, _("Please set XMODIFIERS."));
             imname = DEFAULT_IMNAME;
+        }
+    }
+    
+    if (bHintWindow)
+    {
+        char strTemp[PATH_MAX];
+        snprintf(strTemp, PATH_MAX, "@im=%s", imname);
+        strTemp[PATH_MAX - 1] = '\0';
+        if (CHECK_ENV("XMODIFIERS", strTemp) ||
+            CHECK_ENV("GTK_IM_MODULE", "xim") ||
+            CHECK_ENV("QT_IM_MODULE", "xim"))
+        {
+            char *msg[6];
+            msg[0] = _("Please check your environment varibles.");
+            msg[1] = _("You need to set environment varibles below to make fcitx work correctly.");
+            msg[2] = "export XMODIFIERS=\"@im=fcitx\"";
+            msg[3] = "export QT_IM_MODULE=xim";
+            msg[4] = "export GTK_IM_MODULE=xim";
+            msg[5] = _("You can set those variables in ~/.bashrc .");
+            DrawMessageWindow(_("Setting Hint"), msg, 6);
+            DisplayMessageWindow();
         }
     }
 
