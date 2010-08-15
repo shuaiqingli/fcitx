@@ -39,52 +39,14 @@
 #include "im/pinyin/pyParser.h"
 #include "ui/ui.h"
 #include "interface/DBus.h"
+#include "tools/utarray.h"
+#include <sys/types.h>
+#include <dirent.h>
+#include "tools/util.h"
+#include "fcitx-config/profile.h"
 
-TABLE          *table;
-INT8            iTableIMIndex = 0;
-INT8            iTableCount;
-
-Bool            bTableDictLoaded = False;		//Loads tables only if needed
-
-RECORD         *currentRecord = (RECORD *)NULL;
-RECORD	       *recordHead = (RECORD *)NULL;
-RECORD         *tableSingleHZ[SINGLE_HZ_COUNT];		//Records the single characters in table to speed auto phrase
-RECORD	       *pCurCandRecord = (RECORD *)NULL;	//Records current cand word selected, to update the hit-frequency information
-TABLECANDWORD   tableCandWord[MAX_CAND_WORD*2];
-
-RECORD_INDEX   *recordIndex = (RECORD_INDEX *)NULL;
-
-AUTOPHRASE     *autoPhrase = (AUTOPHRASE *)NULL;
-AUTOPHRASE     *insertPoint = (AUTOPHRASE *)NULL;
-
-uint            iAutoPhrase = 0;
-uint            iTableCandDisplayed;
-uint            iTableTotalCandCount;
-char            strTableLegendSource[PHRASE_MAX_LENGTH * 2 + 1] = "\0";
-
-FH             *fh;
-int             iFH = 0;
-unsigned int    iTableIndex = 0;
-
-Bool            bIsTableDelPhrase = False;
-HOTKEYS         hkTableDelPhrase[HOT_KEY_COUNT] = { CTRL_7, 0 };
-Bool            bIsTableAdjustOrder = False;
-HOTKEYS         hkTableAdjustOrder[HOT_KEY_COUNT] = { CTRL_6, 0 };
-Bool            bIsTableAddPhrase = False;
-HOTKEYS         hkTableAddPhrase[HOT_KEY_COUNT] = { CTRL_8, 0 };
-HOTKEYS         hkGetPY[HOT_KEY_COUNT] = { CTRL_ALT_E, 0 };
-
-INT8            iTableChanged = 0;
-INT8            iTableNewPhraseHZCount;
-Bool            bCanntFindCode;	//Records if new phrase has corresponding code - should be always false
-char           *strNewPhraseCode;
-
-SINGLE_HZ       hzLastInput[PHRASE_MAX_LENGTH];	//Records last HZ input
-INT16           iHZLastInputCount = 0;
-Bool            bTablePhraseTips = False;
-
-ADJUSTORDER     PYBaseOrder;
-Bool		isSavingTableDic = False;
+UT_icd table_icd = {sizeof(TABLE), NULL ,NULL, NULL};
+TableState tbl;
 
 extern char     strPYAuto[];
 
@@ -107,8 +69,6 @@ extern char     strStringGet[];
 extern Bool     bPointAfterNumber;
 extern Bool	bUseDBus;
 
-extern INT8     iIMIndex;
-extern Bool     bUseLegend;
 extern Bool     bIsInLegend;
 extern INT8     lastIsSingleHZ;
 extern Bool     bDisablePagingInLegend;
@@ -125,256 +85,136 @@ extern PYCandWord PYCandWords[];
 extern char     strFindString[];
 extern ParsePYStruct findMap;
 
-#define STR_TBLCONF_MB 0
-#define STR_TBLCONF_NAME 1
-#define STR_TBLCONF_PATH 2
-#define STR_TBLCONF_ADJUSTORDER 3
-#define STR_TBLCONF_USEPY 4
-#define STR_TBLCONF_PYCODE 5
-#define STR_TBLCONF_AUTOSEND 6
-#define STR_TBLCONF_NONEAUTOSEND 7
-#define STR_TBLCONF_ENDCODE 8
-#define STR_TBLCONF_USEMATCHINGKEY 9
-#define STR_TBLCONF_MATCHINGKEY 10
-#define STR_TBLCONF_EXACTMATCH 11
-#define STR_TBLCONF_MAXPHRASE 12
-#define STR_TBLCONF_AUTOPHRASE 13
-#define STR_TBLCONF_AUTOPHRASELENGTH 14
-#define STR_TBLCONF_AUTOPHRASEPHRASE 15
-#define STR_TBLCONF_SAVEAUTOPHRASE 16
-#define STR_TBLCONF_PROMPTTABLECODE 17
-#define STR_TBLCONF_SYMBOL 18
-#define STR_TBLCONF_SYMBOLFILE 19
-#define STR_TBLCONF_CHOOSE 20
-
-#define CONST_STR_TBLCONF_SIZE 21
-
-char* strConstTblConf[] = {
-	"[码表]",
-	"名称=",
-	"码表=",
-	"调频=",
-	"拼音=",
-	"拼音键=",
-	"自动上屏=",
-	"空码自动上屏=",
-	"中止键=",
-	"模糊=",
-	"模糊键=",
-	"精确匹配=",
-	"最长词组字数=",
-	"自动词组=",
-	"自动词组长度=",
-	"词组参与自动造词=",
-	"保存自动词组=",
-	"提示编码=",
-	"符号=",
-	"符号文件=",
-	"候选词选择键="
-};
-
-#define cstr(b) (strConstTblConf[STR_TBLCONF_##b])
-#define cstrlen(b) (strlen(cstr(b)))
+ConfigFileDesc* tableConfigDesc = NULL;
 
 /*
  * 读取码表输入法的名称和文件路径
  */
 void LoadTableInfo (void)
 {
-    FILE           *fp;
-    char            strPath[PATH_MAX];
-    int             i;
-    char           *pstr;
+    char **tablePath;
+    size_t len;
+    char pathBuf[PATH_MAX];
+    int i = 0;
+    DIR *dir;
+    struct dirent *drt;
+    struct stat fileStat;
 
-    FreeTableIM ();
-    if (table)
-	free (table);
-    iTableCount = 0;
+	StringHashSet* sset = NULL;
 
-    fp = UserConfigFile(TABLE_CONFIG_FILENAME, "rt", NULL);
-    if (!fp) {
-	snprintf (strPath, sizeof(strPath), PKGDATADIR "/data/%s", TABLE_CONFIG_FILENAME);
+    tbl.table = malloc(sizeof(UT_array));
+    tbl.iTableCount = 0;
+    utarray_init(tbl.table, &table_icd);
 
-	/* zxd add begin */
-	if( access( strPath, 0 ) && getenv( "FCITXDIR") ) {
-	    strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat( strPath, "/share/fcitx/data/" );
-            strcat( strPath, TABLE_CONFIG_FILENAME );
-	}
-	/* zxd add end */
+    tablePath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , DATADIR, FCITX_CONFIG_DIR "data/table" );
 
-	fp = fopen (strPath, "rt");
-	if (!fp)
-	    return;
-    }
+    for(i = 0; i< len; i++)
+    {
+        snprintf(pathBuf, sizeof(pathBuf), "%s", tablePath[i]);
+        pathBuf[sizeof(pathBuf) - 1] = '\0';
 
-    //首先来看看有多少个码表
-    while (1) {
-	if (!fgets (strPath, PATH_MAX, fp))
-	    break;
+        dir = opendir(pathBuf);
+        if (dir == NULL)
+            continue;
 
-	i = strlen (strPath) - 1;
-	while ((i >= 0) && (strPath[i] == ' ' || strPath[i] == '\n'))
-	    strPath[i--] = '\0';
+		/* collect all *.conf files */
+        while((drt = readdir(dir)) != NULL)
+        {
+            size_t nameLen = strlen(drt->d_name);
+            if (nameLen <= strlen(".conf") )
+                continue;
+            memset(pathBuf,0,sizeof(pathBuf));
 
-	pstr = strPath;
-	if (*pstr == ' ')
-	    pstr++;
-	if (pstr[0] == '#')
-	    continue;
+            if (strcmp(drt->d_name + nameLen -strlen(".conf"), ".conf") != 0)
+                continue;
+            snprintf(pathBuf, sizeof(pathBuf), "%s/%s", tablePath[i], drt->d_name );
 
-	if (strstr (pstr, cstr(MB)))
-	    iTableCount++;
-    }
+            if (stat(pathBuf, &fileStat) == -1)
+                continue;
 
-    table = (TABLE *) malloc (sizeof (TABLE) * iTableCount);
-    for (iTableIMIndex = 0; iTableIMIndex < iTableCount; iTableIMIndex++) {
-	table[iTableIMIndex].strInputCode = NULL;
-	table[iTableIMIndex].strEndCode = NULL;
-	table[iTableIMIndex].strName[0] = '\0';
-	table[iTableIMIndex].strPath[0] = '\0';
-	table[iTableIMIndex].strSymbolFile[0] = '\0';
-	table[iTableIMIndex].tableOrder = AD_NO;
-	table[iTableIMIndex].bUsePY = False;
-	table[iTableIMIndex].cPinyin = '\0';
-	table[iTableIMIndex].iTableAutoSendToClient = -1;
-	table[iTableIMIndex].iTableAutoSendToClientWhenNone = -1;
-	table[iTableIMIndex].rule = NULL;
-	table[iTableIMIndex].bUseMatchingKey = False;
-	table[iTableIMIndex].cMatchingKey = '\0';
-	table[iTableIMIndex].bTableExactMatch = False;
-//	table[iTableIMIndex].iMaxPhraseAllowed = 0;
-	table[iTableIMIndex].bAutoPhrase = True;
-	table[iTableIMIndex].bAutoPhrasePhrase = True;
-	table[iTableIMIndex].iSaveAutoPhraseAfter = 0;
-	table[iTableIMIndex].iAutoPhrase = 4;
-	table[iTableIMIndex].bPromptTableCode = True;
-	table[iTableIMIndex].strSymbol[0] = '\0';
-	table[iTableIMIndex].bHasPinyin = False;
-	strcpy (table[iTableIMIndex].strChoose, "1234567890");//初始化为1234567890
-    }
-
-    iTableIMIndex = -1;
-    //读取其它属性的默认值
-    if (iTableCount) {
-	rewind (fp);
-
-	while (1) {
-	    if (!fgets (strPath, PATH_MAX, fp))
-		break;
-
-	    i = strlen (strPath) - 1;
-	    while ((i >= 0) && (strPath[i] == ' ' || strPath[i] == '\n'))
-		strPath[i--] = '\0';
-
-	    pstr = strPath;
-	    if (*pstr == ' ')
-		pstr++;
-	    if (pstr[0] == '#')
-		continue;
-
-	    if (!strcmp (pstr, cstr(MB) )) {
-		if (iTableIMIndex != -1) {
-		    if (table[iTableIMIndex].strName[0] == '\0' || table[iTableIMIndex].strPath[0] == '\0') {
-			iTableCount = 0;
-			free (table);
-			fprintf (stderr, "The config file of No.%d table errors!\n", iTableIMIndex);
-			return;
-		    }
-		}
-		iTableIMIndex++;
-	    }
-	    else if (MyStrcmp (pstr, cstr(NAME))) {
-		pstr += cstrlen(NAME);
-		strcpy (table[iTableIMIndex].strName, pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(PATH))) {
-		pstr += cstrlen(PATH);
-		strcpy (table[iTableIMIndex].strPath, pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(ADJUSTORDER))) {
-		pstr += cstrlen(ADJUSTORDER);
-		table[iTableIMIndex].tableOrder = (ADJUSTORDER) atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(USEPY))) {
-		pstr += cstrlen(USEPY);
-		table[iTableIMIndex].bUsePY = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(PYCODE))) {
-		pstr += cstrlen(PYCODE);
-		while (*pstr == ' ')
-		    pstr++;
-		table[iTableIMIndex].cPinyin = *pstr;
-	    }
-	    else if (MyStrcmp (pstr, cstr(AUTOSEND))) {
-		pstr += cstrlen(AUTOSEND);
-		table[iTableIMIndex].iTableAutoSendToClient = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(NONEAUTOSEND))) {
-		pstr += cstrlen(NONEAUTOSEND);
-		table[iTableIMIndex].iTableAutoSendToClientWhenNone = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(ENDCODE))) {
-		pstr += cstrlen(ENDCODE);
-		while (*pstr == ' ' || *pstr == '\t')
-		    pstr++;
-		table[iTableIMIndex].strEndCode = (char *) malloc (sizeof (char) * (strlen (pstr) + 1));
-		strcpy (table[iTableIMIndex].strEndCode, pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(USEMATCHINGKEY))) {
-		pstr += cstrlen(USEMATCHINGKEY);
-		table[iTableIMIndex].bUseMatchingKey = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(MATCHINGKEY))) {
-		pstr += cstrlen(MATCHINGKEY);
-		while (*pstr == ' ')
-		    pstr++;
-		table[iTableIMIndex].cMatchingKey = *pstr;
-	    }
-	    else if (MyStrcmp (pstr, cstr(EXACTMATCH) )) {
-		pstr += cstrlen(EXACTMATCH);
-		table[iTableIMIndex].bTableExactMatch = atoi (pstr);
-	    }
-/*	    else if (MyStrcmp (pstr, cstr(MAXPHRASE))) {
-		pstr += cstrlen(MAXPHRASE);
-		table[iTableIMIndex].iMaxPhraseAllowed = atoi (pstr);
-	    }*/
-	    else if (MyStrcmp (pstr, cstr(AUTOPHRASE))) {
-		pstr += cstrlen(AUTOPHRASE);
-		table[iTableIMIndex].bAutoPhrase = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(AUTOPHRASELENGTH))) {
-		pstr += cstrlen(AUTOPHRASELENGTH);
-		table[iTableIMIndex].iAutoPhrase = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(AUTOPHRASEPHRASE))) {
-		pstr += cstrlen(AUTOPHRASEPHRASE);
-		table[iTableIMIndex].bAutoPhrasePhrase = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(SAVEAUTOPHRASE))) {
-		pstr += cstrlen(SAVEAUTOPHRASE);
-		table[iTableIMIndex].iSaveAutoPhraseAfter = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(PROMPTTABLECODE))) {
-		pstr += cstrlen(PROMPTTABLECODE);
-		table[iTableIMIndex].bPromptTableCode = atoi (pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(SYMBOL))) {
-		pstr += cstrlen(SYMBOL);
-		strcpy (table[iTableIMIndex].strSymbol, pstr);
-	    }
-	    else if (MyStrcmp (pstr, cstr(SYMBOLFILE))) {
-		pstr += cstrlen(SYMBOLFILE);
-		strcpy (table[iTableIMIndex].strSymbolFile, pstr);
-	    }
-	    else if(MyStrcmp (pstr, cstr(CHOOSE))){
-                pstr += cstrlen(CHOOSE);
-                strncpy (table[iTableIMIndex].strChoose, pstr, 10);		
+            if (fileStat.st_mode & S_IFREG)
+            {
+				StringHashSet *string;
+				HASH_FIND_STR(sset, drt->d_name, string);
+				if (!string)
+				{
+					char *bStr = strdup(drt->d_name);
+					string = malloc0(sizeof(StringHashSet));
+					string->name = bStr;
+					HASH_ADD_KEYPTR(hh, sset, string->name, strlen(string->name), string);
+				}
             }
-	}
+        }
+
+        closedir(dir);
     }
 
-    fclose (fp);
+    char **paths = malloc0(sizeof(char*) *len);
+    for (i = 0;i < len ;i ++)
+        paths[i] = malloc(sizeof(char) *PATH_MAX);
+    StringHashSet* string;
+    for (string = sset;
+         string != NULL;
+         string = (StringHashSet*)string->hh.next)
+    {
+        int i = 0;
+        for (i = len -1; i >= 0; i--)
+        {
+            snprintf(paths[i], PATH_MAX, "%s/%s", tablePath[len - i - 1], string->name);
+            FcitxLog(DEBUG, "Load Table Config File:%s", paths[i]);
+        }
+        FcitxLog(INFO, _("Load Table Config File:%s"), string->name);
+        ConfigFile* cfile = ParseMultiConfigFile(paths, len, GetTableConfigDesc());
+        if (cfile)
+        {
+            TABLE table;
+            memset(&table, 0, sizeof(TABLE));
+            utarray_push_back(tbl.table, &table);
+            TABLE *t = (TABLE*)utarray_back(tbl.table);
+            TABLEConfigBind(t, cfile, GetTableConfigDesc());
+            ConfigBindSync((GenericConfig*)t);
+            FcitxLog(DEBUG, _("Table Config %s is %s"),string->name, (t->bEnabled)?"Enabled":"Disabled");
+            if (t->bEnabled)
+                tbl.iTableCount ++;
+            else
+            {
+                FreeConfigFile(t->config.configFile);
+                utarray_pop_back(tbl.table);
+            }
+        }
+    }
+
+    for (i = 0;i < len ;i ++)
+        free(paths[i]);
+    free(paths);
+		
+
+    FreeXDGPath(tablePath);
+
+	StringHashSet *curStr;
+	while(sset)
+	{
+		curStr = sset;
+		HASH_DEL(sset, curStr);
+		free(curStr->name);
+        free(curStr);
+	}
+    FreeConfigFileDesc(GetTableConfigDesc());
+}
+
+ConfigFileDesc *GetTableConfigDesc()
+{
+	FcitxLock();
+	if (!tableConfigDesc)
+	{
+		FILE *tmpfp;
+		tmpfp = GetXDGFileData("table.desc", "r");
+		tableConfigDesc = ParseConfigFileDescFp(tmpfp);
+		fclose(tmpfp);
+	}
+	FcitxUnlock();
+
+	return tableConfigDesc;
 }
 
 Bool LoadTableDict (void)
@@ -391,34 +231,26 @@ Bool LoadTableDict (void)
     int             iRecordIndex;
 
     //首先，来看看我们该调入哪个码表
-    for (i = 0; i < iTableCount; i++) {
-	if (table[i].iIMIndex == iIMIndex)
-	    iTableIMIndex = i;
+    for (i = 0; i < tbl.iTableCount; i++) {
+        TABLE* table =(TABLE*) utarray_eltptr(tbl.table, i);
+        if (table->iIMIndex == gs.iIMIndex)
+            tbl.iTableIMIndex = i;
     }
 
     //读入码表
 #ifdef _DEBUG
-    fprintf (stderr, "Loading Table Dict\n");
+    FcitxLog(DEBUG, _("Loading Table Dict"));
 #endif
 
-    fpDict = UserConfigFile( table[iTableIMIndex].strPath, "rb", NULL);
-    if (!fpDict) {
-	snprintf (strPath, sizeof(strPath), PKGDATADIR "/data/%s", table[iTableIMIndex].strPath);
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-	/* zxd add begin */
-        if( access( strPath, 0 ) && getenv( "FCITXDIR") ) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat( strPath, "/share/fcitx/data/" );
-            strcat( strPath, table[iTableIMIndex].strPath );
-        }
-        /* zxd add end */
+    snprintf(strPath, sizeof(strPath), FCITX_CONFIG_DIR "data/table/%s", table->strPath);
+    fpDict = GetXDGFileData(strPath, "r");
 	
-	fpDict = fopen (strPath, "rb");
-	if (!fpDict) {
-	    fprintf (stderr, "Cannot load table file: %s\n", strPath);
+    if (!fpDict) {
+	    FcitxLog( DEBUG, _("Cannot load table file: %s"), strPath);
 	    return False;
 	}
-    }
 
     //先读取码表的信息
     //判断版本信息
@@ -429,60 +261,60 @@ Bool LoadTableDict (void)
 	fread (&iTemp, sizeof (unsigned int), 1, fpDict);
     }
 
-    table[iTableIMIndex].strInputCode = (char *) malloc (sizeof (char) * (iTemp + 1));
-    fread (table[iTableIMIndex].strInputCode, sizeof (char), iTemp + 1, fpDict);
+    table->strInputCode = (char *) malloc (sizeof (char) * (iTemp + 1));
+    fread (table->strInputCode, sizeof (char), iTemp + 1, fpDict);
     /*
      * 建立索引，加26是为了为拼音编码预留空间
      */
-    recordIndex = (RECORD_INDEX *) malloc ((strlen (table[iTableIMIndex].strInputCode) + 26) * sizeof (RECORD_INDEX));
-    for (iTemp = 0; iTemp < strlen (table[iTableIMIndex].strInputCode) + 26; iTemp++) {
-	recordIndex[iTemp].cCode = 0;
-	recordIndex[iTemp].record = NULL;
+    tbl.recordIndex = (RECORD_INDEX *) malloc ((strlen (table->strInputCode) + 26) * sizeof (RECORD_INDEX));
+    for (iTemp = 0; iTemp < strlen (table->strInputCode) + 26; iTemp++) {
+	tbl.recordIndex[iTemp].cCode = 0;
+	tbl.recordIndex[iTemp].record = NULL;
     }
     /* ********************************************************************** */
 
-    fread (&(table[iTableIMIndex].iCodeLength), sizeof (unsigned char), 1, fpDict);
-    if (table[iTableIMIndex].iTableAutoSendToClient == -1)
-	table[iTableIMIndex].iTableAutoSendToClient = table[iTableIMIndex].iCodeLength;
-    if (table[iTableIMIndex].iTableAutoSendToClientWhenNone == -1)
-	table[iTableIMIndex].iTableAutoSendToClientWhenNone = table[iTableIMIndex].iCodeLength;
+    fread (&(table->iCodeLength), sizeof (unsigned char), 1, fpDict);
+    if (table->iTableAutoSendToClient == -1)
+	table->iTableAutoSendToClient = table->iCodeLength;
+    if (table->iTableAutoSendToClientWhenNone == -1)
+	table->iTableAutoSendToClientWhenNone = table->iCodeLength;
 
     if (!iVersion)
-	fread (&(table[iTableIMIndex].iPYCodeLength), sizeof (unsigned char), 1, fpDict);
+	fread (&(table->iPYCodeLength), sizeof (unsigned char), 1, fpDict);
     else
-	table[iTableIMIndex].iPYCodeLength = table[iTableIMIndex].iCodeLength;
+	table->iPYCodeLength = table->iCodeLength;
 
     fread (&iTemp, sizeof (unsigned int), 1, fpDict);
-    table[iTableIMIndex].strIgnoreChars = (char *) malloc (sizeof (char) * (iTemp + 1));
-    fread (table[iTableIMIndex].strIgnoreChars, sizeof (char), iTemp + 1, fpDict);
+    table->strIgnoreChars = (char *) malloc (sizeof (char) * (iTemp + 1));
+    fread (table->strIgnoreChars, sizeof (char), iTemp + 1, fpDict);
 
-    fread (&(table[iTableIMIndex].bRule), sizeof (unsigned char), 1, fpDict);
+    fread (&(table->bRule), sizeof (unsigned char), 1, fpDict);
 
-    if (table[iTableIMIndex].bRule) {	//表示有组词规则
-	table[iTableIMIndex].rule = (RULE *) malloc (sizeof (RULE) * (table[iTableIMIndex].iCodeLength - 1));
-	for (i = 0; i < table[iTableIMIndex].iCodeLength - 1; i++) {
-	    fread (&(table[iTableIMIndex].rule[i].iFlag), sizeof (unsigned char), 1, fpDict);
-	    fread (&(table[iTableIMIndex].rule[i].iWords), sizeof (unsigned char), 1, fpDict);
-	    table[iTableIMIndex].rule[i].rule = (RULE_RULE *) malloc (sizeof (RULE_RULE) * table[iTableIMIndex].iCodeLength);
-	    for (iTemp = 0; iTemp < table[iTableIMIndex].iCodeLength; iTemp++) {
-		fread (&(table[iTableIMIndex].rule[i].rule[iTemp].iFlag), sizeof (unsigned char), 1, fpDict);
-		fread (&(table[iTableIMIndex].rule[i].rule[iTemp].iWhich), sizeof (unsigned char), 1, fpDict);
-		fread (&(table[iTableIMIndex].rule[i].rule[iTemp].iIndex), sizeof (unsigned char), 1, fpDict);
+    if (table->bRule) {	//表示有组词规则
+	table->rule = (RULE *) malloc (sizeof (RULE) * (table->iCodeLength - 1));
+	for (i = 0; i < table->iCodeLength - 1; i++) {
+	    fread (&(table->rule[i].iFlag), sizeof (unsigned char), 1, fpDict);
+	    fread (&(table->rule[i].iWords), sizeof (unsigned char), 1, fpDict);
+	    table->rule[i].rule = (RULE_RULE *) malloc (sizeof (RULE_RULE) * table->iCodeLength);
+	    for (iTemp = 0; iTemp < table->iCodeLength; iTemp++) {
+		fread (&(table->rule[i].rule[iTemp].iFlag), sizeof (unsigned char), 1, fpDict);
+		fread (&(table->rule[i].rule[iTemp].iWhich), sizeof (unsigned char), 1, fpDict);
+		fread (&(table->rule[i].rule[iTemp].iIndex), sizeof (unsigned char), 1, fpDict);
 	    }
 	}
     }
 
-    recordHead = (RECORD *) malloc (sizeof (RECORD));
-    currentRecord = recordHead;
+    tbl.recordHead = (RECORD *) malloc (sizeof (RECORD));
+    tbl.currentRecord = tbl.recordHead;
 
-    fread (&(table[iTableIMIndex].iRecordCount), sizeof (unsigned int), 1, fpDict);
+    fread (&(table->iRecordCount), sizeof (unsigned int), 1, fpDict);
 
     for (i = 0; i < SINGLE_HZ_COUNT; i++)
-	tableSingleHZ[i] = (RECORD *) NULL;
+	tbl.tableSingleHZ[i] = (RECORD *) NULL;
 
     iRecordIndex = 0;
-    for (i = 0; i < table[iTableIMIndex].iRecordCount; i++) {
-	fread (strCode, sizeof (char), table[iTableIMIndex].iPYCodeLength + 1, fpDict);
+    for (i = 0; i < table->iRecordCount; i++) {
+	fread (strCode, sizeof (char), table->iPYCodeLength + 1, fpDict);
 	fread (&iTemp, sizeof (unsigned int), 1, fpDict);
 	fread (strHZ, sizeof (char), iTemp, fpDict);
 	recTemp = (RECORD *) malloc (sizeof (RECORD));
@@ -500,14 +332,14 @@ Bool LoadTableDict (void)
 
 	fread (&(recTemp->iHit), sizeof (unsigned int), 1, fpDict);
 	fread (&(recTemp->iIndex), sizeof (unsigned int), 1, fpDict);
-	if (recTemp->iIndex > iTableIndex)
-	    iTableIndex = recTemp->iIndex;
+	if (recTemp->iIndex > tbl.iTableIndex)
+	    tbl.iTableIndex = recTemp->iIndex;
 
 	/* 建立索引 */
 	if (cChar != recTemp->strCode[0]) {
 	    cChar = recTemp->strCode[0];
-	    recordIndex[iRecordIndex].cCode = cChar;
-	    recordIndex[iRecordIndex].record = recTemp;
+	    tbl.recordIndex[iRecordIndex].cCode = cChar;
+	    tbl.recordIndex[iRecordIndex].record = recTemp;
 	    iRecordIndex++;
 	}
 	/* **************************************************************** */
@@ -515,42 +347,42 @@ Bool LoadTableDict (void)
 	if (utf8_strlen (recTemp->strHZ) == 1 && !IsIgnoreChar (strCode[0]) && !recTemp->bPinyin) {
 	    iTemp = CalHZIndex (recTemp->strHZ);
 	    if (iTemp >= 0 && iTemp < SINGLE_HZ_COUNT) {
-		if (tableSingleHZ[iTemp]) {
-		    if (strlen (strCode) > strlen (tableSingleHZ[iTemp]->strCode))
-			tableSingleHZ[iTemp] = recTemp;
+		if (tbl.tableSingleHZ[iTemp]) {
+		    if (strlen (strCode) > strlen (tbl.tableSingleHZ[iTemp]->strCode))
+			tbl.tableSingleHZ[iTemp] = recTemp;
 		}
 		else
-		    tableSingleHZ[iTemp] = recTemp;
+		    tbl.tableSingleHZ[iTemp] = recTemp;
 	    }
 	}
 
 	if (recTemp->bPinyin)
-	    table[iTableIMIndex].bHasPinyin = True;
+	    table->bHasPinyin = True;
 
-	currentRecord->next = recTemp;
-	recTemp->prev = currentRecord;
-	currentRecord = recTemp;
+	tbl.currentRecord->next = recTemp;
+	recTemp->prev = tbl.currentRecord;
+	tbl.currentRecord = recTemp;
     }
 
-    currentRecord->next = recordHead;
-    recordHead->prev = currentRecord;
+    tbl.currentRecord->next = tbl.recordHead;
+    tbl.recordHead->prev = tbl.currentRecord;
 
     fclose (fpDict);
 #ifdef _DEBUG
-    fprintf (stderr, "Load Table Dict OK\n");
+    FcitxLog(DEBUG, _("Load Table Dict OK"));
 #endif
 
     //读取相应的特殊符号表
-    fpDict = UserConfigFile (table[iTableIMIndex].strSymbolFile, "rt", NULL);
+    fpDict = UserConfigFile (table->strSymbolFile, "rt", NULL);
     if (!fpDict) {
 	snprintf (strPath, sizeof(strPath), PKGDATADIR "/data/%s",
-                  table[iTableIMIndex].strSymbolFile);
+                  table->strSymbolFile);
 
 	/* zxd add begin */
 	if( access( strPath, 0 ) && getenv( "FCITXDIR") ) {
 	    strcpy( strPath, getenv( "FCITXDIR" ) );
             strcat( strPath, "/share/fcitx/data/" );
-            strcat( strPath, table[iTableIMIndex].strSymbolFile );
+            strcat( strPath, table->strSymbolFile );
 	}
 	/* zxd add end */
                   
@@ -558,75 +390,75 @@ Bool LoadTableDict (void)
     }
 
     if (fpDict) {
-	iFH = CalculateRecordNumber (fpDict);
-	fh = (FH *) malloc (sizeof (FH) * iFH);
+	tbl.iFH = CalculateRecordNumber (fpDict);
+	tbl.fh = (FH *) malloc (sizeof (FH) * tbl.iFH);
 
-	for (i = 0; i < iFH; i++) {
-	    if (EOF == fscanf (fpDict, "%s\n", fh[i].strFH))
+	for (i = 0; i < tbl.iFH; i++) {
+	    if (EOF == fscanf (fpDict, "%s\n", tbl.fh[i].strFH))
 		break;
 	}
-	iFH = i;
+	tbl.iFH = i;
 
 	fclose (fpDict);
     }
 
-    strNewPhraseCode = (char *) malloc (sizeof (char) * (table[iTableIMIndex].iCodeLength + 1));
-    strNewPhraseCode[table[iTableIMIndex].iCodeLength] = '\0';
-    bTableDictLoaded = True;
+    tbl.strNewPhraseCode = (char *) malloc (sizeof (char) * (table->iCodeLength + 1));
+    tbl.strNewPhraseCode[table->iCodeLength] = '\0';
+    tbl.bTableDictLoaded = True;
 
-    iAutoPhrase = 0;
-    if (table[iTableIMIndex].bAutoPhrase) {
+    tbl.iAutoPhrase = 0;
+    if (table->bAutoPhrase) {
 	//为自动词组分配空间
-	autoPhrase = (AUTOPHRASE *) malloc (sizeof (AUTOPHRASE) * AUTO_PHRASE_COUNT);
+	tbl.autoPhrase = (AUTOPHRASE *) malloc (sizeof (AUTOPHRASE) * AUTO_PHRASE_COUNT);
 
 	//读取上次保存的自动词组信息
 #ifdef _DEBUG
-	fprintf (stderr, "Loading Autophrase...\n");
+	FcitxLog(DEBUG, _("Loading Autophrase."));
 #endif
 
-	strcpy (strPath, table[iTableIMIndex].strName);
+	strcpy (strPath, table->strName);
 	strcat (strPath, "_LastAutoPhrase.tmp");
 	fpDict = UserConfigFile (strPath, "rb", NULL);
 	i = 0;
 	if (fpDict) {
-	    fread (&iAutoPhrase, sizeof (unsigned int), 1, fpDict);
+	    fread (&tbl.iAutoPhrase, sizeof (unsigned int), 1, fpDict);
 
-	    for (; i < iAutoPhrase; i++) {
-		autoPhrase[i].strCode = (char *) malloc (sizeof (char) * (table[iTableIMIndex].iCodeLength + 1));
-		autoPhrase[i].strHZ = (char *) malloc (sizeof (char) * (PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1));
-		fread (autoPhrase[i].strCode, table[iTableIMIndex].iCodeLength + 1, 1, fpDict);
-		fread (autoPhrase[i].strHZ, PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1, 1, fpDict);
+	    for (; i < tbl.iAutoPhrase; i++) {
+		tbl.autoPhrase[i].strCode = (char *) malloc (sizeof (char) * (table->iCodeLength + 1));
+		tbl.autoPhrase[i].strHZ = (char *) malloc (sizeof (char) * (PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1));
+		fread (tbl.autoPhrase[i].strCode, table->iCodeLength + 1, 1, fpDict);
+		fread (tbl.autoPhrase[i].strHZ, PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1, 1, fpDict);
 		fread (&iTempCount, sizeof (unsigned int), 1, fpDict);
-		autoPhrase[i].iSelected = iTempCount;
+		tbl.autoPhrase[i].iSelected = iTempCount;
 		if (i == AUTO_PHRASE_COUNT - 1)
-		    autoPhrase[i].next = &autoPhrase[0];
+		    tbl.autoPhrase[i].next = &tbl.autoPhrase[0];
 		else
-		    autoPhrase[i].next = &autoPhrase[i + 1];
+		    tbl.autoPhrase[i].next = &tbl.autoPhrase[i + 1];
 	    }
 	    fclose (fpDict);
 	}
 
 	for (; i < AUTO_PHRASE_COUNT; i++) {
-	    autoPhrase[i].strCode = (char *) malloc (sizeof (char) * (table[iTableIMIndex].iCodeLength + 1));
-	    autoPhrase[i].strHZ = (char *) malloc (sizeof (char) * (PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1));
-	    autoPhrase[i].iSelected = 0;
+	    tbl.autoPhrase[i].strCode = (char *) malloc (sizeof (char) * (table->iCodeLength + 1));
+	    tbl.autoPhrase[i].strHZ = (char *) malloc (sizeof (char) * (PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1));
+	    tbl.autoPhrase[i].iSelected = 0;
 	    if (i == AUTO_PHRASE_COUNT - 1)
-		autoPhrase[i].next = &autoPhrase[0];
+		tbl.autoPhrase[i].next = &tbl.autoPhrase[0];
 	    else
-		autoPhrase[i].next = &autoPhrase[i + 1];
+		tbl.autoPhrase[i].next = &tbl.autoPhrase[i + 1];
 	}
 
 	if (i == AUTO_PHRASE_COUNT)
-	    insertPoint = &autoPhrase[0];
+	    tbl.insertPoint = &tbl.autoPhrase[0];
 	else
-	    insertPoint = &autoPhrase[i - 1];
+	    tbl.insertPoint = &tbl.autoPhrase[i - 1];
 
 #ifdef _DEBUG
-	fprintf (stderr, "Load Autophrase OK\n");
+	FcitxLog(DEBUG, _("Load Autophrase OK"));
 #endif
     }
     else
-	autoPhrase = (AUTOPHRASE *) NULL;
+	tbl.autoPhrase = (AUTOPHRASE *) NULL;
 
     return True;
 }
@@ -634,7 +466,7 @@ Bool LoadTableDict (void)
 void TableInit (void)
 {
     bSP = False;
-    PYBaseOrder = baseOrder;
+    tbl.PYBaseOrder = baseOrder;
     strPYAuto[0] = '\0';
 }
 
@@ -647,15 +479,15 @@ void FreeTableIM (void)
     RECORD         *recTemp, *recNext;
     INT16           i;
 
-    if (!recordHead)
+    if (!tbl.recordHead)
 	return;
 
-    if (iTableChanged)
+    if (tbl.iTableChanged)
 	SaveTableDict ();
 
     //释放码表
-    recTemp = recordHead->next;
-    while (recTemp != recordHead) {
+    recTemp = tbl.recordHead->next;
+    while (recTemp != tbl.recordHead) {
 	recNext = recTemp->next;
 
 	free (recTemp->strCode);
@@ -665,56 +497,58 @@ void FreeTableIM (void)
 	recTemp = recNext;
     }
 
-    free (recordHead);
-    recordHead = NULL;
+    free (tbl.recordHead);
+    tbl.recordHead = NULL;
 
-    if (iFH) {
-	free (fh);
-	iFH = 0;
+    if (tbl.iFH) {
+	free (tbl.fh);
+	tbl.iFH = 0;
     }
+    
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    free (table[iTableIMIndex].strInputCode);
-    free (table[iTableIMIndex].strIgnoreChars);
-    free (table[iTableIMIndex].strEndCode);
-    table[iTableIMIndex].iRecordCount = 0;
-    bTableDictLoaded = False;
+    free (table->strInputCode);
+    free (table->strIgnoreChars);
+    free (table->strEndCode);
+    table->iRecordCount = 0;
+    tbl.bTableDictLoaded = False;
 
-    free (strNewPhraseCode);
+    free (tbl.strNewPhraseCode);
 
     //释放组词规则的空间
-    if (table[iTableIMIndex].rule) {
-	for (i = 0; i < table[iTableIMIndex].iCodeLength - 1; i++)
-	    free (table[iTableIMIndex].rule[i].rule);
-	free (table[iTableIMIndex].rule);
+    if (table->rule) {
+	for (i = 0; i < table->iCodeLength - 1; i++)
+	    free (table->rule[i].rule);
+	free (table->rule);
 
-	table[iTableIMIndex].rule = NULL;
+	table->rule = NULL;
     }
 
     //释放索引的空间
-    if (recordIndex) {
-	free (recordIndex);
-	recordIndex = NULL;
+    if (tbl.recordIndex) {
+	free (tbl.recordIndex);
+	tbl.recordIndex = NULL;
     }
 
     //释放自动词组的空间
-    if (autoPhrase) {
+    if (tbl.autoPhrase) {
 	for (i = 0; i < AUTO_PHRASE_COUNT; i++) {
-	    free (autoPhrase[i].strCode);
-	    free (autoPhrase[i].strHZ);
+	    free (tbl.autoPhrase[i].strCode);
+	    free (tbl.autoPhrase[i].strHZ);
 	}
-	free (autoPhrase);
+	free (tbl.autoPhrase);
 
-	autoPhrase = (AUTOPHRASE *) NULL;
+	tbl.autoPhrase = (AUTOPHRASE *) NULL;
     }
 
-    baseOrder = PYBaseOrder;
+    baseOrder = tbl.PYBaseOrder;
 }
 
 void TableResetStatus (void)
 {
-    bIsTableAddPhrase = False;
-    bIsTableDelPhrase = False;
-    bIsTableAdjustOrder = False;
+    tbl.bIsTableAddPhrase = False;
+    tbl.bIsTableDelPhrase = False;
+    tbl.bIsTableAdjustOrder = False;
     bIsDoInputOnly = False;
     //bSingleHZMode = False;
 }
@@ -739,10 +573,13 @@ void SaveTableDict (void)
     FILE	*logfile = (FILE *)NULL;;
 #endif
 
-    if ( isSavingTableDic )
+    if ( tbl.isSavingTableDic )
 	return;
 
-    isSavingTableDic = True;
+    if (!tbl.iTableChanged)
+        return;
+
+    tbl.isSavingTableDic = True;
     
 #ifdef _ENABLE_LOG       
     logfile = UserConfigFile("fcitx-dict.log", "wt", NULL);
@@ -757,47 +594,49 @@ void SaveTableDict (void)
     
     fpDict = UserConfigFile(TEMP_FILE, "wb", &pstr);
     if (!fpDict) {
-	isSavingTableDic = False;
-	fprintf (stderr, "Cannot create table file: %s\n", pstr);
+	tbl.isSavingTableDic = False;
+	FcitxLog(ERROR, _("Cannot create table file: %s"), pstr);
 	return;
     }
     strcpy(strPathTemp, pstr);
 
 #ifdef _DEBUG
-    fprintf (stderr, "Saving TABLE Dict...\n");
+    FcitxLog(DEBUG, _("Saving TABLE Dict."));
 #endif
 
     //写入版本号--如果第一个字为0,表示后面那个字节为版本号，为了与老版本兼容
     iTemp = 0;
     fwrite (&iTemp, sizeof (unsigned int), 1, fpDict);
     fwrite (&iInternalVersion, sizeof (INT8), 1, fpDict);
+    
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    iTemp = strlen (table[iTableIMIndex].strInputCode);
+    iTemp = strlen (table->strInputCode);
     fwrite (&iTemp, sizeof (unsigned int), 1, fpDict);
-    fwrite (table[iTableIMIndex].strInputCode, sizeof (char), iTemp + 1, fpDict);
-    fwrite (&(table[iTableIMIndex].iCodeLength), sizeof (INT8), 1, fpDict);
-    fwrite (&(table[iTableIMIndex].iPYCodeLength), sizeof (INT8), 1, fpDict);
-    iTemp = strlen (table[iTableIMIndex].strIgnoreChars);
+    fwrite (table->strInputCode, sizeof (char), iTemp + 1, fpDict);
+    fwrite (&(table->iCodeLength), sizeof (INT8), 1, fpDict);
+    fwrite (&(table->iPYCodeLength), sizeof (INT8), 1, fpDict);
+    iTemp = strlen (table->strIgnoreChars);
     fwrite (&iTemp, sizeof (unsigned int), 1, fpDict);
-    fwrite (table[iTableIMIndex].strIgnoreChars, sizeof (char), iTemp + 1, fpDict);
+    fwrite (table->strIgnoreChars, sizeof (char), iTemp + 1, fpDict);
 
-    fwrite (&(table[iTableIMIndex].bRule), sizeof (unsigned char), 1, fpDict);
-    if (table[iTableIMIndex].bRule) {	//表示有组词规则
-	for (i = 0; i < table[iTableIMIndex].iCodeLength - 1; i++) {
-	    fwrite (&(table[iTableIMIndex].rule[i].iFlag), sizeof (unsigned char), 1, fpDict);
-	    fwrite (&(table[iTableIMIndex].rule[i].iWords), sizeof (unsigned char), 1, fpDict);
-	    for (iTemp = 0; iTemp < table[iTableIMIndex].iCodeLength; iTemp++) {
-		fwrite (&(table[iTableIMIndex].rule[i].rule[iTemp].iFlag), sizeof (unsigned char), 1, fpDict);
-		fwrite (&(table[iTableIMIndex].rule[i].rule[iTemp].iWhich), sizeof (unsigned char), 1, fpDict);
-		fwrite (&(table[iTableIMIndex].rule[i].rule[iTemp].iIndex), sizeof (unsigned char), 1, fpDict);
+    fwrite (&(table->bRule), sizeof (unsigned char), 1, fpDict);
+    if (table->bRule) {	//表示有组词规则
+	for (i = 0; i < table->iCodeLength - 1; i++) {
+	    fwrite (&(table->rule[i].iFlag), sizeof (unsigned char), 1, fpDict);
+	    fwrite (&(table->rule[i].iWords), sizeof (unsigned char), 1, fpDict);
+	    for (iTemp = 0; iTemp < table->iCodeLength; iTemp++) {
+		fwrite (&(table->rule[i].rule[iTemp].iFlag), sizeof (unsigned char), 1, fpDict);
+		fwrite (&(table->rule[i].rule[iTemp].iWhich), sizeof (unsigned char), 1, fpDict);
+		fwrite (&(table->rule[i].rule[iTemp].iIndex), sizeof (unsigned char), 1, fpDict);
 	    }
 	}
     }
 
-    fwrite (&(table[iTableIMIndex].iRecordCount), sizeof (unsigned int), 1, fpDict);
-    recTemp = recordHead->next;
-    while (recTemp != recordHead) {
-	fwrite (recTemp->strCode, sizeof (char), table[iTableIMIndex].iPYCodeLength + 1, fpDict);
+    fwrite (&(table->iRecordCount), sizeof (unsigned int), 1, fpDict);
+    recTemp = tbl.recordHead->next;
+    while (recTemp != tbl.recordHead) {
+	fwrite (recTemp->strCode, sizeof (char), table->iPYCodeLength + 1, fpDict);
 
 #ifdef _ENABLE_LOG
 	if ( logfile )
@@ -837,33 +676,33 @@ void SaveTableDict (void)
     }
 #endif
 
-    fpDict = UserConfigFile(table[iTableIMIndex].strPath, NULL, &pstr);
+    fpDict = UserConfigFile(table->strPath, NULL, &pstr);
     if (access (pstr, 0))
 	unlink (pstr);
     rename (strPathTemp, pstr);
 
 #ifdef _DEBUG
-    fprintf (stderr, "Rename OK\n");
+    FcitxLog(DEBUG, _("Rename OK"));
 #endif
 
-    iTableChanged = 0;
+    tbl.iTableChanged = 0;
 
-    if (autoPhrase) {
+    if (tbl.autoPhrase) {
 	//保存上次的自动词组信息
 	fpDict = UserConfigFile(TEMP_FILE, "wb", &pstr);
 	strcpy (strPathTemp,pstr);
 	if (fpDict) {
-	    fwrite (&iAutoPhrase, sizeof (int), 1, fpDict);
-	    for (i = 0; i < iAutoPhrase; i++) {
-		fwrite (autoPhrase[i].strCode, table[iTableIMIndex].iCodeLength + 1, 1, fpDict);
-		fwrite (autoPhrase[i].strHZ, PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1, 1, fpDict);
-		iTemp = autoPhrase[i].iSelected;
+	    fwrite (&tbl.iAutoPhrase, sizeof (int), 1, fpDict);
+	    for (i = 0; i < tbl.iAutoPhrase; i++) {
+		fwrite (tbl.autoPhrase[i].strCode, table->iCodeLength + 1, 1, fpDict);
+		fwrite (tbl.autoPhrase[i].strHZ, PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1, 1, fpDict);
+		iTemp = tbl.autoPhrase[i].iSelected;
 		fwrite (&iTemp, sizeof (unsigned int), 1, fpDict);
 	    }
 	    fclose (fpDict);
 	}
 
-	strcpy (strPath, table[iTableIMIndex].strName);
+	strcpy (strPath, table->strName);
 	strcat (strPath, "_LastAutoPhrase.tmp");
 	fpDict = UserConfigFile(strPath, NULL, &pstr);
 	if (access (pstr, 0))
@@ -871,14 +710,15 @@ void SaveTableDict (void)
 	rename (strPathTemp, pstr);
     }
 
-    isSavingTableDic = False;
+    tbl.isSavingTableDic = False;
 }
 
 Bool IsInputKey (int iKey)
 {
     char           *p;
 
-    p = table[iTableIMIndex].strInputCode;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+    p = table->strInputCode;
     if (!p)
 	return False;
 
@@ -888,7 +728,7 @@ Bool IsInputKey (int iKey)
 	p++;
     }
 
-    if (table[iTableIMIndex].bHasPinyin) {
+    if (table->bHasPinyin) {
 	if (iKey >= 'a' && iKey <= 'z')
 	    return True;
     }
@@ -900,7 +740,8 @@ Bool IsEndKey (char cChar)
 {
     char           *p;
 
-    p = table[iTableIMIndex].strEndCode;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+    p = table->strEndCode;
     if (!p)
 	return False;
 
@@ -917,7 +758,8 @@ Bool IsIgnoreChar (char cChar)
 {
     char           *p;
 
-    p = table[iTableIMIndex].strIgnoreChars;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+    p = table->strIgnoreChars;
     while (*p) {
 	if (cChar == *p)
 	    return True;
@@ -931,8 +773,9 @@ INT8 IsChooseKey (int iKey)
 {
     int i = 0;
 
-    while (table[iTableIMIndex].strChoose[i]) {
-	if (iKey == table[iTableIMIndex].strChoose[i])
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+    while (table->strChoose[i]) {
+	if (iKey == table->strChoose[i])
 	    return i + 1;
 	i++;
     }
@@ -943,30 +786,32 @@ INT8 IsChooseKey (int iKey)
 INPUT_RETURN_VALUE DoTableInput (int iKey)
 {
     INPUT_RETURN_VALUE retVal;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    if (!bTableDictLoaded)
+    if (!tbl.bTableDictLoaded)
 	LoadTableDict ();
 
-    if (bTablePhraseTips) {
+    if (tbl.bTablePhraseTips) {
 	if (iKey == CTRL_DELETE) {
-	    bTablePhraseTips = False;
+	    tbl.bTablePhraseTips = False;
 	    TableDelPhraseByHZ (messageUp.msg[1].strMsg);
 	    return IRV_DONOT_PROCESS_CLEAN;
 	}
 	else if (iKey != LCTRL && iKey != RCTRL && iKey != LSHIFT && iKey != RSHIFT) {
 	    SetMessageCount(&messageUp, 0);
 	    SetMessageCount(&messageDown, 0);
-	    bTablePhraseTips = False;
+	    tbl.bTablePhraseTips = False;
 	    CloseInputWindow();
 	}
     }
 
     retVal = IRV_DO_NOTHING;
-    if (IsInputKey (iKey) || IsEndKey (iKey) || iKey == table[iTableIMIndex].cMatchingKey || iKey == table[iTableIMIndex].cPinyin) {
+    if (IsInputKey (iKey) || IsEndKey (iKey) || iKey == table->cMatchingKey || iKey == table->cPinyin) {
 	bIsInLegend = False;
 
-	if (!bIsTableAddPhrase && !bIsTableDelPhrase && !bIsTableAdjustOrder) {
-	    if (strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY) {
+	if (!tbl.bIsTableAddPhrase && !tbl.bIsTableDelPhrase && !tbl.bIsTableAdjustOrder) {
+	    if (strCodeInput[0] == table->cPinyin && table->bUsePY) {
 		if (iCodeInputCount != (MAX_PY_LENGTH * 5 + 1)) {
 		    strCodeInput[iCodeInputCount++] = (char) iKey;
 		    strCodeInput[iCodeInputCount] = '\0';
@@ -976,11 +821,11 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		    retVal = IRV_DO_NOTHING;
 	    }
 	    else {
-		if ((iCodeInputCount < table[iTableIMIndex].iCodeLength) || (table[iTableIMIndex].bHasPinyin && iCodeInputCount < table[iTableIMIndex].iPYCodeLength)) {
+		if ((iCodeInputCount < table->iCodeLength) || (table->bHasPinyin && iCodeInputCount < table->iPYCodeLength)) {
 		    strCodeInput[iCodeInputCount++] = (char) iKey;
 		    strCodeInput[iCodeInputCount] = '\0';
 
-		    if (iCodeInputCount == 1 && strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY) {
+		    if (iCodeInputCount == 1 && strCodeInput[0] == table->cPinyin && table->bUsePY) {
 			iCandWordCount = 0;
 			retVal = IRV_DISPLAY_LAST;
 		    }
@@ -996,7 +841,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 			if ( iCandWordCount ) {			// to realize auto-sending HZ to client
 			    strLastFirstCand = _TableGetCandWord (0,False);
 			    lastFirstCandType = tableCandWord[0].flag;
-			    pLastCandRecord = pCurCandRecord;
+			    pLastCandRecord = tbl.pCurCandRecord;
 		        }
 			
 			retVal = TableGetCandWords (SM_FIRST);
@@ -1017,7 +862,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 
 			    return IRV_DISPLAY_CANDWORDS;
 			}
-			else if (table[iTableIMIndex].iTableAutoSendToClientWhenNone && (iCodeInputCount == (table[iTableIMIndex].iTableAutoSendToClientWhenNone + 1)) && !iCandWordCount) {
+			else if (table->iTableAutoSendToClientWhenNone && (iCodeInputCount == (table->iTableAutoSendToClientWhenNone + 1)) && !iCandWordCount) {
 			    if ( strLastFirstCand && (lastFirstCandType!=CT_AUTOPHRASE)) {
 			    	strcpy (strStringGet, strLastFirstCand);
 				TableUpdateHitFrequency(pLastCandRecord);
@@ -1030,8 +875,8 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 			    strCodeInput[1] = '\0';
 			    TableGetCandWords (SM_FIRST);
 			}
-			else if (table[iTableIMIndex].iTableAutoSendToClient && (iCodeInputCount >= table[iTableIMIndex].iTableAutoSendToClient)) {
-			    if (iCandWordCount == 1 && (tableCandWord[0].flag != CT_AUTOPHRASE || (tableCandWord[0].flag == CT_AUTOPHRASE && !table[iTableIMIndex].iSaveAutoPhraseAfter))) {	//如果只有一个候选词，则送到客户程序中
+			else if (table->iTableAutoSendToClient && (iCodeInputCount >= table->iTableAutoSendToClient)) {
+			    if (iCandWordCount == 1 && (tableCandWord[0].flag != CT_AUTOPHRASE || (tableCandWord[0].flag == CT_AUTOPHRASE && !table->iSaveAutoPhraseAfter))) {	//如果只有一个候选词，则送到客户程序中
 			    	retVal = IRV_DO_NOTHING;
 				if (tableCandWord[0].flag == CT_NORMAL) {
 				    if (tableCandWord[0].candWord.record->bPinyin)
@@ -1055,7 +900,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		    }
 		}
 		else {
-		    if (table[iTableIMIndex].iTableAutoSendToClient) {
+		    if (table->iTableAutoSendToClient) {
 			if (iCandWordCount) {
 			    if (tableCandWord[0].flag != CT_AUTOPHRASE) {
 				strcpy (strStringGet, TableGetCandWord (0));
@@ -1082,25 +927,25 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 	}
     }
     else {
-	if (bIsTableAddPhrase) {
+	if (tbl.bIsTableAddPhrase) {
 	    switch (iKey) {
 	    case LEFT:
-		if (iTableNewPhraseHZCount < iHZLastInputCount && iTableNewPhraseHZCount < PHRASE_MAX_LENGTH) {
-		    iTableNewPhraseHZCount++;
+		if (tbl.iTableNewPhraseHZCount < tbl.iHZLastInputCount && tbl.iTableNewPhraseHZCount < PHRASE_MAX_LENGTH) {
+		    tbl.iTableNewPhraseHZCount++;
 		    TableCreateNewPhrase ();
 		}
 		break;
 	    case RIGHT:
-		if (iTableNewPhraseHZCount > 2) {
-		    iTableNewPhraseHZCount--;
+		if (tbl.iTableNewPhraseHZCount > 2) {
+		    tbl.iTableNewPhraseHZCount--;
 		    TableCreateNewPhrase ();
 		}
 		break;
-	    case ENTER:
-		if (!bCanntFindCode)
+	    case ENTER_K:
+		if (!tbl.bCanntFindCode)
 		    TableInsertPhrase (messageDown.msg[1].strMsg, messageDown.msg[0].strMsg);
 	    case ESC:
-		bIsTableAddPhrase = False;
+		tbl.bIsTableAddPhrase = False;
 		bIsDoInputOnly = False;
 		return IRV_CLEAN;
 	    default:
@@ -1109,13 +954,13 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 
 	    return IRV_DISPLAY_MESSAGE;
 	}
-	if (IsHotKey (iKey, hkTableAddPhrase)) {
-	    if (!bIsTableAddPhrase) {
-		if (iHZLastInputCount < 2 || !table[iTableIMIndex].bRule)	//词组最少为两个汉字
+	if (IsHotKey (iKey, tbl.hkTableAddPhrase)) {
+	    if (!tbl.bIsTableAddPhrase) {
+		if (tbl.iHZLastInputCount < 2 || !table->bRule)	//词组最少为两个汉字
 		    return IRV_DO_NOTHING;
 
-		iTableNewPhraseHZCount = 2;
-		bIsTableAddPhrase = True;
+		tbl.iTableNewPhraseHZCount = 2;
+		tbl.bIsTableAddPhrase = True;
 		bIsDoInputOnly = True;
 		bShowCursor = False;
 
@@ -1134,7 +979,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 
 	    return retVal;
 	}
-	else if (IsHotKey (iKey, hkGetPY)) {
+	else if (IsHotKey (iKey, tbl.hkGetPY)) {
 	    char            strPY[100];
 
 	    //如果拼音单字字库没有读入，则读入它
@@ -1162,7 +1007,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 	    return IRV_TO_PROCESS;
 
 	if (iKey == ESC) {
-	    if (bIsTableDelPhrase || bIsTableAdjustOrder) {
+	    if (tbl.bIsTableDelPhrase || tbl.bIsTableAdjustOrder) {
 		TableResetStatus ();
 		retVal = IRV_DISPLAY_CANDWORDS;
 	    }
@@ -1179,17 +1024,17 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		if (iKey > iCandWordCount)
 		    return IRV_DO_NOTHING;
 		else {
-		    if (bIsTableDelPhrase) {
+		    if (tbl.bIsTableDelPhrase) {
 			TableDelPhraseByIndex (iKey);
 			retVal = TableGetCandWords (SM_FIRST);
 		    }
-		    else if (bIsTableAdjustOrder) {
+		    else if (tbl.bIsTableAdjustOrder) {
 			TableAdjustOrderByIndex (iKey);
 			retVal = TableGetCandWords (SM_FIRST);
 		    }
 		    else {
 			//如果是拼音，进入快速调整字频方式
-			if (strcmp (strCodeInput, table[iTableIMIndex].strSymbol) && strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY)
+			if (strcmp (strCodeInput, table->strSymbol) && strCodeInput[0] == table->cPinyin && table->bUsePY)
 			    PYGetCandWord (iKey - 1);
 			strcpy (strStringGet, TableGetCandWord (iKey - 1));
 
@@ -1205,21 +1050,21 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		retVal = IRV_GET_LEGEND;
 	    }
 	}
-	else if (!bIsTableDelPhrase && !bIsTableAdjustOrder) {
-	    if (IsHotKey (iKey, hkTableAdjustOrder)) {
-		if ((iTableCandDisplayed == iCandWordCount && iCandWordCount < 2) || bIsInLegend)
+	else if (!tbl.bIsTableDelPhrase && !tbl.bIsTableAdjustOrder) {
+	    if (IsHotKey (iKey, tbl.hkTableAdjustOrder)) {
+		if ((tbl.iTableCandDisplayed == iCandWordCount && iCandWordCount < 2) || bIsInLegend)
 		    return IRV_DO_NOTHING;
 
-		bIsTableAdjustOrder = True;
+		tbl.bIsTableAdjustOrder = True;
         SetMessageCount(&messageUp, 0);
         AddMessageAtLast(&messageUp, MSG_TIPS, "选择需要提前的词组序号，ESC结束");
 		retVal = IRV_DISPLAY_MESSAGE;
 	    }
-	    else if (IsHotKey (iKey, hkTableDelPhrase)) {
+	    else if (IsHotKey (iKey, tbl.hkTableDelPhrase)) {
 		if (!iCandWordCount || bIsInLegend)
 		    return IRV_DO_NOTHING;
 
-		bIsTableDelPhrase = True;
+		tbl.bIsTableDelPhrase = True;
         SetMessageCount(&messageUp, 0);
         AddMessageAtLast(&messageUp, MSG_TIPS, "选择需要删除的词组序号，ESC取消");
 		retVal = IRV_DISPLAY_MESSAGE;
@@ -1233,7 +1078,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		iCodeInputCount--;
 		strCodeInput[iCodeInputCount] = '\0';
 		
-		if (iCodeInputCount == 1 && strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY) {
+		if (iCodeInputCount == 1 && strCodeInput[0] == table->cPinyin && table->bUsePY) {
 		    iCandWordCount = 0;
 		    retVal = IRV_DISPLAY_LAST;
 		}
@@ -1244,8 +1089,8 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 	    }
 	    else if (iKey == ' ') {
 		if (!bIsInLegend) {
-		    if (!(table[iTableIMIndex].bUsePY && iCodeInputCount == 1 && strCodeInput[0] == table[iTableIMIndex].cPinyin)) {
-			if (strcmp (strCodeInput, table[iTableIMIndex].strSymbol) && strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY)
+		    if (!(table->bUsePY && iCodeInputCount == 1 && strCodeInput[0] == table->cPinyin)) {
+			if (strcmp (strCodeInput, table->strSymbol) && strCodeInput[0] == table->cPinyin && table->bUsePY)
 			    PYGetCandWord (0);
 
 			if (!iCandWordCount) {
@@ -1275,7 +1120,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
     }
 
     if (!bIsInLegend) {
-	if (!bIsTableDelPhrase && !bIsTableAdjustOrder) {
+	if (!tbl.bIsTableDelPhrase && !tbl.bIsTableAdjustOrder) {
 		SetMessageCount(&messageUp,0);
 	    if (iCodeInputCount) {
         AddMessageAtLast(&messageUp, MSG_INPUT, strCodeInput);
@@ -1285,7 +1130,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 	    bIsDoInputOnly = True;
     }
 
-    if (bIsTableDelPhrase || bIsTableAdjustOrder || bIsInLegend)
+    if (tbl.bIsTableDelPhrase || tbl.bIsTableAdjustOrder || bIsInLegend)
 	bShowCursor = False;
     else
 	bShowCursor = True;
@@ -1296,14 +1141,15 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 char           *TableGetCandWord (int iIndex)
 {
     char *str;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
     
     str=_TableGetCandWord(iIndex, True);
     if (str) {
-    	if (table[iTableIMIndex].bAutoPhrase && (utf8_strlen (str) == 1 || (utf8_strlen (str) > 1 && table[iTableIMIndex].bAutoPhrasePhrase)))
+    	if (table->bAutoPhrase && (utf8_strlen (str) == 1 || (utf8_strlen (str) > 1 && table->bAutoPhrasePhrase)))
     	    UpdateHZLastInput (str);
 	    
-	if ( pCurCandRecord )
-	    TableUpdateHitFrequency (pCurCandRecord);
+	if ( tbl.pCurCandRecord )
+	    TableUpdateHitFrequency (tbl.pCurCandRecord);
     }
     
     return str;
@@ -1312,7 +1158,7 @@ char           *TableGetCandWord (int iIndex)
 void		TableUpdateHitFrequency (RECORD * record)
 {
     record->iHit++;
-    record->iIndex = ++iTableIndex;
+    record->iIndex = ++tbl.iTableIndex;
 }
 
 /*
@@ -1321,8 +1167,10 @@ void		TableUpdateHitFrequency (RECORD * record)
 char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 {
     char           *pCandWord = NULL;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
     
-    if (!strcmp (strCodeInput, table[iTableIMIndex].strSymbol))
+    if (!strcmp (strCodeInput, table->strSymbol))
 	return TableGetFHCandWord (iIndex);
 
     bIsInLegend = False;
@@ -1334,12 +1182,12 @@ char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 	iIndex = iCandWordCount - 1;
 
     if (tableCandWord[iIndex].flag == CT_NORMAL)
-	pCurCandRecord = tableCandWord[iIndex].candWord.record;
+	tbl.pCurCandRecord = tableCandWord[iIndex].candWord.record;
     else
-	pCurCandRecord = (RECORD *)NULL;
+	tbl.pCurCandRecord = (RECORD *)NULL;
 
-    iTableChanged++;
-    if (iTableChanged >= TABLE_AUTO_SAVE_AFTER)
+    tbl.iTableChanged++;
+    if (tbl.iTableChanged >= TABLE_AUTO_SAVE_AFTER)
 	SaveTableDict ();
 
     switch (tableCandWord[iIndex].flag) {
@@ -1347,11 +1195,11 @@ char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 	pCandWord = tableCandWord[iIndex].candWord.record->strHZ;
 	break;
     case CT_AUTOPHRASE:
-	if (table[iTableIMIndex].iSaveAutoPhraseAfter) {
+	if (table->iSaveAutoPhraseAfter) {
 	    /* 当_bLegend为False时，不应该计算自动组词的频度，因此此时实际并没有选择这个词 */
-	    if (table[iTableIMIndex].iSaveAutoPhraseAfter >= tableCandWord[iIndex].candWord.autoPhrase->iSelected && _bLegend)
+	    if (table->iSaveAutoPhraseAfter >= tableCandWord[iIndex].candWord.autoPhrase->iSelected && _bLegend)
 		tableCandWord[iIndex].candWord.autoPhrase->iSelected++;
-	    if (table[iTableIMIndex].iSaveAutoPhraseAfter == tableCandWord[iIndex].candWord.autoPhrase->iSelected)	//保存自动词组
+	    if (table->iSaveAutoPhraseAfter == tableCandWord[iIndex].candWord.autoPhrase->iSelected)	//保存自动词组
 		TableInsertPhrase (tableCandWord[iIndex].candWord.autoPhrase->strCode, tableCandWord[iIndex].candWord.autoPhrase->strHZ);
 	}
 	pCandWord = tableCandWord[iIndex].candWord.autoPhrase->strHZ;
@@ -1363,12 +1211,12 @@ char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 	;
     }
 
-    if (bUseLegend && _bLegend) {
-	strcpy (strTableLegendSource, pCandWord);
+    if (fcitxProfile.bUseLegend && _bLegend) {
+	strcpy (tbl.strTableLegendSource, pCandWord);
 	TableGetLegendCandWords (SM_FIRST);
     }
     else {
-	if (table[iTableIMIndex].bPromptTableCode) {
+	if (table->bPromptTableCode) {
 	    RECORD         *temp;
 
 	    SetMessageCount(&messageUp, 0);
@@ -1376,7 +1224,7 @@ char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 
         SetMessageCount(&messageDown, 0);
         AddMessageAtLast(&messageDown, MSG_TIPS, pCandWord);
-	    temp = tableSingleHZ[CalHZIndex (pCandWord)];
+	    temp = tbl.tableSingleHZ[CalHZIndex (pCandWord)];
 	    if (temp) {
         AddMessageAtLast(&messageDown, MSG_CODE, temp->strCode);
 	    }
@@ -1398,13 +1246,15 @@ char           *_TableGetCandWord (int iIndex, Bool _bLegend)
 INPUT_RETURN_VALUE TableGetPinyinCandWords (SEARCH_MODE mode)
 {
     int             i;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     if (mode == SM_FIRST) {
 	strcpy (strFindString, strCodeInput + 1);
 
 	DoPYInput (-1);
 
-	strCodeInput[0] = table[iTableIMIndex].cPinyin;
+	strCodeInput[0] = table->cPinyin;
 	strCodeInput[1] = '\0';
 
 	strcat (strCodeInput, strFindString);
@@ -1427,26 +1277,28 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
     int             i, iTemp;
     char            strTemp[3], *pstr;
     RECORD         *recTemp;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     if (strCodeInput[0] == '\0')
 	return IRV_TO_PROCESS;
 
     if (bIsInLegend)
 	return TableGetLegendCandWords (mode);
-    if (!strcmp (strCodeInput, table[iTableIMIndex].strSymbol))
+    if (!strcmp (strCodeInput, table->strSymbol))
 	return TableGetFHCandWords (mode);
 
-    if (strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY)
+    if (strCodeInput[0] == table->cPinyin && table->bUsePY)
 	TableGetPinyinCandWords (mode);
     else {
 	if (mode == SM_FIRST) {
 	    iCandWordCount = 0;
-	    iTableCandDisplayed = 0;
-	    iTableTotalCandCount = 0;
+	    tbl.iTableCandDisplayed = 0;
+	    tbl.iTableTotalCandCount = 0;
 	    iCurrentCandPage = 0;
 	    iCandPageCount = 0;
 	    TableResetFlags ();
-	    if (TableFindFirstMatchCode () == -1 && !iAutoPhrase) {
+	    if (TableFindFirstMatchCode () == -1 && !tbl.iAutoPhrase) {
 		SetMessageCount(&messageDown, 0);
 		return IRV_DISPLAY_CANDWORDS;	//Not Found
 	    }
@@ -1456,14 +1308,14 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		return IRV_TO_PROCESS;
 
 	    if (mode == SM_NEXT) {
-		if (iTableCandDisplayed >= iTableTotalCandCount)
+		if (tbl.iTableCandDisplayed >= tbl.iTableTotalCandCount)
 		    return IRV_DO_NOTHING;
 	    }
 	    else {
-		if (iTableCandDisplayed == iCandWordCount)
+		if (tbl.iTableCandDisplayed == iCandWordCount)
 		    return IRV_DO_NOTHING;
 
-		iTableCandDisplayed -= iCandWordCount;
+		tbl.iTableCandDisplayed -= iCandWordCount;
 		TableSetCandWordsFlag (iCandWordCount, False);
 	    }
 
@@ -1471,35 +1323,35 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	}
 
 	iCandWordCount = 0;
-	if (mode == SM_PREV && table[iTableIMIndex].bRule && table[iTableIMIndex].bAutoPhrase && iCodeInputCount == table[iTableIMIndex].iCodeLength) {
-	    for (i = iAutoPhrase - 1; i >= 0; i--) {
-		if (!TableCompareCode (strCodeInput, autoPhrase[i].strCode) && autoPhrase[i].flag) {
-		    if (TableHasPhrase (autoPhrase[i].strCode, autoPhrase[i].strHZ))
+	if (mode == SM_PREV && table->bRule && table->bAutoPhrase && iCodeInputCount == table->iCodeLength) {
+	    for (i = tbl.iAutoPhrase - 1; i >= 0; i--) {
+		if (!TableCompareCode (strCodeInput, tbl.autoPhrase[i].strCode) && tbl.autoPhrase[i].flag) {
+		    if (TableHasPhrase (tbl.autoPhrase[i].strCode, tbl.autoPhrase[i].strHZ))
 			TableAddAutoCandWord (i, mode);
 		}
 	    }
 	}
 
 	if (iCandWordCount < iMaxCandWord) {
-	    while (currentRecord && currentRecord != recordHead) {
-		if ((mode == SM_PREV) ^ (!currentRecord->flag)) {
-		    if (!TableCompareCode (strCodeInput, currentRecord->strCode) && CheckHZCharset (currentRecord->strHZ)) {
+	    while (tbl.currentRecord && tbl.currentRecord != tbl.recordHead) {
+		if ((mode == SM_PREV) ^ (!tbl.currentRecord->flag)) {
+		    if (!TableCompareCode (strCodeInput, tbl.currentRecord->strCode) && CheckHZCharset (tbl.currentRecord->strHZ)) {
 			if (mode == SM_FIRST)
-			    iTableTotalCandCount++;
-			TableAddCandWord (currentRecord, mode);
+			    tbl.iTableTotalCandCount++;
+			TableAddCandWord (tbl.currentRecord, mode);
 		    }
 		}
 
-		currentRecord = currentRecord->next;
+		tbl.currentRecord = tbl.currentRecord->next;
 	    }
 	}
 
-	if (table[iTableIMIndex].bRule && table[iTableIMIndex].bAutoPhrase && mode != SM_PREV && iCodeInputCount == table[iTableIMIndex].iCodeLength) {
-	    for (i = iAutoPhrase - 1; i >= 0; i--) {
-		if (!TableCompareCode (strCodeInput, autoPhrase[i].strCode) && !autoPhrase[i].flag) {
-		    if (TableHasPhrase (autoPhrase[i].strCode, autoPhrase[i].strHZ)) {
+	if (table->bRule && table->bAutoPhrase && mode != SM_PREV && iCodeInputCount == table->iCodeLength) {
+	    for (i = tbl.iAutoPhrase - 1; i >= 0; i--) {
+		if (!TableCompareCode (strCodeInput, tbl.autoPhrase[i].strCode) && !tbl.autoPhrase[i].flag) {
+		    if (TableHasPhrase (tbl.autoPhrase[i].strCode, tbl.autoPhrase[i].strHZ)) {
 			if (mode == SM_FIRST)
-			    iTableTotalCandCount++;
+			    tbl.iTableTotalCandCount++;
 			TableAddAutoCandWord (i, mode);
 		    }
 		}
@@ -1509,12 +1361,12 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	TableSetCandWordsFlag (iCandWordCount, True);
 
 	if (mode != SM_PREV)
-	    iTableCandDisplayed += iCandWordCount;
+	    tbl.iTableCandDisplayed += iCandWordCount;
 
 	//由于iCurrentCandPage和iCandPageCount用来指示是否显示上/下翻页图标，因此，此处需要设置一下
-	iCurrentCandPage = (iTableCandDisplayed == iCandWordCount) ? 0 : 1;
-	iCandPageCount = (iTableCandDisplayed >= iTableTotalCandCount) ? 1 : 2;
-	if (iCandWordCount == iTableTotalCandCount)
+	iCurrentCandPage = (tbl.iTableCandDisplayed == iCandWordCount) ? 0 : 1;
+	iCandPageCount = (tbl.iTableCandDisplayed >= tbl.iTableTotalCandCount) ? 1 : 2;
+	if (iCandWordCount == tbl.iTableTotalCandCount)
 	    iCandPageCount = 0;
 	/* **************************************************** */
     }
@@ -1527,7 +1379,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	strTemp[1] = '\0';
 
     /* 如果用户设置了固定输入条宽度，就在此进行处理 */
-    if (iFixedInputWindowWidth && !(strCodeInput[0] == table[iTableIMIndex].cPinyin && table[iTableIMIndex].bUsePY)) {
+    if (iFixedInputWindowWidth && !(strCodeInput[0] == table->cPinyin && table->bUsePY)) {
 	uint            iWidth = 2 * INPUTWND_START_POS_DOWN + 1;
 
 	if (mode == SM_PREV) {
@@ -1620,7 +1472,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	    }
 
 	    iCandWordCount = i;
-	    iTableCandDisplayed -= iTemp - i;
+	    tbl.iTableCandDisplayed -= iTemp - i;
 	}
     }
 
@@ -1655,7 +1507,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 
 	if (tableCandWord[i].flag == CT_PYPHRASE) {
 	    if (utf8_strlen (tableCandWord[i].candWord.strPYPhrase) == 1) {
-		recTemp = tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.strPYPhrase)];
+		recTemp = tbl.tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.strPYPhrase)];
 
 		if (!recTemp)
 		    pstr = (char *) NULL;
@@ -1667,7 +1519,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	}
 	else if ((tableCandWord[i].flag == CT_NORMAL) && (tableCandWord[i].candWord.record->bPinyin)) {
 	    if (utf8_strlen (tableCandWord[i].candWord.record->strHZ) == 1) {
-		recTemp = tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.record->strHZ)];
+		recTemp = tbl.tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.record->strHZ)];
 		if (!recTemp)
 		    pstr = (char *) NULL;
 		else
@@ -1697,6 +1549,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 void TableAddAutoCandWord (INT16 which, SEARCH_MODE mode)
 {
     int             i, j;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
 
     if (mode == SM_PREV) {
 	if (iCandWordCount == iMaxCandWord) {
@@ -1707,22 +1560,24 @@ void TableAddAutoCandWord (INT16 which, SEARCH_MODE mode)
 	else
 	    i = iCandWordCount++;
 	tableCandWord[i].flag = CT_AUTOPHRASE;
-	tableCandWord[i].candWord.autoPhrase = &autoPhrase[which];
+	tableCandWord[i].candWord.autoPhrase = &tbl.autoPhrase[which];
     }
     else {
 	if (iCandWordCount == iMaxCandWord)
 	    return;
 
 	tableCandWord[iCandWordCount].flag = CT_AUTOPHRASE;
-	tableCandWord[iCandWordCount++].candWord.autoPhrase = &autoPhrase[which];
+	tableCandWord[iCandWordCount++].candWord.autoPhrase = &tbl.autoPhrase[which];
     }
 }
 
 void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 {
     int             i = 0, j;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
 
-    switch (table[iTableIMIndex].tableOrder) {
+    switch (table->tableOrder) {
     case AD_NO:
 	if (mode == SM_PREV) {
 	    if (iCandWordCount == iMaxCandWord)
@@ -1838,20 +1693,21 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 
 void TableResetFlags (void)
 {
-    RECORD         *record = recordHead->next;
+    RECORD         *record = tbl.recordHead->next;
     INT16           i;
 
-    while (record != recordHead) {
+    while (record != tbl.recordHead) {
 	record->flag = False;
 	record = record->next;
     }
-    for (i = 0; i < iAutoPhrase; i++)
-	autoPhrase[i].flag = False;
+    for (i = 0; i < tbl.iAutoPhrase; i++)
+	tbl.autoPhrase[i].flag = False;
 }
 
 void TableSetCandWordsFlag (int iCount, Bool flag)
 {
     int             i;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
 
     for (i = 0; i < iCount; i++) {
 	if (tableCandWord[i].flag == CT_NORMAL)
@@ -1863,10 +1719,11 @@ void TableSetCandWordsFlag (int iCount, Bool flag)
 Bool HasMatchingKey (void)
 {
     char           *str;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     str = strCodeInput;
     while (*str) {
-	if (*str++ == table[iTableIMIndex].cMatchingKey)
+	if (*str++ == table->cMatchingKey)
 	    return True;
     }
     return False;
@@ -1875,16 +1732,17 @@ Bool HasMatchingKey (void)
 int TableCompareCode (char *strUser, char *strDict)
 {
     int             i;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     for (i = 0; i < strlen (strUser); i++) {
 	if (!strDict[i])
 	    return strUser[i];
-	if (strUser[i] != table[iTableIMIndex].cMatchingKey || !table[iTableIMIndex].bUseMatchingKey) {
+	if (strUser[i] != table->cMatchingKey || !table->bUseMatchingKey) {
 	    if (strUser[i] != strDict[i])
 		return (strUser[i] - strDict[i]);
 	}
     }
-    if (table[iTableIMIndex].bTableExactMatch) {
+    if (table->bTableExactMatch) {
 	if (strlen (strUser) != strlen (strDict))
 	    return -999;	//随意的一个值
     }
@@ -1895,29 +1753,30 @@ int TableCompareCode (char *strUser, char *strDict)
 int TableFindFirstMatchCode (void)
 {
     int             i = 0;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    if (!recordHead)
+    if (!tbl.recordHead)
 	return -1;
 
-    if (table[iTableIMIndex].bUseMatchingKey && (strCodeInput[0] == table[iTableIMIndex].cMatchingKey))
+    if (table->bUseMatchingKey && (strCodeInput[0] == table->cMatchingKey))
 	i = 0;
     else {
-	while (strCodeInput[0] != recordIndex[i].cCode) {
-	    if (!recordIndex[i].cCode)
+	while (strCodeInput[0] != tbl.recordIndex[i].cCode) {
+	    if (!tbl.recordIndex[i].cCode)
 		break;
 	    i++;
 	}
     }
-    currentRecord = recordIndex[i].record;
-    if (!currentRecord)
+    tbl.currentRecord = tbl.recordIndex[i].record;
+    if (!tbl.currentRecord)
 	return -1;
 
-    while (currentRecord != recordHead) {
-	if (!TableCompareCode (strCodeInput, currentRecord->strCode)) {
-	    if (CheckHZCharset (currentRecord->strHZ))
+    while (tbl.currentRecord != tbl.recordHead) {
+	if (!TableCompareCode (strCodeInput, tbl.currentRecord->strCode)) {
+	    if (CheckHZCharset (tbl.currentRecord->strHZ))
 		return i;
 	}
-	currentRecord = currentRecord->next;
+	tbl.currentRecord = tbl.currentRecord->next;
 	i++;
     }
 
@@ -1956,6 +1815,8 @@ void TableAdjustOrderByIndex (int iIndex)
 {
     RECORD         *recTemp;
     int             iTemp;
+    TABLECANDWORD*  tableCandWord = tableCandWord;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     if (tableCandWord[iIndex - 1].flag != CT_NORMAL)
 	return;
@@ -1974,13 +1835,13 @@ void TableAdjustOrderByIndex (int iIndex)
     recTemp->prev = tableCandWord[iIndex - 1].candWord.record;
     tableCandWord[iIndex - 1].candWord.record->next = recTemp;
 
-    iTableChanged++;
+    tbl.iTableChanged++;
 
     //需要的话，更新索引
     if (tableCandWord[iIndex - 1].candWord.record->strCode[1] == '\0') {
-	for (iTemp = 0; iTemp < strlen (table[iTableIMIndex].strInputCode); iTemp++) {
-	    if (recordIndex[iTemp].cCode == tableCandWord[iIndex - 1].candWord.record->strCode[0]) {
-		recordIndex[iTemp].record = tableCandWord[iIndex - 1].candWord.record;
+	for (iTemp = 0; iTemp < strlen (table->strInputCode); iTemp++) {
+	    if (tbl.recordIndex[iTemp].cCode == tableCandWord[iIndex - 1].candWord.record->strCode[0]) {
+		tbl.recordIndex[iTemp].record = tableCandWord[iIndex - 1].candWord.record;
 		break;
 	    }
 	}
@@ -1992,6 +1853,7 @@ void TableAdjustOrderByIndex (int iIndex)
  */
 void TableDelPhraseByIndex (int iIndex)
 {
+    TABLECANDWORD *tableCandWord = tableCandWord;
     if (tableCandWord[iIndex - 1].flag != CT_NORMAL)
 	return;
 
@@ -2015,6 +1877,7 @@ void TableDelPhraseByHZ (char *strHZ)
 
 void TableDelPhrase (RECORD * record)
 {
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
     record->prev->next = record->next;
     record->next->prev = record->prev;
 
@@ -2022,7 +1885,7 @@ void TableDelPhrase (RECORD * record)
     free (record->strHZ);
     free (record);
 
-    table[iTableIMIndex].iRecordCount--;
+    table->iRecordCount--;
 }
 
 /*
@@ -2034,11 +1897,11 @@ RECORD         *TableHasPhrase (char *strCode, char *strHZ)
     int             i;
 
     i = 0;
-    while (strCode[0] != recordIndex[i].cCode)
+    while (strCode[0] != tbl.recordIndex[i].cCode)
 	i++;
 
-    recTemp = recordIndex[i].record;
-    while (recTemp != recordHead) {
+    recTemp = tbl.recordIndex[i].record;
+    while (recTemp != tbl.recordHead) {
 	if (!recTemp->bPinyin) {
 	    if (strcmp (recTemp->strCode, strCode) > 0)
 	        break;
@@ -2066,18 +1929,18 @@ RECORD         *TableFindPhrase (char *strHZ)
     strncpy(strTemp, strHZ, utf8_char_len(strHZ));
     strTemp[utf8_char_len(strHZ)] = '\0';
 
-    recTemp = tableSingleHZ[CalHZIndex (strTemp)];
+    recTemp = tbl.tableSingleHZ[CalHZIndex (strTemp)];
     if (!recTemp)
 	return (RECORD *) NULL;
 
     //然后根据该编码找到检索的起始点
     i = 0;
-    while (recTemp->strCode[0] != recordIndex[i].cCode)
+    while (recTemp->strCode[0] != tbl.recordIndex[i].cCode)
 	i++;
 
-    recTemp = recordIndex[i].record;
-    while (recTemp != recordHead) {	    
-	if (recTemp->strCode[0] != recordIndex[i].cCode)
+    recTemp = tbl.recordIndex[i].record;
+    while (recTemp != tbl.recordHead) {	    
+	if (recTemp->strCode[0] != tbl.recordIndex[i].cCode)
 	    break;
 	if (!strcmp (recTemp->strHZ, strHZ)) {
 	    if (!recTemp->bPinyin)
@@ -2093,6 +1956,7 @@ RECORD         *TableFindPhrase (char *strHZ)
 void TableInsertPhrase (char *strCode, char *strHZ)
 {
     RECORD         *insertPoint, *dictNew;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     insertPoint = TableHasPhrase (strCode, strHZ);
 
@@ -2100,19 +1964,19 @@ void TableInsertPhrase (char *strCode, char *strHZ)
 	return;
 
     dictNew = (RECORD *) malloc (sizeof (RECORD));
-    dictNew->strCode = (char *) malloc (sizeof (char) * (table[iTableIMIndex].iCodeLength + 1));
+    dictNew->strCode = (char *) malloc (sizeof (char) * (table->iCodeLength + 1));
     strcpy (dictNew->strCode, strCode);
     dictNew->strHZ = (char *) malloc (sizeof (char) * (strlen (strHZ) + 1));
     strcpy (dictNew->strHZ, strHZ);
     dictNew->iHit = 0;
-    dictNew->iIndex = iTableIndex;
+    dictNew->iIndex = tbl.iTableIndex;
 
     dictNew->prev = insertPoint->prev;
     insertPoint->prev->next = dictNew;
     insertPoint->prev = dictNew;
     dictNew->next = insertPoint;
 
-    table[iTableIMIndex].iRecordCount++;
+    table->iRecordCount++;
 }
 
 void TableCreateNewPhrase (void)
@@ -2120,13 +1984,13 @@ void TableCreateNewPhrase (void)
     int             i;
 
     SetMessageText(&messageDown, 0, "");
-    for (i = iTableNewPhraseHZCount; i > 0; i--)
-        MessageConcat(&messageDown , 0 ,hzLastInput[iHZLastInputCount - i].strHZ);
+    for (i = tbl.iTableNewPhraseHZCount; i > 0; i--)
+        MessageConcat(&messageDown , 0 ,tbl.hzLastInput[tbl.iHZLastInputCount - i].strHZ);
 
     TableCreatePhraseCode (messageDown.msg[0].strMsg);
 
-    if (!bCanntFindCode)
-        SetMessageText(&messageDown, 1, strNewPhraseCode);
+    if (!tbl.bCanntFindCode)
+        SetMessageText(&messageDown, 1, tbl.strNewPhraseCode);
     else
         SetMessageText(&messageDown, 0, "????");
 }
@@ -2138,11 +2002,12 @@ void TableCreatePhraseCode (char *strHZ)
     size_t          iLen;
     char            strTemp[UTF8_MAX_LENGTH + 1] = {'\0', };
     RECORD         *recTemp;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    bCanntFindCode = False;
+    tbl.bCanntFindCode = False;
     iLen = utf8_strlen (strHZ);
-    if (iLen >= table[iTableIMIndex].iCodeLength) {
-	i2 = table[iTableIMIndex].iCodeLength;
+    if (iLen >= table->iCodeLength) {
+	i2 = table->iCodeLength;
 	i1 = 1;
     }
     else {
@@ -2150,33 +2015,33 @@ void TableCreatePhraseCode (char *strHZ)
 	i1 = 0;
     }
 
-    for (i = 0; i < table[iTableIMIndex].iCodeLength - 1; i++) {
-	if (table[iTableIMIndex].rule[i].iWords == i2 && table[iTableIMIndex].rule[i].iFlag == i1)
+    for (i = 0; i < table->iCodeLength - 1; i++) {
+	if (table->rule[i].iWords == i2 && table->rule[i].iFlag == i1)
 	    break;
     }
 
-    for (i1 = 0; i1 < table[iTableIMIndex].iCodeLength; i1++) {
+    for (i1 = 0; i1 < table->iCodeLength; i1++) {
 	int clen;
     char* ps;
-	if (table[iTableIMIndex].rule[i].rule[i1].iFlag) {
-        ps = utf8_get_nth_char(strHZ, table[iTableIMIndex].rule[i].rule[i1].iWhich - 1);
+	if (table->rule[i].rule[i1].iFlag) {
+        ps = utf8_get_nth_char(strHZ, table->rule[i].rule[i1].iWhich - 1);
 		clen = utf8_char_len(ps);
 		strncpy(strTemp, ps, clen);
 	}
 	else {
-		ps = utf8_get_nth_char(strHZ, iLen - table[iTableIMIndex].rule[i].rule[i1].iWhich);
+		ps = utf8_get_nth_char(strHZ, iLen - table->rule[i].rule[i1].iWhich);
 		clen = utf8_char_len(ps);
 		strncpy(strTemp, ps, clen);
 	}
 
-	recTemp = tableSingleHZ[CalHZIndex (strTemp)];
+	recTemp = tbl.tableSingleHZ[CalHZIndex (strTemp)];
 
 	if (!recTemp) {
-	    bCanntFindCode = True;
+	    tbl.bCanntFindCode = True;
 	    break;
 	}
 
-	strNewPhraseCode[i1] = recTemp->strCode[table[iTableIMIndex].rule[i].rule[i1].iIndex - 1];
+	tbl.strNewPhraseCode[i1] = recTemp->strCode[table->rule[i].rule[i1].iIndex - 1];
     }
 }
 
@@ -2190,11 +2055,12 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
     int             i;
     RECORD         *tableLegend = NULL;
     unsigned int    iTableTotalLengendCandCount = 0;
+    TABLECANDWORD* tableCandWord = tbl.tableCandWord;
 
-    if (!strTableLegendSource[0])
+    if (!tbl.strTableLegendSource[0])
 	return IRV_TO_PROCESS;
 
-    iLength = strlen (strTableLegendSource);
+    iLength = strlen (tbl.strTableLegendSource);
     if (mode == SM_FIRST) {
 	iCurrentLegendCandPage = 0;
 	iLegendCandPageCount = 0;
@@ -2220,11 +2086,11 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
     }
 
     iLegendCandWordCount = 0;
-    tableLegend = recordHead->next;
+    tableLegend = tbl.recordHead->next;
 	
-    while (tableLegend != recordHead) {
+    while (tableLegend != tbl.recordHead) {
 	if (((mode == SM_PREV) ^ (!tableLegend->flag)) && ((iLength + 2) == strlen (tableLegend->strHZ))) {
-	    if (!strncmp (tableLegend->strHZ, strTableLegendSource, iLength) && tableLegend->strHZ[iLength] && CheckHZCharset (tableLegend->strHZ)) {
+	    if (!strncmp (tableLegend->strHZ, tbl.strTableLegendSource, iLength) && tableLegend->strHZ[iLength] && CheckHZCharset (tableLegend->strHZ)) {
 		if (mode == SM_FIRST)
 		    iTableTotalLengendCandCount++;
 	
@@ -2242,7 +2108,7 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 
     SetMessageCount(&messageUp, 0);
     AddMessageAtLast(&messageUp, MSG_TIPS, "联想：");
-    AddMessageAtLast(&messageUp, MSG_INPUT, strTableLegendSource);
+    AddMessageAtLast(&messageUp, MSG_INPUT, tbl.strTableLegendSource);
 
     if (bPointAfterNumber) {
 	strTemp[1] = '.';
@@ -2259,7 +2125,7 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 	    strTemp[0] = i + 1 + '0';
     AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
 
-    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), tableCandWord[i].candWord.record->strHZ + strlen (strTableLegendSource));
+    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), tableCandWord[i].candWord.record->strHZ + strlen (tbl.strTableLegendSource));
 	if (i != (iLegendCandWordCount - 1)) {
         MessageConcatLast(&messageDown, " ");
 	}
@@ -2273,6 +2139,7 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 {
     int             i, j;
+    TABLECANDWORD *tableCandWord = tableCandWord;
     
     if (mode == SM_PREV) {
 	for (i = iLegendCandWordCount - 1; i >= 0; i--) {
@@ -2324,15 +2191,16 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 
 char           *TableGetLegendCandWord (int iIndex)
 {
+    TABLECANDWORD *tableCandWord = tableCandWord;
     if (iLegendCandWordCount) {
 	if (iIndex > (iLegendCandWordCount - 1))
 	    iIndex = iLegendCandWordCount - 1;
 
 	tableCandWord[iIndex].candWord.record->iHit++;
-	strcpy (strTableLegendSource, tableCandWord[iIndex].candWord.record->strHZ + strlen (strTableLegendSource));
+	strcpy (tbl.strTableLegendSource, tableCandWord[iIndex].candWord.record->strHZ + strlen (tbl.strTableLegendSource));
 	TableGetLegendCandWords (SM_FIRST);
 
-	return strTableLegendSource;
+	return tbl.strTableLegendSource;
     }
     return NULL;
 }
@@ -2342,7 +2210,7 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
     char            strTemp[3];
     int             i;
 
-    if (!iFH)
+    if (!tbl.iFH)
 	return IRV_DISPLAY_MESSAGE;
 
     if (bPointAfterNumber) {
@@ -2355,7 +2223,7 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
     SetMessageCount(&messageDown, 0);
 
     if (mode == SM_FIRST) {
-	iCandPageCount = iFH / iMaxCandWord - ((iFH % iMaxCandWord) ? 0 : 1);
+	iCandPageCount = tbl.iFH / iMaxCandWord - ((tbl.iFH % iMaxCandWord) ? 0 : 1);
 	iCurrentCandPage = 0;
     }
     else {
@@ -2381,11 +2249,11 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
 	if (i == 9)
 	    strTemp[0] = '0';
     AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
-    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), fh[iCurrentCandPage * iMaxCandWord + i].strFH);
+    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), tbl.fh[iCurrentCandPage * iMaxCandWord + i].strFH);
 	if (i != (iMaxCandWord - 1)) {
         MessageConcatLast(&messageDown, " ");
 	}
-	if ((iCurrentCandPage * iMaxCandWord + i) >= (iFH - 1)) {
+	if ((iCurrentCandPage * iMaxCandWord + i) >= (tbl.iFH - 1)) {
 	    i++;
 	    break;
 	}
@@ -2403,7 +2271,7 @@ char           *TableGetFHCandWord (int iIndex)
 	if (iIndex > (iCandWordCount - 1))
 	    iIndex = iCandWordCount - 1;
 
-	return fh[iCurrentCandPage * iMaxCandWord + iIndex].strFH;
+	return tbl.fh[iCurrentCandPage * iMaxCandWord + iIndex].strFH;
     }
     return NULL;
 }
@@ -2414,23 +2282,23 @@ Bool TablePhraseTips (void)
     char            strTemp[PHRASE_MAX_LENGTH * UTF8_MAX_LENGTH + 1] = "\0", *ps;
     INT16           i, j;
 
-    if (!recordHead)
+    if (!tbl.recordHead)
 	return False;
 
     //如果最近输入了一个词组，这个工作就不需要了
     if (lastIsSingleHZ != 1)
 	return False;
 
-    j = (iHZLastInputCount > PHRASE_MAX_LENGTH) ? iHZLastInputCount - PHRASE_MAX_LENGTH : 0;
-    for (i = j; i < iHZLastInputCount; i++)
-	strcat (strTemp, hzLastInput[i].strHZ);
+    j = (tbl.iHZLastInputCount > PHRASE_MAX_LENGTH) ? tbl.iHZLastInputCount - PHRASE_MAX_LENGTH : 0;
+    for (i = j; i < tbl.iHZLastInputCount; i++)
+	strcat (strTemp, tbl.hzLastInput[i].strHZ);
     //如果只有一个汉字，这个工作也不需要了
     if (utf8_strlen (strTemp) < 2)
 	return False;
 
     //首先要判断是不是已经在词库中
 	ps = strTemp;
-    for (i = 0; i < (iHZLastInputCount - j - 1); i++) {
+    for (i = 0; i < (tbl.iHZLastInputCount - j - 1); i++) {
 	recTemp = TableFindPhrase (ps);
 	if (recTemp) {
         SetMessageCount(&messageUp, 0);
@@ -2441,7 +2309,7 @@ Bool TablePhraseTips (void)
         AddMessageAtLast(&messageDown, MSG_FIRSTCAND, "编码为 ");
         AddMessageAtLast(&messageDown, MSG_CODE, recTemp->strCode);
         AddMessageAtLast(&messageDown, MSG_TIPS, " ^DEL删除");
-	    bTablePhraseTips = True;
+	    tbl.bTablePhraseTips = True;
 	    bShowCursor = False;
 
 	    return True;
@@ -2456,30 +2324,31 @@ void TableCreateAutoPhrase (INT8 iCount)
 {
     char            *strHZ;
     INT16           i, j, k;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    if (!autoPhrase)
+    if (!tbl.autoPhrase)
 	return;
 
-    strHZ=(char *)malloc((table[iTableIMIndex].iAutoPhrase * UTF8_MAX_LENGTH + 1)*sizeof(char));
+    strHZ=(char *)malloc((table->iAutoPhrase * UTF8_MAX_LENGTH + 1)*sizeof(char));
     /*
      * 为了提高效率，此处只重新生成新录入字构成的词组
      */
-    j = iHZLastInputCount - table[iTableIMIndex].iAutoPhrase - iCount;
+    j = tbl.iHZLastInputCount - table->iAutoPhrase - iCount;
     if (j < 0)
 	j = 0;
 
-    for (; j < iHZLastInputCount - 1; j++) {
-	for (i = table[iTableIMIndex].iAutoPhrase; i >= 2; i--) {
-	    if ((j + i - 1) > iHZLastInputCount)
+    for (; j < tbl.iHZLastInputCount - 1; j++) {
+	for (i = table->iAutoPhrase; i >= 2; i--) {
+	    if ((j + i - 1) > tbl.iHZLastInputCount)
 		continue;
 
-	    strcpy (strHZ, hzLastInput[j].strHZ);
+	    strcpy (strHZ, tbl.hzLastInput[j].strHZ);
 	    for (k = 1; k < i; k++)
-		strcat (strHZ, hzLastInput[j + k].strHZ);
+		strcat (strHZ, tbl.hzLastInput[j + k].strHZ);
 
 	    //再去掉重复的词组
-	    for (k = 0; k < iAutoPhrase; k++) {
-		if (!strcmp (autoPhrase[k].strHZ, strHZ))
+	    for (k = 0; k < tbl.iAutoPhrase; k++) {
+		if (!strcmp (tbl.autoPhrase[k].strHZ, strHZ))
 		    goto _next;
 	    }
 	    //然后去掉系统中已经有的词组
@@ -2487,19 +2356,19 @@ void TableCreateAutoPhrase (INT8 iCount)
 	    	goto _next;
 
 	    TableCreatePhraseCode (strHZ);
-	    if (iAutoPhrase != AUTO_PHRASE_COUNT) {
-		autoPhrase[iAutoPhrase].flag = False;
-		strcpy (autoPhrase[iAutoPhrase].strCode, strNewPhraseCode);
-		strcpy (autoPhrase[iAutoPhrase].strHZ, strHZ);
-		autoPhrase[iAutoPhrase].iSelected = 0;
-		iAutoPhrase++;
+	    if (tbl.iAutoPhrase != AUTO_PHRASE_COUNT) {
+		tbl.autoPhrase[tbl.iAutoPhrase].flag = False;
+		strcpy (tbl.autoPhrase[tbl.iAutoPhrase].strCode, tbl.strNewPhraseCode);
+		strcpy (tbl.autoPhrase[tbl.iAutoPhrase].strHZ, strHZ);
+		tbl.autoPhrase[tbl.iAutoPhrase].iSelected = 0;
+		tbl.iAutoPhrase++;
 	    }
 	    else {
-		insertPoint->flag = False;
-		strcpy (insertPoint->strCode, strNewPhraseCode);
-		strcpy (insertPoint->strHZ, strHZ);
-		insertPoint->iSelected = 0;
-		insertPoint = insertPoint->next;
+		tbl.insertPoint->flag = False;
+		strcpy (tbl.insertPoint->strCode, tbl.strNewPhraseCode);
+		strcpy (tbl.insertPoint->strHZ, strHZ);
+		tbl.insertPoint->iSelected = 0;
+		tbl.insertPoint = tbl.insertPoint->next;
 	    }
 
 	  _next:
@@ -2515,22 +2384,23 @@ void UpdateHZLastInput (char *str)
 {
     int             i, j;
 	char           *pstr;
+    TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
 	pstr = str;
 
     for (i = 0; i < utf8_strlen (str) ; i++) {
-	if (iHZLastInputCount < PHRASE_MAX_LENGTH)
-	    iHZLastInputCount++;
+	if (tbl.iHZLastInputCount < PHRASE_MAX_LENGTH)
+	    tbl.iHZLastInputCount++;
 	else {
-	    for (j = 0; j < (iHZLastInputCount - 1); j++) {
-		strncpy(hzLastInput[j].strHZ, hzLastInput[j + 1].strHZ, utf8_char_len(hzLastInput[j + 1].strHZ));
+	    for (j = 0; j < (tbl.iHZLastInputCount - 1); j++) {
+		strncpy(tbl.hzLastInput[j].strHZ, tbl.hzLastInput[j + 1].strHZ, utf8_char_len(tbl.hzLastInput[j + 1].strHZ));
 	    }
 	}
-	strncpy(hzLastInput[iHZLastInputCount - 1].strHZ, pstr, utf8_char_len(pstr));
-	hzLastInput[iHZLastInputCount - 1].strHZ[utf8_char_len(pstr)] = '\0';
+	strncpy(tbl.hzLastInput[tbl.iHZLastInputCount - 1].strHZ, pstr, utf8_char_len(pstr));
+	tbl.hzLastInput[tbl.iHZLastInputCount - 1].strHZ[utf8_char_len(pstr)] = '\0';
 	pstr = pstr + utf8_char_len(pstr);
     }
 
-    if (table[iTableIMIndex].bRule && table[iTableIMIndex].bAutoPhrase)
+    if (table->bRule && table->bAutoPhrase)
 	TableCreateAutoPhrase ((INT8) (utf8_strlen (str)));
 }

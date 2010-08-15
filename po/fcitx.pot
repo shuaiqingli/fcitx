@@ -1,0 +1,557 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Copyright (c) 2002-2010 Yuking
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: fcitx 4.0 beta1\n"
+"Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
+"POT-Creation-Date: 2010-08-15 00:11+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/interface/ImeRemote.c:148
+#, c-format
+msgid "Can't open socket %s: %s"
+msgstr ""
+
+#: src/interface/DBus.c:95
+#, c-format
+msgid "Connection Error (%s)"
+msgstr ""
+
+#: src/interface/DBus.c:107
+#, c-format
+msgid "Name Error (%s)"
+msgstr ""
+
+#: src/interface/DBus.c:121
+#, c-format
+msgid "Match Error (%s)"
+msgstr ""
+
+#: src/interface/DBus.c:155
+msgid "MovePreeditCaret"
+msgstr ""
+
+#: src/interface/DBus.c:158 src/interface/DBus.c:170 src/interface/DBus.c:214
+msgid "Message has no arguments!"
+msgstr ""
+
+#: src/interface/DBus.c:160 src/interface/DBus.c:172
+msgid "Argument is not INT32!"
+msgstr ""
+
+#: src/interface/DBus.c:163
+#, c-format
+msgid "Got Signal with value %d"
+msgstr ""
+
+#: src/interface/DBus.c:167
+msgid "SelectCandidate: "
+msgstr ""
+
+#: src/interface/DBus.c:197
+#, c-format
+msgid "%d:%s"
+msgstr ""
+
+#: src/interface/DBus.c:201
+msgid "LookupTablePageUp"
+msgstr ""
+
+#: src/interface/DBus.c:206
+msgid "LookupTablePageDown"
+msgstr ""
+
+#: src/interface/DBus.c:211
+msgid "TriggerProperty: "
+msgstr ""
+
+#: src/interface/DBus.c:216
+msgid "Argument is not STRING!"
+msgstr ""
+
+#: src/interface/DBus.c:219
+#, c-format
+msgid "%s"
+msgstr ""
+
+#: src/interface/DBus.c:225
+msgid "PanelCreated"
+msgstr ""
+
+#: src/interface/DBus.c:229
+msgid "Exit"
+msgstr ""
+
+#: src/interface/DBus.c:232
+msgid "ReloadConfig"
+msgstr ""
+
+#: src/interface/DBus.c:253 src/interface/DBus.c:287 src/interface/DBus.c:334
+#: src/interface/DBus.c:381 src/interface/DBus.c:415 src/interface/DBus.c:449
+#: src/interface/DBus.c:483 src/interface/DBus.c:517 src/interface/DBus.c:551
+#: src/interface/DBus.c:585 src/interface/DBus.c:647 src/interface/DBus.c:681
+#: src/interface/DBus.c:719 src/interface/DBus.c:758 src/interface/DBus.c:795
+msgid "Message Null"
+msgstr ""
+
+#: src/interface/DBus.c:260 src/interface/DBus.c:265 src/interface/DBus.c:305
+#: src/interface/DBus.c:312 src/interface/DBus.c:352 src/interface/DBus.c:359
+#: src/interface/DBus.c:388 src/interface/DBus.c:393 src/interface/DBus.c:422
+#: src/interface/DBus.c:427 src/interface/DBus.c:456 src/interface/DBus.c:461
+#: src/interface/DBus.c:490 src/interface/DBus.c:495 src/interface/DBus.c:524
+#: src/interface/DBus.c:529 src/interface/DBus.c:558 src/interface/DBus.c:563
+#: src/interface/DBus.c:598 src/interface/DBus.c:606 src/interface/DBus.c:615
+#: src/interface/DBus.c:625 src/interface/DBus.c:654 src/interface/DBus.c:659
+#: src/interface/DBus.c:689 src/interface/DBus.c:692 src/interface/DBus.c:697
+#: src/interface/DBus.c:728 src/interface/DBus.c:731 src/interface/DBus.c:736
+#: src/interface/DBus.c:765 src/interface/DBus.c:768 src/interface/DBus.c:773
+#: src/interface/DBus.c:802 src/interface/DBus.c:807
+msgid "Out Of Memory!"
+msgstr ""
+
+#: src/interface/DBus.c:830
+#, c-format
+msgid "Type: %d Text: %s"
+msgstr ""
+
+#: src/interface/DBus.c:856
+#, c-format
+msgid "Labels %d, Texts %d, CMB:%s"
+msgstr ""
+
+#: src/interface/DBus.c:892
+#, c-format
+msgid "updateMesssages Up:%s"
+msgstr ""
+
+#: src/ui/tray.c:129
+#, c-format
+msgid "X error %i on opcode send"
+msgstr ""
+
+#: src/ui/ui.c:88
+msgid "FCITX can only run under X"
+msgstr ""
+
+#: src/ui/ui.c:130
+msgid "XEvent--Expose"
+msgstr ""
+
+#: src/ui/InputWindow.c:156
+msgid "DISPLAY InputWindow"
+msgstr ""
+
+#: src/ui/InputWindow.c:186
+msgid "CAL InputWindow"
+msgstr ""
+
+#: src/ui/MainWindow.c:103
+msgid "DISPLAY MainWindow"
+msgstr ""
+
+#: src/ui/MainWindow.c:125
+msgid "DRAW MainWindow"
+msgstr ""
+
+#: src/ui/skin.c:305
+msgid "Can not load default skin, is installion correct?"
+msgstr ""
+
+#: src/ui/skin.c:310
+#, c-format
+msgid "Can not load skin %s, return to default"
+msgstr ""
+
+#: src/ui/font.c:14
+msgid "Error: Load fontconfig failed"
+msgstr ""
+
+#: src/ui/font.c:63
+#, c-format
+msgid "your current font is: %s"
+msgstr ""
+
+#: src/ui/font.c:82
+msgid "no valid font."
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:261
+msgid "Enum option duplicated."
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:274
+msgid "Enum option number must larger than 0"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:284
+msgid "Enum Option is invalid, take it as string"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:291
+#, c-format
+msgid "Unknown type, take it as string: %s"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:297
+msgid "Missing type, take it as string"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:604
+#, c-format
+msgid "Configure group name error: line %d"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:614
+#, c-format
+msgid "Duplicate group name, merge with the previous: %s :line %d"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:631
+#, c-format
+msgid "Invalid Entry: line %d missing '='"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:641
+#, c-format
+msgid "Duplicate option, overwrite: line %d"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:744
+#, c-format
+msgid "Option %s is Invalid, Use Default Value %s"
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:753
+#, c-format
+msgid "Option %s is Invalid."
+msgstr ""
+
+#: src/fcitx-config/fcitx-config.c:784
+#, c-format
+msgid "no default option for %s/%s"
+msgstr ""
+
+#: src/im/special/punc.c:68
+#, c-format
+msgid "Can't open Chinese punc file: %s"
+msgstr ""
+
+#: src/im/pinyin/py.c:210
+msgid "Can not find System Database of Pinyin!"
+msgstr ""
+
+#: src/im/pinyin/py.c:2411
+#, c-format
+msgid "Cannot Save User Pinyin Database: %s"
+msgstr ""
+
+#: src/im/pinyin/py.c:2471
+#, c-format
+msgid "Cannot Save Frequent word: %s"
+msgstr ""
+
+#: src/im/pinyin/py.c:2539
+#, c-format
+msgid "Cannot Save Pinyin Index: %s"
+msgstr ""
+
+#: src/im/table/table.c:240
+msgid "Loading Table Dict"
+msgstr ""
+
+#: src/im/table/table.c:249
+#, c-format
+msgid "Cannot load table file: %s"
+msgstr ""
+
+#: src/im/table/table.c:370
+msgid "Load Table Dict OK"
+msgstr ""
+
+#: src/im/table/table.c:414
+msgid "Loading Autophrase."
+msgstr ""
+
+#: src/im/table/table.c:455
+msgid "Load Autophrase OK"
+msgstr ""
+
+#: src/im/table/table.c:596
+#, c-format
+msgid "Cannot create table file: %s"
+msgstr ""
+
+#: src/im/table/table.c:602
+msgid "Saving TABLE Dict."
+msgstr ""
+
+#: src/im/table/table.c:683
+msgid "Rename OK"
+msgstr ""
+
+#: src/tools/tools.c:253
+msgid "error: configure file: color"
+msgstr ""
+
+#: src/tools/tools.c:306 src/tools/tools.c:331
+msgid "error: shouldn't be here"
+msgstr ""
+
+#: src/tools/tools.c:347
+msgid "error: invalid configure format"
+msgstr ""
+
+#: src/tools/tools.c:1131
+msgid "error: configure file: line length"
+msgstr ""
+
+#: src/tools/tools.c:1146
+msgid "error: configure file: configure group name"
+msgstr ""
+
+#: src/tools/tools.c:1158
+msgid "error: invalid configure group name"
+msgstr ""
+
+#: src/tools/tools.c:1173
+msgid "error: configure file: configure entry name"
+msgstr ""
+
+#: src/tools/tools.c:1189
+msgid "error: configure file: no group name at beginning"
+msgstr ""
+
+#: src/tools/util.c:315
+msgid "pthread mutexattr init failed"
+msgstr ""
+
+#: src/tools/util.c:322
+msgid "pthread mutex init failed"
+msgstr ""
+
+#: src/tools/util.c:351
+#, c-format
+msgid "Info:"
+msgstr ""
+
+#: src/tools/util.c:354
+#, c-format
+msgid "Error:"
+msgstr ""
+
+#: src/tools/util.c:357
+#, c-format
+msgid "Debug:"
+msgstr ""
+
+#: src/tools/util.c:360
+#, c-format
+msgid "Warning:"
+msgstr ""
+
+#: src/tools/util.c:363
+#, c-format
+msgid "Fatal:"
+msgstr ""
+
+#: src/core/xim.c:492
+msgid "Recording file must be an absolute path."
+msgstr ""
+
+#: src/core/xim.c:525
+#, c-format
+msgid "Sending %s  icid=%d connectid=%d\n"
+msgstr ""
+
+#: src/core/xim.c:587
+msgid "Can't Create imWindow"
+msgstr ""
+
+#: src/core/xim.c:597
+msgid "XMODIFIERS Error."
+msgstr ""
+
+#: src/core/xim.c:602
+msgid "Please set XMODIFIERS."
+msgstr ""
+
+#: src/core/xim.c:653
+#, c-format
+msgid "Start FCITX error. Another XIM daemon named %s is running?"
+msgstr ""
+
+#: src/core/xim.c:933
+#, c-format
+msgid "Set icid=%d(connect_id=%d) to %d"
+msgstr ""
+
+#: src/core/MyErrorsHandlers.c:82
+#, c-format
+msgid "FCITX -- Get Signal No.: %d"
+msgstr ""
+
+#: data/config.desc:2
+msgid "English Font"
+msgstr ""
+
+#: data/config.desc:7
+msgid "Chinese Font"
+msgstr ""
+
+#: data/config.desc:12
+msgid "Font Size"
+msgstr ""
+
+#: data/config.desc:17
+msgid "Font Size in Main Window"
+msgstr ""
+
+#: data/tables.desc:2 data/table.desc:2
+msgid "Code Table Name"
+msgstr ""
+
+#: data/tables.desc:6 data/table.desc:6
+msgid "IconName"
+msgstr ""
+
+#: data/tables.desc:10 data/table.desc:10
+msgid "Code Table File"
+msgstr ""
+
+#: data/tables.desc:14 data/table.desc:14
+msgid "Adjust Order"
+msgstr ""
+
+#: data/tables.desc:18 data/table.desc:23
+msgid "Use Pinyin"
+msgstr ""
+
+#: data/tables.desc:22 data/table.desc:28
+msgid "Pinyin Key"
+msgstr ""
+
+#: data/tables.desc:26 data/table.desc:33
+msgid "Auto Send Candidate Word to Client"
+msgstr ""
+
+#: data/tables.desc:30 data/table.desc:37 data/table.desc:38
+msgid "Auto Send Candidate Word if no match in Code Table"
+msgstr ""
+
+#: data/tables.desc:34 data/table.desc:42 data/table.desc:43
+msgid "End Key"
+msgstr ""
+
+#: data/tables.desc:38 data/table.desc:47 data/table.desc:48
+msgid "Use Matching Key"
+msgstr ""
+
+#: data/tables.desc:42 data/table.desc:52 data/table.desc:53
+msgid "Matching Key"
+msgstr ""
+
+#: data/tables.desc:46 data/table.desc:57 data/table.desc:58
+msgid "Exact Match"
+msgstr ""
+
+#: data/tables.desc:50
+msgid "Max Phrase Length"
+msgstr ""
+
+#: data/tables.desc:54 data/table.desc:61 data/table.desc:62
+msgid "Auto Phrase"
+msgstr ""
+
+#: data/tables.desc:58 data/table.desc:66 data/table.desc:67
+msgid "Auto Phrase Length"
+msgstr ""
+
+#: data/tables.desc:62 data/table.desc:71 data/table.desc:72
+msgid "Auto Phrase Phrase"
+msgstr ""
+
+#: data/tables.desc:66 data/table.desc:76 data/table.desc:77
+msgid "Save Auto Phrase"
+msgstr ""
+
+#: data/tables.desc:70 data/table.desc:81 data/table.desc:82
+msgid "Prompt Table Code"
+msgstr ""
+
+#: data/tables.desc:74 data/table.desc:85 data/table.desc:86
+msgid "Symbol"
+msgstr ""
+
+#: data/tables.desc:78 data/table.desc:90 data/table.desc:91
+msgid "Symbol File"
+msgstr ""
+
+#: data/tables.desc:82 data/table.desc:95 data/table.desc:96
+msgid "Choose"
+msgstr ""
+
+#: data/profile.desc:2
+msgid "Main Window Position X"
+msgstr ""
+
+#: data/profile.desc:7
+msgid "Main Window Position Y"
+msgstr ""
+
+#: data/profile.desc:12
+msgid "Input Window Position X"
+msgstr ""
+
+#: data/profile.desc:17
+msgid "Input Window Position Y"
+msgstr ""
+
+#: data/profile.desc:22
+msgid "Use Full Width Character"
+msgstr ""
+
+#: data/profile.desc:27
+msgid "Use Chinese Punctuation"
+msgstr ""
+
+#: data/profile.desc:32
+msgid "Input Window Shows at the position of cursor"
+msgstr ""
+
+#: data/profile.desc:37
+msgid "Prompt the phrases after input"
+msgstr ""
+
+#: data/profile.desc:42
+msgid "Current Input Method Index"
+msgstr ""
+
+#: data/profile.desc:47
+msgid "Disable the keyboard switch hotkey"
+msgstr ""
+
+#: data/profile.desc:52
+msgid "Show Main Window in a compact way"
+msgstr ""
+
+#: data/profile.desc:57
+msgid "Use Traditional Chinese in Input"
+msgstr ""
+
+#: data/profile.desc:62
+msgid "Use recording mode"
+msgstr ""
+
+#: data/table.desc:100 data/table.desc:101
+msgid "Enable This Table or Not"
+msgstr ""

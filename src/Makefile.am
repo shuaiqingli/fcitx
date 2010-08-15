@@ -1,1 +1,1 @@
-SUBDIRS=im ui tools interface core
+SUBDIRS=fcitx-config im ui tools interface core

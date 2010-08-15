@@ -1,0 +1,197 @@
+/***************************************************************************
+ *   Copyright (C) 20010~2010 by CSSlayer                                  *
+ *   wengxt@gmail.com                                                      *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
+/**
+ * @file config.h
+ * @author CSSlayer wengxt@gmail.com
+ * @date 2010-04-30
+ *
+ * @brief 新配置文件读写
+ */
+
+#ifndef FCITX_CONFIG_H
+#define FCITX_CONFIG_H
+
+#include <X11/Xlib.h>
+#include <stdio.h>
+#include <fcitx-config/uthash.h>
+#include <fcitx-config/hotkey.h>
+
+typedef struct ConfigColor
+{
+    double r;
+    double g;
+    double b;
+} ConfigColor;
+
+typedef enum ConfigType
+{
+	T_Integer,
+    T_Color,
+    T_String,
+    T_Char,
+    T_Boolean,
+    T_Enum,
+    T_File,
+    T_Hotkey,
+    T_Font
+} ConfigType;
+
+typedef enum ConfigSync
+{
+    Raw2Value,
+    Value2Raw
+} ConfigSync;
+
+typedef enum ConfigSyncResult
+{
+    SyncSuccess,
+    SyncNoBinding,
+    SyncInvalid
+} ConfigSyncResult;
+
+typedef void (*SyncFilter)(void* , ConfigSync);
+
+typedef struct ConfigEnum
+{
+    char **enumDesc;
+    int enumCount;
+} ConfigEnum;
+
+typedef struct ConfigOptionDesc
+{
+    char *optionName;
+    char *desc;
+    ConfigType type;
+    char *rawDefaultValue;
+    ConfigEnum configEnum;
+
+    UT_hash_handle hh;
+} ConfigOptionDesc;
+
+typedef struct ConfigGroupDesc
+{
+    char *groupName;
+    ConfigOptionDesc *optionsDesc;
+    UT_hash_handle hh;
+} ConfigGroupDesc;
+
+typedef struct ConfigFileDesc
+{
+    ConfigGroupDesc *groupsDesc;
+} ConfigFileDesc;
+
+typedef struct ConfigOption
+{
+    char *optionName;
+    char *rawValue;
+    union {
+        int *integer;
+        Bool *boolean;
+        HOTKEYS *hotkey;
+        ConfigColor *color;
+        int *enumerate;
+        char **string;
+        char *chr;
+    } value;
+    SyncFilter filter;
+    ConfigOptionDesc *optionDesc;
+    UT_hash_handle hh;
+} ConfigOption;
+
+typedef struct ConfigGroup
+{
+    char *groupName;
+    ConfigGroupDesc *groupDesc;
+    ConfigOption* options;
+    UT_hash_handle hh;
+} ConfigGroup;
+
+typedef struct ConfigFile
+{
+    ConfigFileDesc *fileDesc;
+    ConfigGroup* groups;
+} ConfigFile;
+
+struct GenericConfig;
+
+typedef void(*ConfigBindingFunc)(struct GenericConfig*);
+
+typedef struct GenericConfig
+{
+    ConfigFile *configFile;
+} GenericConfig;
+
+#define CONFIG_BINDING_DECLARE(config_type) \
+    void config_type##ConfigBind(config_type* config, ConfigFile* cfile, ConfigFileDesc* cfdesc);
+#define CONFIG_BINDING_BEGIN(config_type) \
+    void config_type##ConfigBind(config_type* config, ConfigFile* cfile, ConfigFileDesc* cfdesc) { \
+        GenericConfig *gconfig = (GenericConfig*) config; \
+        if (gconfig->configFile) { \
+            FreeConfigFile(gconfig->configFile); \
+        } \
+        gconfig->configFile = cfile;
+#define CONFIG_BINDING_REGISTER(g, o, var) \
+        { \
+            ConfigBindValue(cfile, g, o, &config->var, NULL); \
+        }        
+
+#define CONFIG_BINDING_REGISTER_WITH_FILTER(group, option, var, filter_func) \
+        { \
+            ConfigBindValue(cfile, g, o, &config->var, filter_func); \
+        }
+#define CONFIG_BINDING_END() }
+
+#define IsColorValid(c) ((c) >=0 && (c) <= 255)
+#define RoundColor(c) ((c)>=0?((c)<=255?c:255):0)
+
+ConfigFile *ParseConfigFile(char *filename, ConfigFileDesc*);
+ConfigFile *ParseMultiConfigFile(char **filename, int len, ConfigFileDesc*);
+ConfigFile *ParseConfigFileFp(FILE* fp, ConfigFileDesc* fileDesc);
+ConfigFile *ParseMultiConfigFileFp(FILE **fp, int len, ConfigFileDesc* fileDesc);
+Bool CheckConfig(ConfigFile *configFile, ConfigFileDesc* fileDesc);
+ConfigFileDesc *ParseConfigFileDesc(char* filename);
+ConfigFileDesc *ParseConfigFileDescFp(FILE* filename);
+ConfigFile* ParseIni(char* filename, ConfigFile* reuse);
+ConfigFile* ParseIniFp(FILE* filename, ConfigFile* reuse);
+void FreeConfigFile(ConfigFile* cfile);
+void FreeConfigFileDesc(ConfigFileDesc* cfdesc);
+void FreeConfigGroup(ConfigGroup *group);
+void FreeConfigGroupDesc(ConfigGroupDesc *cgdesc);
+void FreeConfigOption(ConfigOption *option);
+void FreeConfigOptionDesc(ConfigOptionDesc *codesc);
+Bool SaveConfigFile(char *filename, ConfigFile *cfile, ConfigFileDesc* cdesc);
+Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc);
+void ConfigSyncValue(ConfigOption *option, ConfigSync sync);
+void ConfigBindSync(GenericConfig* config);
+
+typedef ConfigSyncResult (*ConfigOptionFunc)(ConfigOption *, ConfigSync);
+ConfigSyncResult ConfigOptionInteger(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionBoolean(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionEnum(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionColor(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionString(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionHotkey(ConfigOption *option, ConfigSync sync);
+#define ConfigOptionFile ConfigOptionString
+#define ConfigOptionFont ConfigOptionString
+
+void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void* var, SyncFilter filter);
+
+#endif

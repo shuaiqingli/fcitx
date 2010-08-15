@@ -34,6 +34,7 @@
 #include "core/xim.h"
 #include "tools/tools.h"
 #include "interface/DBus.h"
+#include "fcitx-config/profile.h"
 
 VKWindow vkWindow;
 
@@ -55,8 +56,6 @@ extern int      iScreen;
 
 extern char     strStringGet[];
 extern Bool     bVK;
-extern int      iMainWindowX;
-extern int      iMainWindowY;
 extern Window   inputWindow;
 
 extern IC      *CurrentIC;
@@ -467,7 +466,7 @@ void SwitchVK (void)
 	if (bUseDBus)
 		x = DisplayWidth (dpy, iScreen) / 2 - VK_WINDOW_WIDTH / 2;
 	else
-		x = iMainWindowX;
+		x = fcitxProfile.iMainWindowOffsetX;
 	if ((x + VK_WINDOW_WIDTH) >= DisplayWidth (dpy, iScreen))
 	    x = DisplayWidth (dpy, iScreen) - VK_WINDOW_WIDTH - 1;
 	if (x < 0)
@@ -476,9 +475,9 @@ void SwitchVK (void)
 	if (bUseDBus)
 		y = 0;
 	else
-		y = iMainWindowY + skin_config.skin_main_bar.mbbg_img.height + 2;
+		y = fcitxProfile.iMainWindowOffsetY + skin_config.skin_main_bar.mbbg_img.height + 2;
 	if ((y + VK_WINDOW_HEIGHT) >= DisplayHeight (dpy, iScreen))
-	    y = iMainWindowY - VK_WINDOW_HEIGHT - 2;
+	    y = fcitxProfile.iMainWindowOffsetY - VK_WINDOW_HEIGHT - 2;
 	if (y < 0)
 	    y = 0;
 

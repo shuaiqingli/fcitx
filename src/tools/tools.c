@@ -45,14 +45,13 @@
 #include "im/pinyin/PYFA.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/sp.h"
-#include "tools/uthash.h"
+#include "im/table/table.h"
+#include "im/qw/qw.h"
+#include "fcitx-config/uthash.h"
+#include "tools/util.h"
 
 extern Display *dpy;
 extern int      iScreen;
-extern int      iMainWindowX;
-extern int      iMainWindowY;
-extern int      iInputWindowX;
-extern int      iInputWindowY;
 extern int      iInputWindowWidth;
 extern int      iInputWindowHeight;
 
@@ -66,8 +65,6 @@ extern MESSAGE_COLOR messageColor[];
 extern MESSAGE_COLOR inputWindowLineColor;
 extern MESSAGE_COLOR mainWindowLineColor;
 extern MESSAGE_COLOR cursorColor;
-extern WINDOW_COLOR VKWindowColor;
-extern MESSAGE_COLOR VKWindowAlphaColor;
 extern ENTER_TO_DO enterToDo;
 extern char  skinType[];
 char  colorScheme[64];
@@ -85,7 +82,6 @@ extern HOTKEYS  hkPYDelFreq[];
 extern HOTKEYS  hkPYDelUserPhr[];
 extern HOTKEYS  hkLegend[];
 extern HOTKEYS  hkTrack[];
-extern HOTKEYS  hkGetPY[];
 extern HOTKEYS  hkGBT[];
 extern HOTKEYS	hkHideMainWindow[];
 extern HOTKEYS	hkSaveAll[];
@@ -99,18 +95,10 @@ extern Bool     bEngPuncAfterNumber;
 
 //extern Bool     bAutoHideInputWindow;
 extern XColor   colorArrow;
-extern Bool     bTrackCursor;
 extern Bool     bCenterInputWindow;
 extern HIDE_MAINWINDOW hideMainWindow;
-extern Bool     bCompactMainWindow;
 extern HIDE_MAINWINDOW hideMainWindow;
 extern int      iFontSize;
-
-extern Bool     bUseGBKT;
-
-extern Bool     bChnPunc;
-extern Bool     bCorner;
-extern Bool     bUseLegend;
 
 extern Bool     bPYCreateAuto;
 extern Bool     bPYSaveAutoAsPhrase;
@@ -123,10 +111,6 @@ extern Bool     bShowUserSpeed;
 extern Bool     bShowVersion;
 extern Bool     bShowVK;
 
-extern char     strNameOfPinyin[];
-extern char     strNameOfShuangpin[];;
-extern char     strNameOfQuwei[];
-
 extern Bool     bFullPY;
 extern Bool     bDisablePagingInLegend;
 extern Bool     bSendTextWhenSwitchEng;
@@ -137,9 +121,6 @@ extern int      i3rdSelectKey;
 extern ADJUSTORDER baseOrder;
 extern ADJUSTORDER phraseOrder;
 extern ADJUSTORDER freqOrder;
-
-extern INT8     iIMIndex;
-extern Bool     bLocked;
 
 extern MHPY     MHPY_C[];
 extern MHPY     MHPY_S[];
@@ -175,16 +156,11 @@ extern Bool bUseDBus;
 #ifdef _ENABLE_RECORDING
 extern HOTKEYS  hkRecording[];
 extern HOTKEYS	hkResetRecording[];
-extern Bool	bRecording;
 extern char     strRecordingPath[];
 #endif
 
 extern char *sVKHotkey; 
 extern int utf8_in_gb18030[];
-
-pthread_rwlock_t plock;
-
-#define FCITX_CONFIG_DIR "/fcitx-utf8/"
 
 Bool MyStrcmp (char *str1, char *str2)
 {
@@ -274,7 +250,7 @@ static int generic_config_color(Configure *c, void *a, int isread)
 
     if(isread){
         if(sscanf((char *)a, "%d %d %d", &r, &g, &b) != 3){
-            fprintf(stderr, "error: configure file: color\n");
+            FcitxLog(FATAL, _("error: configure file: color"));
             exit(1);
         }
         c->value.color->red   = r << 8;
@@ -327,7 +303,7 @@ static int write_configures(FILE *fp, Configure *configures)
                     generic_config_color(tc, fp, 0);
                     break;
                 default:
-                    fprintf(stderr, "error: shouldn't be here\n");
+                    FcitxLog(FATAL, _("error: shouldn't be here"));
                     exit(1);
             }
         }
@@ -352,7 +328,7 @@ static int read_configure(Configure *config, char *str)
                 generic_config_color(config, str, 1);
                 break;
             default:
-                fprintf(stderr, "error: shouldn't be here\n");
+                FcitxLog(FATAL, _("error: shouldn't be here"));
                 exit(1);
         }
     }
@@ -368,7 +344,7 @@ inline static int main_window_input_method_name_color(char * a)//(Configure *c, 
         if(sscanf((char *)a, "%d %d %d %d %d %d %d %d %d",
                     &r[0], &g[0], &b[0], &r[1], &g[1], &b[1], &r[2], &g[2], &b[2]) != 9)
         {
-            fprintf(stderr, "error: invalid configure format\n");
+            FcitxLog(FATAL, _("error: invalid configure format"));
             exit(1);
         }
 
@@ -487,7 +463,7 @@ inline static int association(Configure *c, void *a, int isread)
 inline static int lookup_pinyin(Configure *c, void *a, int isread)
 {
     if(isread)
-        SetHotKey((char *)a, hkGetPY);
+        SetHotKey((char *)a, tbl.hkGetPY);
     else
         fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_E");
 
@@ -919,21 +895,9 @@ Configure input_method_config[] = {
         .value.integer = &inputMethods[IM_PY],
     },
     {
-        .name = "拼音名称",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strNameOfPinyin,
-        .value.str_value.string_length = 41,    /* FIXME: 不应在此硬编码字符串长度，下同 */
-    },
-    {
         .name = "使用双拼",
         .value_type = CONFIG_INTEGER,
         .value.integer = &inputMethods[IM_SP],
-    },
-    {
-        .name = "双拼名称",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strNameOfShuangpin,
-        .value.str_value.string_length = 41,
     },
     {
         .name = "默认双拼方案",
@@ -944,12 +908,6 @@ Configure input_method_config[] = {
         .name = "使用区位",
         .value_type = CONFIG_INTEGER,
         .value.integer = &inputMethods[IM_QW],
-    },
-    {
-        .name = "区位名称",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strNameOfQuwei,
-        .value.str_value.string_length = 41,
     },
     {
         .name = "使用码表",
@@ -1133,7 +1091,8 @@ void load_CS_config()
 void LoadConfig (Bool bMode)
 {
     FILE    *fp;
-    char    buf[PATH_MAX], *pbuf, *pbuf1;
+    char    *strBuf = NULL, *pbuf, *pbuf1, strPath[PATH_MAX];
+    size_t  bufLen = 0;
     //用于标示group的index，在配置文件里面配置是分组的，类似与ini文件的分组
     int     group_idx;
     int		i;
@@ -1148,16 +1107,16 @@ void LoadConfig (Bool bMode)
     fp = UserConfigFile("config", "rt", NULL);
     if(!fp && errno == ENOENT){ /* $HOME/.fcitx/config does not exist */
     
-        snprintf(buf, PATH_MAX, PKGDATADIR "/data/config");
+        snprintf(strPath, PATH_MAX, PKGDATADIR "/data/config");
 
 	/* zxd add begin */
-        if( access( buf, 0 ) && getenv( "FCITXDIR" ) ) {
-            strcpy( buf, getenv( "FCITXDIR" ) );
-            strcat( buf, "/share/fcitx/data/config" );
+        if( access( strPath, 0 ) && getenv( "FCITXDIR" ) ) {
+            strcpy( strPath, getenv( "FCITXDIR" ) );
+            strcat( strPath, "/share/fcitx/data/config" );
         }
         /* zxd add end */
         
-        fp = fopen(buf, "rt");
+        fp = fopen(strPath, "rt");
         if(!fp)
             SaveConfig();
     }
@@ -1165,18 +1124,16 @@ void LoadConfig (Bool bMode)
     if (fp) {
 	group_idx = -1;
 
-	/* FIXME: 也许应该用另外更恰当的缓冲区长度 */
-	while(fgets(buf, PATH_MAX, fp)){		//每次最多读入PATH_MAX大小的数据
-	    i = strlen(buf);
+	while(getline(&strBuf, &bufLen, fp) != -1){
+	    i = strlen(strBuf);
 
-            /*fcitx的配置文件每行最多是PATH_MAX个字符，因此有上面的FIXME*/
-            if(buf[i-1] != '\n'){
-		fprintf(stderr, "error: configure file: line length\n");
-		exit(1);
+        if(strBuf[i-1] != '\n'){
+            FcitxLog(FATAL, _("error: configure file: line length"));
+            exit(1);
 	    } else
-		buf[i-1] = '\0';
+		strBuf[i-1] = '\0';
 
-	    pbuf = buf;
+	    pbuf = strBuf;
 	    while(*pbuf && isspace(*pbuf))	//将pbuf指向第一个非空字符
 		pbuf++;
             if(!*pbuf || *pbuf == '#')		//如果改行是空数据或者是注释(以#开头为注释)
@@ -1186,7 +1143,7 @@ void LoadConfig (Bool bMode)
 		pbuf++;
 		pbuf1 = strchr(pbuf, ']');
 		if(!pbuf1){
-                    fprintf(stderr, "error: configure file: configure group name\n");
+                    FcitxLog(FATAL, _("error: configure file: configure group name"));
                     exit(1);
                 }
 
@@ -1198,7 +1155,7 @@ void LoadConfig (Bool bMode)
                         break;
                     }
                 if(group_idx < 0){
-                    fprintf(stderr, "error: invalid configure group name\n");
+                    FcitxLog(FATAL, _("error: invalid configure group name"));
                     exit(1); /* 我认为这儿没有必要退出。此处完全可以忽略这个错误，
                               * 并且在后面也忽略这个组的配置即可。
                               * 因为这儿退出只会带来一个坏处，那就是扩展性。
@@ -1213,7 +1170,7 @@ void LoadConfig (Bool bMode)
             //pbuf1指向第一个非空字符与=之间的字符
             pbuf1 = strchr(pbuf, '=');
             if(!pbuf1){
-                fprintf(stderr, "error: configure file: configure entry name\n");
+                FcitxLog(FATAL, _("error: configure file: configure entry name"));
                 exit(1);	// 和前面一样，这儿也应该是一个警告而不应该是提示出错并退出。
             }
 
@@ -1229,7 +1186,7 @@ void LoadConfig (Bool bMode)
 
 
             if(group_idx < 0){
-                fprintf(stderr, "error: configure file: no group name at beginning\n");
+                FcitxLog(FATAL, _("error: configure file: no group name at beginning"));
                 exit(1);
             }
             //找到该组中的配置项，并将其保存到对应的全局变量里面去
@@ -1244,6 +1201,9 @@ void LoadConfig (Bool bMode)
 
         fclose(fp);
     }
+
+    if (strBuf)
+        free(strBuf);
 
     /* 如果配置文件中没有设置打开/关闭输入法的热键，那么设置CTRL-SPACE为默认热键 */
     if (!Trigger_Keys) {
@@ -1294,280 +1254,23 @@ inline static int get_version(Configure *c, void *a, int isread)
     return 0;
 }
 
-/** 主窗口位置X */
-inline static int get_main_window_offset_x(Configure *c, void *a, int isread)
-{
-    if(isread){
-        iMainWindowX = atoi(a);
-        if(iMainWindowX < 0)
-            iMainWindowX = 0;
-        else if((iMainWindowX) > DisplayWidth(dpy, iScreen))
-            iMainWindowX = DisplayWidth(dpy, iScreen) - 1;
-    }else
-        fprintf((FILE *)a, "%s=%d\n", c->name, iMainWindowX);
-
-    return 0;
-}
-
-/** 主窗口位置Y */
-inline static int get_main_window_offset_y(Configure *c, void *a, int isread)
-{
-    if(isread){
-        iMainWindowY = atoi(a);
-        if(iMainWindowY < 0)
-            iMainWindowY = 0;
-        else if((iMainWindowY) > DisplayHeight(dpy, iScreen))
-            iMainWindowY = DisplayHeight(dpy, iScreen) - 1;
-    }else
-        fprintf((FILE *)a, "%s=%d\n", c->name, iMainWindowY);
-
-    return 0;
-}
-
-/** 输入窗口位置X */
-inline static int get_input_window_offset_x(Configure *c, void *a, int isread)
-{
-    if(isread){
-        iInputWindowX = atoi(a);
-        if(iInputWindowX < 0)
-            iInputWindowX = 0;
-        else if((iInputWindowX + iInputWindowWidth) > DisplayWidth(dpy, iScreen))
-            iInputWindowX = DisplayWidth(dpy, iScreen) - iInputWindowWidth - 3;
-    }else
-        fprintf((FILE *)a, "%s=%d\n", c->name, iInputWindowX);
-
-    return 0;
-}
-
-/** 输入窗口位置Y */
-inline static int get_input_window_offset_y(Configure *c, void *a, int isread)
-{
-    if(isread){
-        iInputWindowY = atoi(a);
-        if(iInputWindowY < 0)
-            iInputWindowY = 0;
-        else if((iInputWindowY + iInputWindowHeight) > DisplayHeight(dpy, iScreen))
-            iInputWindowY = DisplayHeight(dpy, iScreen) - iInputWindowHeight - 3;
-    }else
-        fprintf((FILE *)a, "%s=%d\n", c->name, iInputWindowY);
-
-    return 0;
-}
-
-static int iIMIndex_tmp = 0;		/* Issue 11: piaoairy add 20080518 */
-
-Configure profiles[] = {
-    {
-        .name = "版本",
-        .value_type = CONFIG_OTHER,
-        .config_rw = get_version,
-    },
-    {
-        .name = "主窗口位置X",
-        .value_type = CONFIG_OTHER,
-        .config_rw = get_main_window_offset_x,
-    },
-    {
-        .name = "主窗口位置Y",
-        .value_type = CONFIG_OTHER,
-        .config_rw = get_main_window_offset_y,
-    },
-    {
-        .name = "输入窗口位置X",
-        .value_type = CONFIG_OTHER,
-        .config_rw = get_input_window_offset_x,
-    },
-    {
-        .name = "输入窗口位置Y",
-        .value_type = CONFIG_OTHER,
-        .config_rw = get_input_window_offset_y,
-    },
-    {
-        .name = "全角",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bCorner,
-    },
-    {
-        .name = "中文标点",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bChnPunc,
-    },
-    {
-        .name = "光标跟随",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bTrackCursor,
-    },
-    {
-        .name = "联想",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bUseLegend,
-    },
-    {
-        .name = "当前输入法",	//  Issue 11: piaoairy: 本来打算将iIMIndex 改为int类型,
-        .value_type = CONFIG_INTEGER,	// 无奈使用的地方太多,
-        .value.integer = &iIMIndex_tmp,	// 只好重新定义个iIMIndex_tmp搭桥.
-    },
-    {
-        .name = "禁止键盘切换",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bLocked,
-    },
-    {
-        .name = "简洁模式",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bCompactMainWindow,
-    },
-    {
-        .name = "GBK繁体",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bUseGBKT,
-    },
-#ifdef _ENABLE_RECORDING
-    {
-        .name = "记录模式",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bRecording,
-    },
-#endif
-    {
-        .name = NULL,
-    },
-};
-
-/**
- * @brief 加载配置文件
- * @param void
- * @return void
- */
-void LoadProfile (void)
-{
-    FILE           *fp;
-    char            buf[PATH_MAX], *pbuf, *pbuf1;
-    int             i;
-    Configure       *tmpconfig;
-
-    /* 前将窗口的位置设定为最原始的默认值，接下来如果配置文件有，
-     * 会从配置文件中读取，如果没有就使用这个了*/
-    iMainWindowX = MAINWND_STARTX;		//主窗口位置X
-    iMainWindowY = MAINWND_STARTY;		//主窗口位置Y
-    iInputWindowX = INPUTWND_STARTX;	//输入窗口位置X
-    iInputWindowY = INPUTWND_STARTY;	//输入窗口位置Y
-
-    fp = UserConfigFile ("profile", "rt", NULL);
-    if(!fp){
-        if(errno == ENOENT)
-            SaveProfile();
-        return;
-    }
-
-    /* FIXME: 也许应该用另外更恰当的缓冲区长度 */
-    while(fgets(buf, PATH_MAX, fp)){
-        i = strlen(buf);
-        if(buf[i-1] != '\n'){
-            fprintf(stderr, "error: profile file: line length\n");
-            exit(1);
-        }else
-            buf[i-1] = '\0';
-
-        pbuf = buf;
-        while(*pbuf && isspace(*pbuf))
-            pbuf++;
-        if(!*pbuf || *pbuf == '#')
-            continue;
-
-        pbuf1 = strchr(pbuf, '=');
-        if(!pbuf1){
-            fprintf(stderr, "error: profile file: configure entry name\n");
-            exit(1);
-        }
-
-        for(tmpconfig = profiles; tmpconfig->name; tmpconfig++)
-            if(strncmp(tmpconfig->name, pbuf, pbuf1-pbuf) == 0)
-                read_configure(tmpconfig, ++pbuf1);
-    }
-
-    fclose(fp);
-
-    iIMIndex = iIMIndex_tmp;		/* piaoairy add 20080518 */
-
-    if(bNeedSaveConfig){
-        SaveConfig();
-        SaveProfile();
-     }
-}
-
-void SaveProfile (void)
-{
-    FILE           *fp;
-
-    fp = UserConfigFile ("profile", "wt", NULL);
-    if (!fp) {
-	perror("fopen");
-        exit(1);
-    }
-
-    iIMIndex_tmp = iIMIndex;		/* piaoairy add 20080518 */
-    write_configures(fp, profiles);
-    fclose(fp);
-}
-
-void SetHotKey (char *strKeys, HOTKEYS * hotkey)
-{
-    char           *p;
-    char            strKey[30];
-    int             i, j;
-
-    p = strKeys;
-
-    while (*p == ' ')
-	p++;
-    i = 0;
-    while (p[i] != ' ' && p[i] != '\0')
-	i++;
-    strncpy (strKey, p, i);
-    strKey[i] = '\0';
-    p += i + 1;
-    j = ParseKey (strKey);
-    if (j != -1)
-	hotkey[0] = j;
-    if (j == -1)
-	j = 0;
-    else
-	j = 1;
-
-    i = 0;
-    while (p[i] != ' ' && p[i] != '\0')
-	i++;
-    if (p[0]) {
-	strncpy (strKey, p, i);
-	strKey[i] = '\0';
-
-	i = ParseKey (strKey);
-	if (i == -1)
-	    i = 0;
-    }
-    else
-	i = 0;
-
-    hotkey[j] = i;
-}
-
 /*
  * 计算文件中有多少行
  * 注意:文件中的空行也做为一行处理
  */
 int CalculateRecordNumber (FILE * fpDict)
 {
-    char            strText[101];
+    char           *strBuf = NULL;
+    size_t          bufLen = 0;
     int             nNumber = 0;
 
-    for (;;) {
-	if (!fgets (strText, 100, fpDict))
-	    break;
-
+	while(getline(&strBuf, &bufLen, fpDict) != -1){
 	nNumber++;
     }
     rewind (fpDict);
+
+    if (strBuf)
+        free(strBuf);
 
     return nNumber;
 }
@@ -1718,13 +1421,14 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
     char           *ret;
     char            strPath[PATH_MAX];
     int             i, len, ret_len;
-	char            buf[2 * UTF8_MAX_LENGTH + 2];
+    char           *strBuf = NULL;
+    size_t          bufLen = 0;
 	char           *ps;
 
     if (strHZ == NULL)
 	return NULL;
 
-	if (pthread_rwlock_wrlock(&plock) != 0)
+	if (FcitxLock() != 0)
 		return NULL;
     if (!s2t_table) {
 	len = 0;
@@ -1746,15 +1450,13 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
 	    strcpy (ret, strHZ);
 	    return ret;
 	}
-	for (;;)
+	while(getline(&strBuf, &bufLen, fp) != -1)
 	{
         simple2trad_t *s2t;
 		char *ps;
 		int wc;
-		if(!fgets(buf, sizeof(buf) - 1, fp))
-			break;
 
-		ps = utf8_get_char(buf, &wc);
+		ps = utf8_get_char(strBuf, &wc);
 		s2t = (simple2trad_t*) malloc(sizeof(simple2trad_t));
 		s2t->wc = wc;
 		s2t->len = utf8_char_len(ps);
@@ -1763,9 +1465,10 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
 
 		HASH_ADD_INT(s2t_table, wc, s2t);
 	}
-
+    if(strBuf)
+        free(strBuf);
     }
-	pthread_rwlock_unlock(&plock);
+	FcitxUnlock();
 
     i = 0;
     len = utf8_strlen (strHZ);

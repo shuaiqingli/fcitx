@@ -1,0 +1,9 @@
+#!/bin/sh
+filename=desc.po
+dir=`pwd`
+filename=`basename $filename`
+cd ..
+find data -iname "*.desc" | while read f
+do
+    awk '/^[\t ]*Description=/ { print "\n#: '$f':" NR"\n" "msgid \"" substr($0, 13)"\"\n" "msgstr \"\""}' $f >> $dir/$filename
+done

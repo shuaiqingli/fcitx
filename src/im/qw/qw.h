@@ -22,6 +22,9 @@
 
 #include "core/ime.h"
 
+#define strNameOfQuwei "Quwei"
+#define strIconNameOfQuwei "quwei"
+
 INPUT_RETURN_VALUE DoQWInput(int iKey);
 INPUT_RETURN_VALUE QWGetCandWords (SEARCH_MODE mode);
 char *QWGetCandWord (int iIndex);

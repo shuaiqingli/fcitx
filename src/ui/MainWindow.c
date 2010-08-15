@@ -33,30 +33,21 @@
 #include "ui/ui.h"
 #include "ui/skin.h"
 #include "MainWindow.h"
+#include "fcitx-config/profile.h"
 
 Window          mainWindow = (Window) NULL;
 
-int             iMainWindowX = MAINWND_STARTX;
-int             iMainWindowY = MAINWND_STARTY;
-
 HIDE_MAINWINDOW hideMainWindow = HM_SHOW;
 
-Bool            bCompactMainWindow = False;
 Bool            bShowVK = False;
 Bool		bMainWindow_Hiden = False;
 
 char           *strFullCorner = "全角模式";
 
 extern Display *dpy;
-extern Bool     bCorner;
-extern Bool     bLocked;
-extern Bool     bChnPunc;
 extern Bool     bSP;
-extern Bool     bUseLegend;
 extern Bool     bVK;
 extern CARD16   connect_id;
-
-extern Bool     bUseGBKT;
 
 extern unsigned char iCurrentVK;
 extern int iScreen;
@@ -82,8 +73,8 @@ Bool CreateMainWindow (void)
     InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
 	mainWindow=XCreateWindow (dpy, 
 							  RootWindow(dpy, iScreen),
-							  iMainWindowX,
-							  iMainWindowY,
+							  fcitxProfile.iMainWindowOffsetX,
+							  fcitxProfile.iMainWindowOffsetY,
 							  skin_config.skin_main_bar.mbbg_img.width, 
 							  skin_config.skin_main_bar.mbbg_img.height,
 							  0, depth,InputOutput, vs,attribmask, &attrib);
@@ -109,7 +100,7 @@ Bool CreateMainWindow (void)
 void DisplayMainWindow (void)
 {
 #ifdef _DEBUG
-    fprintf (stderr, "DISPLAY MainWindow\n");
+    FcitxLog(DEBUG, _("DISPLAY MainWindow"));
 #endif
 	
     if (!bMainWindow_Hiden)
@@ -129,9 +120,9 @@ void DrawMainWindow (void)
     iIndex = IS_CLOSED;
 
 	//中英标点符号咋就反了?修正	
-	btmpPunc=bChnPunc?False:True;
+	btmpPunc=fcitxProfile.bChnPunc?False:True;
 #ifdef _DEBUG
-    fprintf (stderr, "DRAW MainWindow\n");
+    FcitxLog(DEBUG, _("DRAW MainWindow"));
 #endif
 	//XResizeWindow(dpy, mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);
 
@@ -150,10 +141,10 @@ void DrawMainWindow (void)
 		draw_a_img(&c, skin_config.skin_main_bar.mbbg_img,bar,RELEASE );
 		draw_a_img(&c, skin_config.skin_main_bar.logo_img,logo,ms_logo);
 		draw_a_img(&c, skin_config.skin_main_bar.zhpunc_img,punc[btmpPunc],ms_punc);
-		draw_a_img(&c, skin_config.skin_main_bar.chs_img,chs_t[bUseGBKT],ms_chs);
-		draw_a_img(&c, skin_config.skin_main_bar.half_corner_img,corner[bCorner],ms_corner);
-		draw_a_img(&c, skin_config.skin_main_bar.unlock_img,lock[bLocked],ms_lock);
-		draw_a_img(&c, skin_config.skin_main_bar.lxoff_img,lx[bUseLegend],ms_lx);
+		draw_a_img(&c, skin_config.skin_main_bar.chs_img,chs_t[fcitxProfile.bUseGBKT],ms_chs);
+		draw_a_img(&c, skin_config.skin_main_bar.half_corner_img,corner[fcitxProfile.bCorner],ms_corner);
+		draw_a_img(&c, skin_config.skin_main_bar.unlock_img,lock[fcitxProfile.bLocked],ms_lock);
+		draw_a_img(&c, skin_config.skin_main_bar.lxoff_img,lx[fcitxProfile.bUseLegend],ms_lx);
 		draw_a_img(&c, skin_config.skin_main_bar.vkhide_img,vk[bVK],ms_vk);
 		
 		iIndex = ConnectIDGetState (connect_id);
@@ -165,30 +156,30 @@ void DrawMainWindow (void)
 		}
 		else 
 		{
-			strcpy(tmpstr,im[iIMIndex].strName);
+			strcpy(tmpstr,im[gs.iIMIndex].strName);
 			
 			//默认码表显示
-			if     ( strcmp(tmpstr,"智能拼音") == 0)
+			if ( strcmp(tmpstr,"Pinyin") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.pinyin_img,pinyin,ms_py);
-			else if( strcmp(tmpstr,"智能双拼") == 0)
+			else if( strcmp(tmpstr,"Shuangpin") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.shuangpin_img,shuangpin,ms_py);
-			else if( strcmp(tmpstr,"区位") == 0)
+			else if( strcmp(tmpstr,"Quwei") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.quwei_img,quwei,ms_py);
-			else if( strcmp(tmpstr,"五笔字型") == 0)
+			else if( strcmp(tmpstr,"Wubi") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.wubi_img,wubi,ms_py);
-			else if( strcmp(tmpstr,"五笔拼音") == 0)
+			else if( strcmp(tmpstr,"WubiPinyin") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.mixpywb_img,mix,ms_py);					
-			else if( strcmp(tmpstr,"二笔") == 0)
+			else if( strcmp(tmpstr,"Erbi") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.erbi_img,erbi,ms_py);					
-			else if( strcmp(tmpstr,"仓颉") == 0)
+			else if( strcmp(tmpstr,"Cangjie") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.cj_img,cangji,ms_py);					
-			else if( strcmp(tmpstr,"晚风") == 0)
+			else if( strcmp(tmpstr,"Wanfeng") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.wanfeng_img,wanfeng,ms_py);					
-			else if( strcmp(tmpstr,"冰蟾全息") == 0)
+			else if( strcmp(tmpstr,"Bingcan") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.bingchan_img,bingchan,ms_py);	
-			else if( strcmp(tmpstr,"自然码") == 0)
+			else if( strcmp(tmpstr,"Ziranma") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.ziran_img,ziran,ms_py);
-			else if( strcmp(tmpstr,"电报码") == 0)
+			else if( strcmp(tmpstr,"Dianbaoma") == 0)
 				draw_a_img(&c, skin_config.skin_main_bar.dianbao_img,dianbao,ms_py);
 			else
 			{	//如果非默认码表的内容,则临时加载png文件.

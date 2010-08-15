@@ -50,16 +50,14 @@
 #include "ui/TrayWindow.h"
 #include "ui/skin.h"
 #include "core/ime.h"
+#include "fcitx-config/profile.h"
+#include "tools/util.h"
 
 Display        *dpy;
 int             iScreen;
 
 extern Window   mainWindow;
-extern int      iMainWindowX;
-extern int      iMainWindowY;
 extern Window   inputWindow;
-extern int      iInputWindowX;
-extern int      iInputWindowY;
 extern int      iVKWindowX;
 extern int      iVKWindowY;
 extern Window   ximWindow;
@@ -69,13 +67,10 @@ extern WINDOW_COLOR inputWindowColor;
 extern WINDOW_COLOR VKWindowColor;
 extern HIDE_MAINWINDOW hideMainWindow;
 extern Bool     bMainWindow_Hiden;
-extern Bool     bCompactMainWindow;
-extern INT8     iIMIndex;
 unsigned char   iCurrentVK;
 extern CARD16   connect_id;
 extern Bool     bShowVK;
 extern Bool     bVK;
-extern Bool     bCorner;
 extern Bool     bIsDisplaying;
 
 // added by yunfan
@@ -89,8 +84,8 @@ char            strUserLocale[50] = "zh_CN.UTF-8";
 Bool
 InitX(void)
 {
-    if ((dpy = XOpenDisplay((char *) NULL)) == NULL) {
-        fprintf(stderr, "Error: FCITX can only run under X\n");
+    if ((dpy = XOpenDisplay ((char *) NULL)) == NULL) {
+        FcitxLog (ERROR, _("FCITX can only run under X"));
         return False;
     }
 
@@ -132,7 +127,7 @@ MyXEventHandler(XEvent * event)
         break;
     case Expose:
 #ifdef _DEBUG
-        fprintf(stderr, "XEvent--Expose\n");
+    FcitxLog(DEBUG, _("XEvent--Expose"));
 #endif
         if (event->xexpose.count > 0)
             break;
@@ -149,8 +144,8 @@ MyXEventHandler(XEvent * event)
                 vkMenu.mark = iCurrentVK;
             DrawXlibMenu(dpy, &vkMenu);
         } else if (event->xexpose.window == imMenu.menuWindow) {
-            if (iIMIndex >= 0)
-                imMenu.mark = iIMIndex;
+            if (gs.iIMIndex >= 0)
+                imMenu.mark = gs.iIMIndex;
             DrawXlibMenu(dpy, &imMenu);
         } else if (event->xexpose.window == skinMenu.menuWindow) {
             int             i;
@@ -191,11 +186,11 @@ MyXEventHandler(XEvent * event)
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
                      skin_config.skin_main_bar.logo_img)) {
-                    iMainWindowX = event->xbutton.x;
-                    iMainWindowY = event->xbutton.y;
+                    fcitxProfile.iMainWindowOffsetX = event->xbutton.x;
+                    fcitxProfile.iMainWindowOffsetY = event->xbutton.y;
                     ms_logo = PRESS;
                     if (!MouseClick
-                        (&iMainWindowX, &iMainWindowY, mainWindow)) {
+                        (&fcitxProfile.iMainWindowOffsetX, &fcitxProfile.iMainWindowOffsetY, mainWindow)) {
                         if (ConnectIDGetState(connect_id) != IS_CHN) {
                             SetIMState((ConnectIDGetState(connect_id) ==
                                         IS_ENG) ? False : True);
@@ -259,7 +254,7 @@ MyXEventHandler(XEvent * event)
                                        skin_config.skin_main_bar.
                                        vkshow_img)) {
                     ms_vk = PRESS;
-                } else if (!bCorner
+                } else if (!fcitxProfile.bCorner
                            && IsInRspArea(event->xbutton.x,
                                           event->xbutton.y,
                                           skin_config.skin_main_bar.
@@ -274,7 +269,6 @@ MyXEventHandler(XEvent * event)
                 SetIMState((ConnectIDGetState(connect_id) ==
                             IS_ENG) ? False : True);
                 DrawMainWindow();
-
                 if (ConnectIDGetState(connect_id) == IS_CHN)
                     DrawTrayWindow(ACTIVE_ICON, 0, 0, tray.size,
                                    tray.size);
@@ -298,7 +292,6 @@ MyXEventHandler(XEvent * event)
             } else if (event->xbutton.window == mainMenu.menuWindow) {
                 int             i;
                 i = selectShellIndex(&mainMenu, event->xbutton.y);
-
                 if (i == 0) {
                     DisplayAboutWindow();
                     XUnmapWindow(dpy, mainMenu.menuWindow);
@@ -324,7 +317,6 @@ MyXEventHandler(XEvent * event)
                 clearSelectFlag(&mainMenu);
                 XUnmapWindow(dpy, imMenu.menuWindow);
                 XUnmapWindow(dpy, mainMenu.menuWindow);
-
             } else if (event->xbutton.window == skinMenu.menuWindow) {
                 // 皮肤切换在此进行
                 int             i;
@@ -399,13 +391,13 @@ MyXEventHandler(XEvent * event)
 
                 GetMenuHeight(dpy, &mainMenu);
 
-                mainMenu.pos_x = iMainWindowX;
+                mainMenu.pos_x = fcitxProfile.iMainWindowOffsetX;
                 mainMenu.pos_y =
-                    iMainWindowY +
+                    fcitxProfile.iMainWindowOffsetY +
                     skin_config.skin_main_bar.mbbg_img.height + 5;
                 if ((mainMenu.pos_y + mainMenu.height) >
                     DisplayHeight(dpy, iScreen))
-                    mainMenu.pos_y = iMainWindowY - 5 - mainMenu.height;
+                    mainMenu.pos_y = fcitxProfile.iMainWindowOffsetY - 5 - mainMenu.height;
 
                 DrawXlibMenu(dpy, &mainMenu);
                 DisplayXlibMenu(dpy, &mainMenu);
@@ -463,7 +455,7 @@ MyXEventHandler(XEvent * event)
                                         skin_config.skin_main_bar.
                                         vkshow_img))
                     SwitchVK();
-                else if (!bCorner
+                else if (!fcitxProfile.bCorner
                          && IsInRspArea(event->xbutton.x, event->xbutton.y,
                                         skin_config.skin_main_bar.
                                         pinyin_img)) {
@@ -571,7 +563,7 @@ MyXEventHandler(XEvent * event)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
                                    skin_config.skin_main_bar.vkshow_img)) {
                 ms_vk = MOTION;
-            } else if (!bCorner
+            } else if (!fcitxProfile.bCorner
                        && IsInRspArea(event->xbutton.x, event->xbutton.y,
                                       skin_config.skin_main_bar.
                                       pinyin_img)) {

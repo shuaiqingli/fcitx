@@ -33,6 +33,7 @@
  */
 
 #include <langinfo.h>
+#include <libintl.h>
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -42,6 +43,7 @@
 
 #include "core/main.h"
 #include "core/MyErrorsHandlers.h"
+#include "core/ime.h"
 #include "tools/tools.h"
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
@@ -65,6 +67,9 @@
 #include "ui/about.h"
 #include "im/special/QuickPhrase.h"
 #include "im/special/AutoEng.h"
+#include "tools/util.h"
+
+#include "fcitx-config/profile.h"
 
 #ifndef CODESET
 #define CODESET 14
@@ -81,15 +86,18 @@ extern HIDE_MAINWINDOW hideMainWindow;
 
 extern void* remoteThread(void*);
 
-extern pthread_rwlock_t plock;
-
 int main (int argc, char *argv[])
 {
+    setlocale(LC_ALL, "");
+    bindtextdomain("fcitx", ".");
+    textdomain("fcitx");
+
     XEvent          event;
     int             c; 	//用于保存用户输入的参数
     Bool            bBackground = True;
     char	    *imname=(char *)NULL;
     pthread_t	    pid;
+    gs.bMutexInited = False;
 
     SetMyExceptionHandler();		//处理事件
 
@@ -136,14 +144,8 @@ int main (int argc, char *argv[])
 #ifdef _ENABLE_DBUS
     if (bUseDBus && !InitDBus ())
 	exit (5);
-    dbus_threads_init_default();
 #endif
 	
-	if (pthread_rwlock_init(&plock,NULL) != 0) {
-      fprintf(stderr,"lock init failed\n");
-      exit(-1);
-    }
-
 	/**
 	*  加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
 	*/
@@ -221,6 +223,8 @@ int main (int argc, char *argv[])
 #ifdef _ENABLE_RECORDING
     OpenRecording(True);
 #endif
+	
+    FcitxInitThread();
 
     pthread_create(&pid, NULL, remoteThread, NULL);
 

@@ -25,7 +25,6 @@ static char CodeTipsEngine[10][MAX_TIPS_LEN+1];
 static char StringGetEngine[MAX_CAND_LEN+1];
 
 extern INT8 iIMCount;
-extern INT8 iIMIndex;
 extern INT8 iInCap;
 
 extern Bool	bPointAfterNumber;
@@ -71,7 +70,7 @@ static void ExtraReset(void)
 	EXTRA_IM *eim=NULL;
 	for(i=0;i<EIM_MAX;i++)
 	{
-		if(EIM_index[i]==iIMIndex)
+		if(EIM_index[i]==gs.iIMIndex)
 		{
 			eim=EIMS[i];
 			break;
@@ -161,7 +160,7 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 	INPUT_RETURN_VALUE ret=IRV_DO_NOTHING;
 	for(i=0;i<EIM_MAX;i++)
 	{
-		if(EIM_index[i]==iIMIndex)
+		if(EIM_index[i]==gs.iIMIndex)
 		{
 			eim=EIMS[i];
 			break;
@@ -203,7 +202,7 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 	}
 	else if(ret==IRV_TO_PROCESS)
 	{
-		if(key==ENTER)
+		if(key==ENTER_K)
 		{
 			iCodeInputCount=strlen(strCodeInput);
 			strcpy(strStringGet,strCodeInput);
@@ -266,7 +265,7 @@ static INPUT_RETURN_VALUE ExtraGetCandWords(SEARCH_MODE sm)
 	INPUT_RETURN_VALUE ret=IRV_DO_NOTHING;
 	for(i=0;i<EIM_MAX;i++)
 	{
-		if(EIM_index[i]==iIMIndex)
+		if(EIM_index[i]==gs.iIMIndex)
 		{
 			eim=EIMS[i];
 			break;
@@ -286,7 +285,7 @@ static char *ExtraGetCandWord(int index)
 	EXTRA_IM *eim=NULL;
 	for(i=0;i<EIM_MAX;i++)
 	{
-		if(EIM_index[i]==iIMIndex)
+		if(EIM_index[i]==gs.iIMIndex)
 		{
 			eim=EIMS[i];
 			break;
@@ -487,7 +486,7 @@ void LoadExtraIM(char *fn)
 		dlclose(handle);
 		return;
 	}
-	RegisterNewIM(eim->Name,ExtraReset,ExtraDoInput,ExtraGetCandWords,ExtraGetCandWord,NULL,NULL,NULL,NULL);
+	RegisterNewIM(eim->Name, eim->IconName,ExtraReset,ExtraDoInput,ExtraGetCandWords,ExtraGetCandWord,NULL,NULL,NULL,NULL);
 	EIMS[i]=eim;
 	EIM_handle[i]=handle;
 	strcpy(EIM_file[i],fn);

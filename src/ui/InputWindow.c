@@ -36,10 +36,9 @@
 
 #include "interface/DBus.h"
 #include "skin.h"
+#include "fcitx-config/profile.h"
 
 Window          inputWindow;
-int             iInputWindowX = INPUTWND_STARTX;
-int             iInputWindowY = INPUTWND_STARTY;
 
 uint            iInputWindowHeight = INPUTWND_HEIGHT;
 int		iFixedInputWindowWidth = 0;
@@ -57,7 +56,6 @@ XImage         *pNext = NULL, *pPrev = NULL;
 
 Bool            bShowPrev = False;
 Bool            bShowNext = False;
-Bool            bTrackCursor = True;
 Bool            bCenterInputWindow = True;
 Bool            bShowInputWindowTriggering = True;
 Bool		bIsDisplaying = False;
@@ -74,7 +72,6 @@ int		iOffsetY = 16;
 
 extern Display *dpy;
 
-extern Bool     bUseGBKT;
 extern int iScreen;
 //计算速度
 extern Bool     bStartRecordType;
@@ -96,7 +93,6 @@ extern char     strXModifiers[];
 
 #ifdef _ENABLE_RECORDING
 extern FILE	*fpRecord;
-extern Bool	bRecording;
 #endif
 
 Pixmap pm_input_bar;
@@ -120,7 +116,7 @@ Bool CreateInputWindow (void)
    	vs=find_argb_visual (dpy, scr);
     InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
 	
-    inputWindow=XCreateWindow (dpy, RootWindow(dpy, scr),iInputWindowX, iInputWindowY, INPUT_BAR_MAX_LEN, iInputWindowHeight, 0, depth,InputOutput, vs,attribmask, &attrib);
+    inputWindow=XCreateWindow (dpy, RootWindow(dpy, scr),fcitxProfile.iInputWindowOffsetX, fcitxProfile.iInputWindowOffsetY, INPUT_BAR_MAX_LEN, iInputWindowHeight, 0, depth,InputOutput, vs,attribmask, &attrib);
 
 	if(mainWindow == (Window)NULL)
 		return False;
@@ -157,7 +153,7 @@ void CalculateInputWindowHeight (void)
 void DisplayInputWindow (void)
 {
 #ifdef _DEBUG
-    fprintf (stderr, "DISPLAY InputWindow\n");
+    FcitxLog(DEBUG, _("DISPLAY InputWindow"));
 #endif
     CalInputWindow();
     MoveInputWindow(connect_id);
@@ -187,7 +183,7 @@ void CalInputWindow (void)
 {
 
 #ifdef _DEBUG
-    fprintf (stderr, "CAL InputWindow\n");
+    FcitxLog(DEBUG, _("CAL InputWindow"));
 #endif
 
     if (MESSAGE_IS_EMPTY) {
@@ -219,7 +215,7 @@ void CalInputWindow (void)
     }
 
 #ifdef _ENABLE_RECORDING
-    if ( bRecording && fpRecord ) {
+    if ( fcitxProfile.bRecording && fpRecord ) {
 	if ( messageUp.msgCount > 0 ) {
 	    if ( MESSAGE_TYPE_IS(LAST_MESSAGE(messageUp), MSG_RECORDING) )
 	        DecMessageCount(&messageUp);
@@ -241,10 +237,10 @@ void DrawInputWindow(void)
 	for (i = 0; i < messageUp.msgCount; i++)
 	{
 //		printf("messageUp:%s\n",messageUp[i].strMsg);
-		strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageUp.msg[i].strMsg) : messageUp.msg[i].strMsg;
+		strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageUp.msg[i].strMsg) : messageUp.msg[i].strMsg;
 		strcat(up_str,strGBKT);
 		
-		if (bUseGBKT)
+		if (fcitxProfile.bUseGBKT)
 	   		free (strGBKT);
 	}
 	
@@ -254,15 +250,15 @@ void DrawInputWindow(void)
         strcpy(first_str, "");
     else
     {
-        strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[0].strMsg) : messageDown.msg[0].strMsg;
+        strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[0].strMsg) : messageDown.msg[0].strMsg;
         strcpy(first_str,strGBKT);
-        if (bUseGBKT)
+        if (fcitxProfile.bUseGBKT)
             free(strGBKT);
         if (messageDown.msgCount >= 2)
         {
-            strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[1].strMsg) : messageDown.msg[1].strMsg;
+            strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[1].strMsg) : messageDown.msg[1].strMsg;
             strcat(first_str,strGBKT);
-            if (bUseGBKT)
+            if (fcitxProfile.bUseGBKT)
                 free(strGBKT);
         }
         strGBKT=NULL;
@@ -271,10 +267,10 @@ void DrawInputWindow(void)
 	for (i = 2; i < messageDown.msgCount; i++) 
 	{
 //		printf("%d:%s\n",i, messageDown[i].strMsg);
-	   	strGBKT = bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[i].strMsg) : messageDown.msg[i].strMsg;
+	   	strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[i].strMsg) : messageDown.msg[i].strMsg;
 	   	strcat(down_str,strGBKT);
 	   	
-	   	if (bUseGBKT)
+	   	if (fcitxProfile.bUseGBKT)
 	   		free (strGBKT);
 	}
   
@@ -290,7 +286,7 @@ void MoveInputWindow(CARD16 connect_id)
 	iInputWindowWidth=(iInputWindowWidth>skin_config.skin_input_bar.ibbg_img.width)?iInputWindowWidth:skin_config.skin_input_bar.ibbg_img.width;
 	iInputWindowWidth=(iInputWindowWidth>=INPUT_BAR_MAX_LEN)?INPUT_BAR_MAX_LEN:iInputWindowWidth;
 	
-    if (ConnectIDGetTrackCursor (connect_id) && bTrackCursor)
+    if (ConnectIDGetTrackCursor (connect_id) && fcitxProfile.bTrackCursor)
     {
         int iTempInputWindowX, iTempInputWindowY;
 
@@ -341,20 +337,20 @@ void MoveInputWindow(CARD16 connect_id)
     {
 		position * pos = ConnectIDGetPos(connect_id);
 		if (bCenterInputWindow) {
-		    iInputWindowX = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
-		    if (iInputWindowX < 0)
-			iInputWindowX = 0;
+		    fcitxProfile.iInputWindowOffsetX = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
+		    if (fcitxProfile.iInputWindowOffsetX < 0)
+			fcitxProfile.iInputWindowOffsetX = 0;
 		}
 		else
-		    iInputWindowX = pos ? pos->x : iInputWindowX;
+		    fcitxProfile.iInputWindowOffsetX = pos ? pos->x : fcitxProfile.iInputWindowOffsetX;
 	
 		if (!bUseDBus)
 		{
-			XMoveResizeWindow (dpy, inputWindow, iInputWindowX, pos ? pos->y : iInputWindowY, iInputWindowWidth, iInputWindowHeight); 
+			XMoveResizeWindow (dpy, inputWindow, fcitxProfile.iInputWindowOffsetX, pos ? pos->y : fcitxProfile.iInputWindowOffsetY, iInputWindowWidth, iInputWindowHeight); 
 		}
 #ifdef _ENABLE_DBUS
 		else
-		    KIMUpdateSpotLocation(iInputWindowX, pos ? pos->y : iInputWindowY);
+		    KIMUpdateSpotLocation(fcitxProfile.iInputWindowOffsetX, pos ? pos->y : fcitxProfile.iInputWindowOffsetY);
 #endif
     }
     

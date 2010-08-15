@@ -10,6 +10,7 @@
 
 #include "ui/tray.h"
 #include "ui/TrayWindow.h"
+#include "tools/util.h"
 
 #define MAX_SUPPORTED_XEMBED_VERSION 1
 
@@ -125,7 +126,7 @@ void TraySendOpcode(Display* dpy, Window dock, TrayWindow* tray,
     XSendEvent(dpy, dock, False, NoEventMask, &ev);
     XSync(dpy, False);
     if (UntrapErrors()) {
-        fprintf(stderr, "Tray.c : X error %i on opcode send\n",
+        FcitxLog(WARNING, _("X error %i on opcode send"),
                 iTrappedErrorCode );
     }
 }

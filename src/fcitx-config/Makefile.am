@@ -1,0 +1,21 @@
+INCLUDES = -I$(top_srcdir)/src
+DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\"
+
+lib_LTLIBRARIES=libfcitx-config.la
+libfcitx_config_la_SOURCES= \
+						   sprintf.c sprintf.h \
+						   fcitx-config.c fcitx-config.h \
+						   profile.c profile.h \
+						   configfile.c configfile.h \
+						   hotkey.c hotkey.h
+libfcitx_config_la_LDFLAGS= -version-number 4:0:0 -no-undefined
+libfcitx_configincludedir= $(includedir)/fcitx-config
+libfcitx_configinclude_HEADERS= \
+								fcitx-config.h \
+								configfile.h \
+								profile.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = fcitx-config.pc
+EXTRA_DIST = \
+	fcitx-config.pc.in

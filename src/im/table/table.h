@@ -24,8 +24,7 @@
 #include <limits.h>
 
 #include "core/ime.h"
-
-#define TABLE_CONFIG_FILENAME "tables.conf"
+#include "tools/utarray.h"
 
 #define MAX_CODE_LENGTH  30
 #define PHRASE_MAX_LENGTH 10
@@ -47,38 +46,40 @@ typedef struct _RULE {
 } RULE;
 
 typedef struct _TABLE {
-    char            strPath[PATH_MAX];
-    char            strSymbolFile[PATH_MAX];
-    char            strName[MAX_IM_NAME + 1];
+    GenericConfig   config;
+    char           *strPath;
+    char           *strSymbolFile;
+    char           *strName;
+    char           *strIconName;
     char           *strInputCode;
     unsigned char   iCodeLength;
     unsigned char   iPYCodeLength;
     char           *strEndCode;	//中止键，按下该键相当于输入该键后再按一个空格
     char           *strIgnoreChars;
     char            cMatchingKey;
-    char            strSymbol[MAX_CODE_LENGTH + 1];
+    char           *strSymbol;
     char            cPinyin;	//输入该键后，表示进入临时拼音状态
     unsigned char   bRule;
 
     RULE           *rule;	//组词规则
-    INT8            iIMIndex;	//记录该码表对应于输入法的顺序
+    int             iIMIndex;	//记录该码表对应于输入法的顺序
     unsigned int    iRecordCount;
     ADJUSTORDER     tableOrder;
 
     Bool            bUsePY;	//使用拼音
-    INT8            iTableAutoSendToClient;	//自动上屏
-    INT8            iTableAutoSendToClientWhenNone;	//空码自动上屏
+    int             iTableAutoSendToClient;	//自动上屏
+    int             iTableAutoSendToClientWhenNone;	//空码自动上屏
     Bool            bUseMatchingKey;	//是否模糊匹配
     Bool            bAutoPhrase;	//是否自动造词
-    INT8            iSaveAutoPhraseAfter;	//选择N次后保存自动词组，0-不保存，1-立即保存
+    int             iSaveAutoPhraseAfter;	//选择N次后保存自动词组，0-不保存，1-立即保存
     Bool            bAutoPhrasePhrase;	//词组是否参与造词
-    INT8            iAutoPhrase;	//自动造词长度
+    int             iAutoPhrase;	//自动造词长度
     Bool            bTableExactMatch;	//是否只显示精确匹配的候选字/词
     Bool            bPromptTableCode;	//输入完毕后是否提示编码
-//    int             iMaxPhraseAllowed;	//允许的最长词组字数。0-不限
 
     Bool            bHasPinyin;		//标记该码表中是否有拼音
-    char            strChoose[11];		//设置选择键
+    char           *strChoose;		//设置选择键
+    Bool            bEnabled;
 } TABLE;
 
 typedef struct _RECORD {
@@ -128,6 +129,58 @@ typedef enum {
     CT_PYPHRASE			//临时拼音转换过来的候选字/词
 } CANDTYPE;
 
+typedef struct TableState {
+    UT_array* table; /* 码表 */
+    
+    INT8            iTableIMIndex;
+    INT8            iTableCount;
+    
+    Bool            bTableDictLoaded;		//Loads tables only if needed
+    
+    RECORD         *currentRecord;
+    RECORD	       *recordHead;
+    
+    RECORD         *tableSingleHZ[SINGLE_HZ_COUNT];		//Records the single characters in table to speed auto phrase
+    RECORD	       *pCurCandRecord;	//Records current cand word selected, to update the hit-frequency information
+    TABLECANDWORD   tableCandWord[MAX_CAND_WORD*2];
+    
+    RECORD_INDEX   *recordIndex;
+    
+    AUTOPHRASE     *autoPhrase;
+    AUTOPHRASE     *insertPoint;
+    
+    uint            iAutoPhrase;
+    uint            iTableCandDisplayed;
+    uint            iTableTotalCandCount;
+    char            strTableLegendSource[PHRASE_MAX_LENGTH * 2 + 1];
+    
+    FH             *fh;
+    int             iFH ;
+    unsigned int    iTableIndex;
+    
+    Bool            bIsTableDelPhrase;
+    HOTKEYS         hkTableDelPhrase[HOT_KEY_COUNT];
+    Bool            bIsTableAdjustOrder;
+    HOTKEYS         hkTableAdjustOrder[HOT_KEY_COUNT];
+    Bool            bIsTableAddPhrase;
+    HOTKEYS         hkTableAddPhrase[HOT_KEY_COUNT];
+    HOTKEYS         hkGetPY[HOT_KEY_COUNT];
+    
+    INT8            iTableChanged;
+    INT8            iTableNewPhraseHZCount;
+    Bool            bCanntFindCode;	//Records if new phrase has corresponding code - should be always false
+    char           *strNewPhraseCode;
+    
+    SINGLE_HZ       hzLastInput[PHRASE_MAX_LENGTH];	//Records last HZ input
+    INT16           iHZLastInputCount ;
+    Bool            bTablePhraseTips;
+    
+    ADJUSTORDER     PYBaseOrder;
+    Bool		isSavingTableDic;
+} TableState;
+
+extern TableState tbl;
+
 void            LoadTableInfo (void);
 Bool            LoadTableDict (void);
 void            TableInit (void);
@@ -171,5 +224,8 @@ void            TableResetFlags (void);
 void            TableCreateAutoPhrase (INT8 iCount);
 
 void            UpdateHZLastInput (char *);
+
+ConfigFileDesc *GetTableConfigDesc();
+CONFIG_BINDING_DECLARE(TABLE);
 
 #endif

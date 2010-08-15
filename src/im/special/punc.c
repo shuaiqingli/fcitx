@@ -26,6 +26,7 @@
 #include "im/special/punc.h"
 #include "core/ime.h"
 #include "tools/tools.h"
+#include "tools/util.h"
 
 ChnPunc        *chnPunc = (ChnPunc *) NULL;
 
@@ -64,7 +65,7 @@ int LoadPuncDict (void)
 
 	fpDict = fopen (strPath, "rt");
 	if (!fpDict) {
-	    printf ("Can't open Chinese punc file: %s\n", strPath);
+	    FcitxLog(WARNING, _("Can't open Chinese punc file: %s"), strPath);
 	    return False;
 	}
     }

@@ -40,6 +40,8 @@
 #include "im/pinyin/pyParser.h"
 #include "im/pinyin/sp.h"
 #include "tools/utf8.h"
+#include "fcitx-config/profile.h"
+#include "tools/util.h"
 
 int             iPYFACount;
 PYFA           *PYFAList;
@@ -94,7 +96,6 @@ Bool		isSavingPYIndex = False;
 Bool		isSavingPYFreq = False;
 
 extern Bool     bIsInLegend;
-extern Bool     bUseLegend;
 extern Bool     bSP_UseSemicolon;
 extern Bool     bSP;
 extern int      iCandWordCount;
@@ -206,7 +207,7 @@ Bool LoadPYOtherDict (void)
 
     fp = fopen (strPath, "rb");
     if (!fp)
-	fprintf (stderr, "\nCan not find System Database of Pinyin!\n");
+	FcitxLog (ERROR, _("Can not find System Database of Pinyin!"));
     else {
 	while (!feof (fp)) {
         INT8 clen;
@@ -1377,7 +1378,7 @@ char           *PYGetCandWord (int iIndex)
             PYAddUserPhrase (strPYAuto, strHZString);
         SetMessageCount(&messageDown, 0);
         SetMessageCount(&messageUp, 0);
-        if (bUseLegend) {
+        if (fcitxProfile.bUseLegend) {
             strcpy (strPYLegendSource, strPYAuto);
             strcpy (strPYLegendMap, strHZString);
             PYGetLegendCandWords (SM_FIRST);
@@ -2407,7 +2408,7 @@ void SavePYUserPhrase (void)
     fp = UserConfigFile (TEMP_FILE, "wb", &pstr);
     if (!fp) {
 	isSavingPYUserPhrase = False;
-	fprintf (stderr, "无法保存拼音用户词库：%s\n", pstr);
+	FcitxLog(ERROR, _("Cannot Save User Pinyin Database: %s"), pstr);
 	return;
     }
     strcpy(strPathTemp, pstr);
@@ -2467,7 +2468,7 @@ void SavePYFreq (void)
     fp = UserConfigFile(TEMP_FILE, "wb", &pstr);
     if (!fp) {
 	isSavingPYFreq = False;
-	fprintf (stderr, "无法保存常用词表：%s\n", pstr);
+	FcitxLog (ERROR, _("Cannot Save Frequent word: %s"), pstr);
 	return;
     }
     strcpy(strPathTemp, pstr);
@@ -2535,7 +2536,7 @@ void SavePYIndex (void)
     fp = UserConfigFile (TEMP_FILE, "wb", &pstr);
     if (!fp) {
 	isSavingPYIndex = False;
-	fprintf (stderr, "无法保存索引文件：%s\n", pstr);
+	FcitxLog(ERROR, _("Cannot Save Pinyin Index: %s"), pstr);
 	return;
     }
     strcpy(strPathTemp, pstr);

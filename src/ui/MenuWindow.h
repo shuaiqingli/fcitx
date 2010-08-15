@@ -36,7 +36,7 @@
 #include <X11/Xlib.h>
 
 #define MENU_WINDOW_WIDTH	120
-#define MENU_WINDOW_HEIGHT	200
+#define MENU_WINDOW_HEIGHT	400
 
 #define IM_MENU_WINDOW_WIDTH	110
 #define IM_MENU_WINDOW_HEIGHT	300
@@ -90,7 +90,6 @@ typedef struct
 }xlibMenu;
 
 extern xlibMenu mainMenu,imMenu,vkMenu,skinMenu;
-extern INT8     iIMIndex;
 Bool            CreateMenuWindow (void);
 void            InitMenu(void );
 void            InitMenuWindowColor (void);

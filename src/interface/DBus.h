@@ -7,14 +7,9 @@
 #include "core/xim.h"
 
 extern IM *im;
-extern INT8 iIMIndex;
 
 extern INT8 iState;
-extern Bool bChnPunc;
-extern Bool bCorner;
 extern Bool bVK;
-extern Bool bUseGBKT;
-extern Bool bUseLegend;
 extern Bool bUseTable;
 extern Bool bUseQW;
 extern Bool bUseSP;

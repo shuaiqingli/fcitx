@@ -38,6 +38,9 @@
 #define AUTOSAVE_ORDER_COUNT  	1024
 #define AUTOSAVE_FREQ_COUNT  	32
 
+#define strNameOfPinyin "Pinyin"
+#define strIconNameOfPinyin "pinyin"
+
 typedef enum FIND_MODE {
     FIND_PHRASE,
     FIND_BASE,

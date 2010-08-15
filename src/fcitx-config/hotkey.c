@@ -18,25 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "KeyList.h"
-#include "xim.h"
-
-//键盘扫描码列表，只用于快速切换键
-/* KEYCODE_LIST    keyCodeList[] = {
-    {"LCTRL", L_CTRL}
-    ,
-    {"RCTRL", R_CTRL}
-    ,
-    {"LSHIFT", L_SHIFT}
-    ,
-    {"RSHIFT", R_SHIFT}
-    ,
-    {"LSUPER", L_SUPER}    
-    ,
-    {"RSUPER", R_SUPER}
-    ,
-    {"\0", 0}
-}; */
+#include "fcitx-config/hotkey.h"
+#include <string.h>
 
 KEY_LIST        keyList[] = {
     {"TAB", 9}
@@ -424,20 +407,44 @@ int GetKeyList (char *strKey)
     return -1;
 }
 
-/*
-int GetKeyCodeList (char *strKey)
+void SetHotKey (char *strKeys, HOTKEYS * hotkey)
 {
-    int             i;
+    char           *p;
+    char            strKey[30];
+    int             i, j;
+
+    p = strKeys;
+
+    while (*p == ' ')
+       p++;
+    i = 0;
+    while (p[i] != ' ' && p[i] != '\0')
+       i++;
+    strncpy (strKey, p, i);
+    strKey[i] = '\0';
+    p += i + 1;
+    j = ParseKey (strKey);
+    if (j != -1)
+       hotkey[0] = j;
+    if (j == -1)
+       j = 0;
+    else
+       j = 1;
 
     i = 0;
-    for (;;) {
-	if (!keyCodeList[i].code)
-	    break;
-	if (!strcmp (strKey, keyCodeList[i].strKey))
-	    return keyCodeList[i].code;
-	i++;
-    }
+    while (p[i] != ' ' && p[i] != '\0')
+       i++;
+    if (p[0]) {
+       strncpy (strKey, p, i);
+       strKey[i] = '\0';
 
-    return -1;
+       i = ParseKey (strKey);
+       if (i == -1)
+           i = 0;
+    }
+    else
+       i = 0;
+
+    hotkey[j] = i;
 }
-*/
+

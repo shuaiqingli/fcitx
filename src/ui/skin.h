@@ -218,7 +218,6 @@ extern Window   inputWindow;
 extern Bool bShowCursor;
 extern INT8	iIMCount;
 extern IM	*im;
-extern INT8	iIMIndex;
 extern Bool	bShowPrev;
 extern Bool	bShowNext;
 extern int skinCount;
@@ -236,7 +235,6 @@ void load_tray_img();
 void load_input_img();
 void load_input_msg();
 void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse);
-extern void draw_main_bar();
 extern void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
 extern void set_mouse_status(mouse_e m);
 /**

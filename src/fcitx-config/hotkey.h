@@ -18,7 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 /**
- * @file   KeyList.h
+ * @file   hotkey.h
  * @author Yuking yuking_net@sohu.com
  * @date   2008-1-16
  * 
@@ -27,14 +27,13 @@
  * 
  */
 
-#ifndef _KEYLIST_H
-#define _KETLIST_H
+#ifndef _HOTKEY_H
+#define _HOTKEY_H
 
 #include <stdio.h>
 #include <X11/Xlib.h>
 
-#include "xim.h"
-#include "IMdkit.h"
+typedef int HOTKEYS;
 
 typedef enum _KEYCODE_LIST {
     L_CTRL = 37,
@@ -83,7 +82,7 @@ typedef enum _KEY_STATE {
 
 typedef enum _KEY {
     TAB = 9,
-    ENTER = 13,
+    ENTER_K = 13,
     ESC = 27,
     DELETE = 255,
 
@@ -356,6 +355,5 @@ typedef enum _KEY {
 int             GetKey (unsigned char iKeyCode, int iKeyState, int iCount);
 int             ParseKey (char *strKey);
 int             GetKeyList (char *strKey);
-//int             GetKeyCodeList (char *strKey);
 
 #endif

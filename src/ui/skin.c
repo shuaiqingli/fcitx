@@ -30,6 +30,7 @@
 #include "ui/ui.h"
 #include "ui/skin.h"
 #include "ui/font.h"
+#include "tools/util.h"
 #include <pthread.h>
 #ifdef _ENABLE_TRAY
 #include "ui/TrayWindow.h"
@@ -115,7 +116,7 @@ void rtrim(char *str )
     *(s+1)=0;
 }
 
-void trim(char *str)
+void skin_trim(char *str)
 {
 	ltrim(str) ;
 	rtrim(str) ;
@@ -128,7 +129,7 @@ int GetPrivateProfileString(FILE * fptmp,char *SelectName, char *KeyName,char *D
     char *pchBegin;
 	FILE * fp=fptmp;
 
-    pthread_rwlock_wrlock(&plock);
+    FcitxLock();
     pchBegin = NULL;
     sprintf(chBuf,"[%s]",SelectName);
 	
@@ -159,7 +160,6 @@ int GetPrivateProfileString(FILE * fptmp,char *SelectName, char *KeyName,char *D
     while (1) {
         if( feof(fp) ) {
             strcpy(ReturnString,DefaultString);
-            //	fclose(fp) ;
             return -1;
         }
         
@@ -168,7 +168,7 @@ int GetPrivateProfileString(FILE * fptmp,char *SelectName, char *KeyName,char *D
         
         // 过滤注释
         if (chBuf1[0] == '#') continue;
-        trim(chBuf1);
+        skin_trim(chBuf1);
         // 关键字名 
         pchBegin = strstr( chBuf1, KeyName );
 
@@ -190,12 +190,12 @@ int GetPrivateProfileString(FILE * fptmp,char *SelectName, char *KeyName,char *D
     }
     
     strcpy( chMsg, pchBegin+1 ); 
-    trim(chMsg) ;
+    skin_trim(chMsg) ;
     int len = strlen(chMsg);
     len = len > Size?Size:len;
     strncpy(ReturnString,chMsg, len);
     ReturnString[Size - 1] = '\0';
-    pthread_rwlock_unlock(&plock);
+    FcitxUnlock();
 
     return 0;
 }
@@ -302,12 +302,12 @@ reload:
     {
         if (strcmp(skinType, "default") == 0)
         {
-            fprintf(stderr, "Can not load default skin, is installion correct?\n");
+            FcitxLog(FATAL, _("Can not load default skin, is installion correct?"));
             perror("fopen");
             exit(1);	// 如果安装目录里面也没有配置文件，那就只好告诉用户，无法运行了
         }
         perror("fopen");
-        fprintf(stderr, "Can not load skin %s, return to default\n", skinType);
+        FcitxLog(WARNING, _("Can not load skin %s, return to default"), skinType);
         strcpy(skinType, "default");
         goto reload;
     }

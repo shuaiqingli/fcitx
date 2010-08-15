@@ -28,9 +28,6 @@
 #include "skin.h"
 
 
-extern int   iMainWindowX;
-extern int   iMainWindowY;
-
 extern int      iScreen;
 
 xlibMenu mainMenu,imMenu,vkMenu,skinMenu; 
@@ -39,7 +36,7 @@ void InitMenuDefault(xlibMenu * Menu)
 {
 	Menu->pos_x=100;
 	Menu->pos_y=100;
-	Menu->width=110;
+	Menu->width=130;
 //	Menu->bgcolor.r=0xDCDCDC;
 //	Menu->bgselectcolor=0x0A2465;
 //	Menu->charcolor=0x111111;
@@ -311,19 +308,6 @@ Bool CreateImMenuWindow()
 	Bool ret;
 
 	InitMenuDefault(&imMenu);
-/*	SetMeueShell(&imMenu.shell[0],"1.智能拼音",0,menushell);
-	SetMeueShell(&imMenu.shell[1],"2.智能双拼",0,menushell);
-	SetMeueShell(&imMenu.shell[2],"3.区位输入",0,menushell);
-	SetMeueShell(&imMenu.shell[3],"4.五笔字型",0,menushell);
-	SetMeueShell(&imMenu.shell[4],"5.五笔拼音",0,menushell);
-	SetMeueShell(&imMenu.shell[5],"6.二笔",0,menushell);
-	SetMeueShell(&imMenu.shell[6],"7.仓颉",0,menushell);
-	SetMeueShell(&imMenu.shell[7],"8.晚风",0,menushell);
-	SetMeueShell(&imMenu.shell[8],"9.冰蟾全息",0,menushell);
-	SetMeueShell(&imMenu.shell[9],"10.自然码",0,menushell);
-	SetMeueShell(&imMenu.shell[10],"11.电报码",0,menushell);
-*/	
-
 	ret=CreateXlibMenu(dpy,&imMenu);
 	return ret;
 }  

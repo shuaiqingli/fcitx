@@ -20,6 +20,9 @@
 #ifndef _SP_H
 #define _SP_H
 
+#define strNameOfShuangpin "Shuangpin"
+#define strIconNameOfShuangpin "shuangpin"
+
 typedef enum {
     SP_FROM_USER=0,
     SP_FROM_SYSTEM_CONFIG,

@@ -101,7 +101,7 @@ int main ( int argc, char *argv[] )
         return 1;
     }
 
-	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", DisplayString(dpy));
+	sprintf(socketfile, "/tmp/fcitx-socket-%s", DisplayString(dpy));
 
     if (dpy)
         XCloseDisplay(dpy);

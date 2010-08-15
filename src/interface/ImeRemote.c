@@ -33,6 +33,7 @@
 #include "core/xim.h"
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
+#include "tools/util.h"
 #ifdef _ENABLE_DBUS
 #include "DBus.h"
 extern Property state_prop;
@@ -141,10 +142,10 @@ static void main_loop (int socket_fd)
 
 void* remoteThread (void* val)
 {
-	sprintf(socketfile, "/tmp/fcitx-soeckt-%s", DisplayString(dpy));
+	sprintf(socketfile, "/tmp/fcitx-socket-%s", DisplayString(dpy));
 	int socket_fd = create_socket(socketfile);
 	if (socket_fd < 0) {
-		fprintf(stderr, "Can't open socket %s: %s\n", socketfile, strerror(errno));
+		FcitxLog(ERROR, _("Can't open socket %s: %s"), socketfile, strerror(errno));
 		return 0;
 	}
 

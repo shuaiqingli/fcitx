@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ui/skin.h"
+#include "tools/util.h"
 
 extern char strUserLocale[];
 
@@ -10,7 +11,7 @@ void InitFont()
 {
     if (!FcInit())
     {
-        fprintf(stderr, "Error: Load fontconfig failed");
+        FcitxLog(FATAL, _("Error: Load fontconfig failed"));
         exit(1);
     }
 }
@@ -59,7 +60,7 @@ reloadfont:
 
     FcFontSetDestroy(fs);
 
-    fprintf(stderr, "your current font is: %s\n", skin_config.skin_font.font_zh);
+    FcitxLog(INFO, _("your current font is: %s"), skin_config.skin_font.font_zh);
 
     setlocale (LC_CTYPE, "");
     return;
@@ -78,6 +79,6 @@ nofont:
         goto reloadfont;
     }
         
-    fprintf(stderr, "no valid font.");
+    FcitxLog(FATAL, _("no valid font."));
     exit(1);
 }

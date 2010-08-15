@@ -3,6 +3,8 @@
 
 #include "tools/utf8.h"
 
+#define FCITX_CONFIG_DIR "/fcitx/"
+
 #define EIM_MAX		4
 
 #define MAX_IM_NAME	(8 * UTF8_MAX_LENGTH)
@@ -45,6 +47,7 @@
 
 typedef struct {
 	char Name[MAX_IM_NAME + 1];
+    char IconName[MAX_IM_NAME + 1];
 
 	void (*Reset) (void);
 	int (*DoInput) (int);

@@ -38,19 +38,22 @@
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
 #include "ui/font.h"
+#include "ui/ui.h"
 #include "im/special/punc.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/sp.h"
 #include "im/qw/qw.h"
 #include "im/table/table.h"
-#include "tools/tools.h"
-#include "ui/ui.h"
 #include "im/special/vk.h"
 #include "im/special/QuickPhrase.h"
 #include "im/special/AutoEng.h"
 #include "im/extra/extra.h"
 #include "ui/skin.h"
+#include "tools/tools.h"
 #include "interface/DBus.h"
+#include "fcitx-config/profile.h"
+
+FcitxState gs; /* global state */
 
 IM             *im = NULL;
 INT8            iIMCount = 0;
@@ -75,8 +78,6 @@ char            strStringGet[MAX_USER_INPUT + 1];	//保存输入法返回的需�
 
 ENTER_TO_DO     enterToDo = K_ENTER_SEND;
 
-Bool            bCorner = False;	//全半角切换
-Bool            bChnPunc = True;	//中英文标点切换
 Bool            bIsDoInputOnly = False;	//表明是否只由输入法来处理键盘
 Bool            bLastIsNumber = False;	//上一次输入是不是阿拉伯数字
 char		cLastIsAutoConvert = 0;	//上一次输入是不是符合数字后自动转换的符号，如'.'/','，0表示不是这样的符号
@@ -88,7 +89,6 @@ Bool            bAutoHideInputWindow = False;	//是否自动隐藏输入条
 Bool            bEngPuncAfterNumber = True;	//数字后面输出半角符号(只对'.'/','有效)
 Bool            bPhraseTips = True;
 INT8            lastIsSingleHZ = 0;
-Bool            bUseGBKT = False;
 
 SEMICOLON_TO_DO semicolonToDo = K_SEMICOLON_QUICKPHRASE;
 Bool            bEngAfterCap = True;
@@ -126,11 +126,7 @@ HOTKEYS         hkRecording[HOT_KEY_COUNT] = { CTRL_ALT_J, 0 };
 HOTKEYS		hkResetRecording[HOT_KEY_COUNT] = { CTRL_ALT_A, 0 };
 #endif
 
-Bool            bUseLegend = False;
 Bool            bIsInLegend = False;
-
-INT8            iIMIndex = 0;
-Bool            bLocked = False;
 
 // dgod extern im
 char		strExternIM[PATH_MAX];
@@ -144,10 +140,6 @@ Bool            bShowUserSpeed = True;
 Bool            bShowVersion = True;
 uint            iHZInputed = 0;
 
-char            strNameOfPinyin[41] = "智能拼音";
-char            strNameOfShuangpin[41] = "智能双拼";
-char            strNameOfQuwei[41] = "区位";
-
 Bool		bCursorAuto=False;
 
 int		inputMethods[INPUT_METHODS];
@@ -159,7 +151,6 @@ extern ChnPunc *chnPunc;
 extern Bool     bShowPrev;
 extern Bool     bShowNext;
 extern Bool     bShowCursor;
-extern Bool     bTrackCursor;
 
 extern Window   inputWindow;
 extern HIDE_MAINWINDOW hideMainWindow;
@@ -174,7 +165,6 @@ extern Bool     bVK;
 
 extern Window   aboutWindow;
 
-extern Bool     bCompactMainWindow;
 extern Bool     bShowVK;
 
 extern INT8     iTableChanged;
@@ -182,7 +172,6 @@ extern INT8     iNewPYPhraseCount;
 extern INT8     iOrderCount;
 extern INT8     iNewFreqCount;
 
-extern TABLE   *table;
 extern INT8     iTableCount;
 
 extern Bool     bTrigger;
@@ -211,7 +200,6 @@ extern Property legend_prop;
 
 #ifdef _ENABLE_RECORDING
 extern FILE	*fpRecord;
-extern Bool	bRecording;
 extern Bool     bWrittenRecord;
 #endif
 
@@ -248,8 +236,8 @@ void ResetInput (void)
     if (!IsIM (strNameOfPinyin))
     bShowCursor = False;
 
-    if (im[iIMIndex].ResetIM)
-    im[iIMIndex].ResetIM ();
+    if (im[gs.iIMIndex].ResetIM)
+    im[gs.iIMIndex].ResetIM ();
 
     iFirstQuickPhrase = -1;
 }
@@ -388,7 +376,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     if (ConnectIDGetState (call_data->connect_id) != IS_CLOSED) {
         if ((kev->time - lastKeyPressedTime) < 500 && (!bIsDoInputOnly)) {
         if (iKeyState == KEY_CTRL_SHIFT_COMP && (iKey == 225 || iKey == 227)) {
-            if ( !bLocked ) {
+            if ( !fcitxProfile.bLocked ) {
                 if (ConnectIDGetState (call_data->connect_id) == IS_CHN)
         	    SwitchIM (-1);
                 else if (IsHotKey (iKey, hkTrigger))
@@ -398,7 +386,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
                 ChangVK();
         }
         else if (iKey == CTRL_LSHIFT) {
-            if ( !bLocked ) {
+            if ( !fcitxProfile.bLocked ) {
                 if (ConnectIDGetState (call_data->connect_id) == IS_CHN)
         	    SwitchIM (-1);
                 else if (IsHotKey (iKey, hkTrigger))
@@ -422,7 +410,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         else if ((kev->keycode == i2ndSelectKey && keyReleased == KR_2ND_SELECTKEY)
         	 || (iKey == (i2ndSelectKey ^ 0xFF) && keyReleased == KR_2ND_SELECTKEY_OTHER)) {
             if (!bIsInLegend) {
-        	pstr = im[iIMIndex].GetCandWord (1);
+        	pstr = im[gs.iIMIndex].GetCandWord (1);
         	if (pstr) {
         	    strcpy (strStringGet, pstr);
         	    if (bIsInLegend)
@@ -446,7 +434,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         else if ((kev->keycode == i3rdSelectKey && keyReleased == KR_3RD_SELECTKEY)
         	 || (iKey == (i3rdSelectKey ^ 0xFF) && keyReleased == KR_3RD_SELECTKEY_OTHER) ) {
             if (!bIsInLegend) {
-        	pstr = im[iIMIndex].GetCandWord (2);
+        	pstr = im[gs.iIMIndex].GetCandWord (2);
         	if (pstr) {
         	    strcpy (strStringGet, pstr);
         	    if (bIsInLegend)
@@ -495,7 +483,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
             if (!bUseDBus)
         	DrawMainWindow ();
 
-            if (bShowInputWindowTriggering && !bCorner) {
+            if (bShowInputWindowTriggering && !fcitxProfile.bCorner) {
         	    DisplayInputWindow ();
             }
             else
@@ -538,12 +526,12 @@ void ProcessKey (IMForwardEventStruct * call_data)
         	}
 
         	if (iKey == CTRL_LSHIFT || iKey == SHIFT_LCTRL) {
-        	    if (bLocked)
+        	    if (fcitxProfile.bLocked)
         		retVal = IRV_TO_PROCESS;
         	}
         	else {
         	    //调用输入法模块
-        	    if (bCorner && (iKey >= 32 && iKey <= 126)) {
+        	    if (fcitxProfile.bCorner && (iKey >= 32 && iKey <= 126)) {
         		//有人报 空格 的全角不对，正确的是0xa1 0xa1
         		//但查资料却说全角符号总是以0xa3开始。
         		//由于0xa3 0xa0可能会显示乱码，因此采用0xa1 0xa1的方式
@@ -554,7 +542,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         		if (!iInCap) {
         		    char            strTemp[MAX_USER_INPUT];
 
-        		    retVal = im[iIMIndex].DoInput (iKey);
+        		    retVal = im[gs.iIMIndex].DoInput (iKey);
         		    if (!bCursorAuto && !IsIM (strNameOfPinyin) && !IsIM (strNameOfShuangpin))
         			iCursorPos = iCodeInputCount;
 
@@ -583,7 +571,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         		    if (!iInCap && iKey >= 'A' && iKey <= 'Z' && bEngAfterCap && !(kev->state & KEY_CAPSLOCK)) {
         			iInCap = 1;
         			if (!bIsInLegend && iCandWordCount) {
-        			    pstr = im[iIMIndex].GetCandWord (0);
+        			    pstr = im[gs.iIMIndex].GetCandWord (0);
         			    iCandWordCount = 0;
         			    if (pstr) {
         				SendHZtoClient (call_data, pstr);
@@ -602,9 +590,9 @@ void ProcessKey (IMForwardEventStruct * call_data)
         		    }
         		    else if (!iInCap) {
         			if (IsHotKey (iKey, hkPrevPage))
-        			    retVal = im[iIMIndex].GetCandWords (SM_PREV);
+        			    retVal = im[gs.iIMIndex].GetCandWords (SM_PREV);
         			else if (IsHotKey (iKey, hkNextPage))
-        			    retVal = im[iIMIndex].GetCandWords (SM_NEXT);
+        			    retVal = im[gs.iIMIndex].GetCandWords (SM_NEXT);
         		    }
 
         		    if (retVal == IRV_TO_PROCESS) {
@@ -713,7 +701,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    retVal = IRV_TO_PROCESS;
         			}
         			else {
-        			    if (bChnPunc) {
+        			    if (fcitxProfile.bChnPunc) {
         				char           *pPunc;
 
         				pstr = NULL;
@@ -721,7 +709,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         				if (pPunc) {
         				    strStringGet[0] = '\0';
         				    if (!bIsInLegend)
-        					pstr = im[iIMIndex].GetCandWord (0);
+        					pstr = im[gs.iIMIndex].GetCandWord (0);
         				    if (pstr)
         					strcpy (strStringGet, pstr);
         				    strcat (strStringGet, pPunc);
@@ -750,7 +738,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         					else {
         					    strStringGet[0] = '\0';
         					    if (!bIsInLegend)
-        						pstr = im[iIMIndex].GetCandWord (0);
+        						pstr = im[gs.iIMIndex].GetCandWord (0);
         					    if (pstr)
         						strcpy (strStringGet, pstr);
         					    iLen = strlen (strStringGet);
@@ -825,7 +813,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
         			retVal = IRV_DO_NOTHING;
         		    }
-        		    else if (iKey == ENTER) {
+        		    else if (iKey == ENTER_K) {
         			if (iInCap) {
         			    if (!iCodeInputCount)
         				strcpy (strStringGet, ";");
@@ -993,7 +981,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     case IRV_GET_CANDWORDS:
     SendHZtoClient (call_data, strStringGet);
     bLastIsNumber = False;
-    if (bPhraseTips && im[iIMIndex].PhraseTips && !bVK)
+    if (bPhraseTips && im[gs.iIMIndex].PhraseTips && !bVK)
         DoPhraseTips ();
     iHZInputed += (int) (utf8_strlen (strStringGet));	
 
@@ -1011,7 +999,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     break;
     case IRV_ENG:
     //如果处于中文标点模式，应该将其中的标点转换为全角
-    if (bChnPunc && bConvertPunc)
+    if (fcitxProfile.bChnPunc && bConvertPunc)
         ConvertPunc ();
     case IRV_PUNC:
     iHZInputed += (int) (utf8_strlen (strStringGet));	//粗略统计字数
@@ -1054,9 +1042,9 @@ INPUT_RETURN_VALUE ChangeCorner (void)
     ResetInput ();
     ResetInputWindow ();
 
-    bCorner = !bCorner;
+    fcitxProfile.bCorner = !fcitxProfile.bCorner;
 
-    SwitchIM(iIMIndex);
+    SwitchIM(gs.iIMIndex);
     
     if (!bUseDBus) {
     DrawMainWindow ();
@@ -1074,7 +1062,7 @@ INPUT_RETURN_VALUE ChangeCorner (void)
 
 INPUT_RETURN_VALUE ChangePunc (void)
 {
-    bChnPunc = !bChnPunc;
+    fcitxProfile.bChnPunc = !fcitxProfile.bChnPunc;
     
     if (!bUseDBus) 
         DrawMainWindow ();
@@ -1091,7 +1079,7 @@ INPUT_RETURN_VALUE ChangePunc (void)
 
 INPUT_RETURN_VALUE ChangeGBKT (void)
 {
-    bUseGBKT = !bUseGBKT;
+    fcitxProfile.bUseGBKT = !fcitxProfile.bUseGBKT;
     ResetInput ();
     ResetInputWindow ();
 
@@ -1112,7 +1100,7 @@ INPUT_RETURN_VALUE ChangeGBKT (void)
 
 INPUT_RETURN_VALUE ChangeLegend (void)
 {
-    bUseLegend = !bUseLegend;
+    fcitxProfile.bUseLegend = !fcitxProfile.bUseLegend;
     ResetInput ();
     
     if (!bUseDBus) {
@@ -1133,7 +1121,7 @@ INPUT_RETURN_VALUE ChangeLegend (void)
 
 INPUT_RETURN_VALUE ChangeTrack (void)
 {
-    bTrackCursor = !bTrackCursor;
+    fcitxProfile.bTrackCursor = !fcitxProfile.bTrackCursor;
     SaveProfile ();
 
     return IRV_DO_NOTHING;;
@@ -1141,7 +1129,7 @@ INPUT_RETURN_VALUE ChangeTrack (void)
 
 void ChangeLock (void)
 {
-    bLocked = !bLocked;
+    fcitxProfile.bLocked = !fcitxProfile.bLocked;
     
     if (!bUseDBus)
     DrawMainWindow ();
@@ -1152,13 +1140,13 @@ void ChangeLock (void)
 #ifdef _ENABLE_RECORDING
 void ChangeRecording (void)
 {
-    bRecording =! bRecording;
+    fcitxProfile.bRecording =! fcitxProfile.bRecording;
     ResetInput ();
     ResetInputWindow ();
     CloseInputWindow();
 
     CloseRecording();
-    if ( bRecording )
+    if ( fcitxProfile.bRecording )
         OpenRecording(True);
 
     SaveProfile ();
@@ -1172,7 +1160,7 @@ void ResetRecording (void)
         bWrittenRecord = False;
     }
 
-    if ( bRecording )
+    if ( fcitxProfile.bRecording )
         OpenRecording(False);
 }
 #endif
@@ -1185,27 +1173,27 @@ void SwitchIM (INT8 index)
     if (index != (INT8) - 2 && bVK)
     return;
 
-    iLastIM = (iIMIndex >= iIMCount) ? (iIMCount - 1) : iIMIndex;
+    iLastIM = (gs.iIMIndex >= iIMCount) ? (iIMCount - 1) : gs.iIMIndex;
     if (index == (INT8) - 1) {
-    if (iIMIndex == (iIMCount - 1))
-        iIMIndex = 0;
+    if (gs.iIMIndex == (iIMCount - 1))
+        gs.iIMIndex = 0;
     else
-        iIMIndex++;
+        gs.iIMIndex++;
     }
     else if (index != (INT8) - 2) {
     if (index >= iIMCount)
-        iIMIndex = iIMCount - 1;
+        gs.iIMIndex = iIMCount - 1;
     else {
-        iIMIndex = index;
+        gs.iIMIndex = index;
     }
     }
 
     if (bVK)
         str = vks[iCurrentVK].strName;
-    else if (bCorner)
+    else if (fcitxProfile.bCorner)
     str = strFullCorner;
     else
-    str = im[iIMIndex].strName;
+    str = im[gs.iIMIndex].strName;
 
     if (!bUseDBus) {
 	XResizeWindow (dpy, mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);
@@ -1213,10 +1201,10 @@ void SwitchIM (INT8 index)
     }
 
     if (index != (INT8) - 2) {
-    if (im[iLastIM].Destroy)
-        im[iLastIM].Destroy ();
-    if (im[iIMIndex].Init)
-        im[iIMIndex].Init ();
+    if (im[iLastIM].Save)
+        im[iLastIM].Save();
+    if (im[gs.iIMIndex].Init)
+        im[gs.iIMIndex].Init ();
     }
 
     ResetInput ();
@@ -1235,7 +1223,7 @@ void SwitchIM (INT8 index)
         int iIndex = ConnectIDGetState(connect_id);
         
         if (iIndex == IS_CHN) {
-        strcpy(logo_prop.label, im[iIMIndex].strName);
+        strcpy(logo_prop.label, im[gs.iIMIndex].strName);
         iState = IS_CHN;
         }
     }
@@ -1250,14 +1238,14 @@ void SelectIM(int imidx)
 {
 //	int i=0;
 	INT8        iLastIM;
-	iIMIndex=imidx;
+	gs.iIMIndex=imidx;
 
-    iLastIM = (iIMIndex >= iIMCount) ? (iIMCount - 1) : iIMIndex;
+    iLastIM = (gs.iIMIndex >= iIMCount) ? (iIMCount - 1) : gs.iIMIndex;
 
-	if (im[iLastIM].Destroy)
-	    im[iLastIM].Destroy ();
-	if (im[iIMIndex].Init)
-	    im[iIMIndex].Init ();
+	if (im[iLastIM].Save)
+	    im[iLastIM].Save();
+	if (im[gs.iIMIndex].Init)
+	    im[gs.iIMIndex].Init ();
 	ResetInput ();
 	DrawMainWindow ();
 /*
@@ -1279,19 +1267,20 @@ void DoPhraseTips (void)
     if (!bPhraseTips)
     return;
 
-    if (im[iIMIndex].PhraseTips ())
+    if (im[gs.iIMIndex].PhraseTips ())
     lastIsSingleHZ = -1;
     else
     lastIsSingleHZ = 0;
 }
 
-void RegisterNewIM (char *strName, void (*ResetIM) (void),
-            INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int), Bool (*PhraseTips) (void), void (*Init) (void), void (*Destroy) (void))
+void RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void),
+            INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int), Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void))
 {
 #ifdef _DEBUG
     printf ("REGISTER %s\n", strName);
 #endif
     strcpy (im[iIMCount].strName, strName);
+    strcpy (im[iIMCount].strIconName, strIconName);
     im[iIMCount].ResetIM = ResetIM;
     im[iIMCount].DoInput = DoInput;
     im[iIMCount].GetCandWords = GetCandWords;
@@ -1299,14 +1288,14 @@ void RegisterNewIM (char *strName, void (*ResetIM) (void),
     im[iIMCount].GetLegendCandWord = GetLegendCandWord;
     im[iIMCount].PhraseTips = PhraseTips;
     im[iIMCount].Init = Init;
-    im[iIMCount].Destroy = Destroy;
+    im[iIMCount].Save = Save;
 
     iIMCount++;
 }
 
 Bool IsIM (char *strName)
 {
-    if (strstr (im[iIMIndex].strName, strName))
+    if (strstr (im[gs.iIMIndex].strName, strName))
     return True;
 
     return False;
@@ -1314,9 +1303,12 @@ Bool IsIM (char *strName)
 
 void SaveIM (void)
 {
-    if (iTableChanged)
-    SaveTableDict ();
-    SavePY();
+    int i = 0;
+    for (i = 0; i < iIMCount; i++)
+    {
+        if (im[i].Save)
+            im[i].Save();
+    }
 }
 
 void SetIM (void)
@@ -1330,7 +1322,7 @@ void SetIM (void)
     if (inputMethods[IM_TABLE])
     LoadTableInfo ();
 
-    iIMCount = iTableCount;
+    iIMCount = tbl.iTableCount;
     if (inputMethods[IM_PY])
     iIMCount++;
     if (inputMethods[IM_SP])
@@ -1373,29 +1365,31 @@ void SetIM (void)
     if ( inputMethods[k]>0 ) {
         switch (k) {
         case IM_PY:
-        RegisterNewIM (strNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, SavePY);
+        RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, SavePY);
         break;
         case IM_SP:
-        RegisterNewIM (strNameOfShuangpin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, SPInit, SavePY);
+        RegisterNewIM (strNameOfShuangpin, strIconNameOfShuangpin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, SPInit, SavePY);
         break;
         case IM_QW:
-        RegisterNewIM (strNameOfQuwei, NULL, DoQWInput, QWGetCandWords, QWGetCandWord, NULL, NULL, NULL, NULL);
+        RegisterNewIM (strNameOfQuwei, strIconNameOfQuwei, NULL, DoQWInput, QWGetCandWords, QWGetCandWord, NULL, NULL, NULL, NULL);
         break;
-        case IM_TABLE:for (l = 0; l < iTableCount; l++) {
-            RegisterNewIM (table[l].strName, TableResetStatus, DoTableInput, TableGetCandWords, TableGetCandWord, TableGetLegendCandWord, TablePhraseTips, TableInit, FreeTableIM);
-            table[l].iIMIndex = iIMCount - 1;
-            }
+        case IM_TABLE:
+        for (l = 0; l < tbl.iTableCount; l++) {
+            TABLE* table = (TABLE*) utarray_eltptr(tbl.table, l);
+            RegisterNewIM (table->strName, table->strIconName, TableResetStatus, DoTableInput, TableGetCandWords, TableGetCandWord, TableGetLegendCandWord, TablePhraseTips, TableInit, FreeTableIM);
+            table->iIMIndex = iIMCount - 1;
+        }
         default:
             break;
         }
     }
     }
 
-    if ( (!inputMethods[IM_SP] && (!inputMethods[IM_TABLE] || !iTableCount)) && !iIMCount )	 //至少应该有一种输入法
-    RegisterNewIM (strNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, NULL);
+    if ( (!inputMethods[IM_SP] && (!inputMethods[IM_TABLE] || !tbl.iTableCount)) && !iIMCount )	 //至少应该有一种输入法
+    RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, NULL);
 
     if (strExternIM[0] && strExternIM[1])
     LoadExtraIM(strExternIM);
 
-    SwitchIM (iIMIndex);
+    SwitchIM (gs.iIMIndex);
 }

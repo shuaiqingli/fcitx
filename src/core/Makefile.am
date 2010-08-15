@@ -2,7 +2,6 @@ INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
 
 bin_PROGRAMS=fcitx
 fcitx_SOURCES= IC.c IC.h\
-			   KeyList.c \
 			   MyErrorsHandlers.c MyErrorHandlers.h\
 			   ime.c ime.h \
 			   internalVersion.c \
@@ -18,6 +17,7 @@ fcitx_LDADD=../../lib/libXimd.a \
 			../im/special/libimspecial.a \
 			../tools/libtools.a \
 			../ui/libui.a \
-			../interface/libinterface.a
+			../interface/libinterface.a \
+            ../fcitx-config/libfcitx-config.la
 
 fcitx_LDFLAGS = -ldl -lpthread

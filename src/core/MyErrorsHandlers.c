@@ -40,6 +40,7 @@
 #include "core/ime.h"
 #include "core/MyErrorsHandlers.h"
 #include "tools/tools.h"
+#include "tools/util.h"
 
 #ifndef SIGUNUSED
 #define SIGUNUSED 32
@@ -78,7 +79,7 @@ void OnException (int signo)
     }
 #endif
     
-    fprintf (stderr, "\nFCITX -- Get Signal No.: %d\n", signo);
+    FcitxLog(INFO, _("FCITX -- Get Signal No.: %d"), signo);
     
     if ( signo!=SIGSEGV && signo!=SIGCONT)
         SaveIM();

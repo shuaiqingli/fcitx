@@ -32,9 +32,10 @@
 
 #include <X11/keysym.h>
 #include "core/xim.h"
-#include "core/KeyList.h"
+#include "fcitx-config/hotkey.h"
 #include "core/fcitx.h"
 #include "tools/utf8.h"
+#include "fcitx-config/fcitx-config.h"
 
 #define MAX_CAND_WORD	10
 #define MAX_USER_INPUT	300
@@ -58,9 +59,9 @@ typedef enum _SEARCH_MODE {
 } SEARCH_MODE;
 
 typedef enum ADJUST_ORDER {
-    AD_NO,
-    AD_FAST,
-    AD_FREQ
+    AD_NO = 0,
+    AD_FAST = 1,
+    AD_FREQ = 2
 } ADJUSTORDER;
 
 typedef enum _INPUT_RETURN_VALUE {
@@ -105,8 +106,9 @@ typedef enum _KEY_RELEASED {
     KR_3RD_SELECTKEY_OTHER
 } KEY_RELEASED;
 
-typedef struct {
+typedef struct IM{
     char            strName[MAX_IM_NAME + 1];
+    char            strIconName[MAX_IM_NAME + 1];
     void            (*ResetIM) (void);
                     INPUT_RETURN_VALUE (*DoInput) (int);
                     INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE);
@@ -114,10 +116,13 @@ typedef struct {
     char           *(*GetLegendCandWord) (int);
                     Bool (*PhraseTips) (void);
     void            (*Init) (void);
-    void            (*Destroy) (void);
+    void            (*Save) (void);
 } IM;
 
-typedef int     HOTKEYS;
+typedef struct FcitxState {
+    INT8 iIMIndex;
+    Bool bMutexInited;
+} FcitxState;
 
 void            ProcessKey (IMForwardEventStruct * call_data);
 void            ResetInput (void);
@@ -136,14 +141,16 @@ void		ChangeRecording (void);
 void		ResetRecording (void);
 #endif
 
-void            RegisterNewIM (char *strName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
-			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Destroy) (void));
+void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
+			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void));
 void            SwitchIM (INT8 index);
 void            DoPhraseTips ();
 Bool            IsIM (char *strName);
 void            SaveIM (void);
 void            SetIM (void);
 void            ConvertPunc (void);
+
+extern FcitxState gs;
 
 // Bool            IsKeyIgnored (int iKeyCode);
 

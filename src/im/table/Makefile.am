@@ -1,6 +1,7 @@
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
-DEFS = -DPKGDATADIR=\"$(pkgdatadir)\"
+DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\"
 
 noinst_LIBRARIES=libimtable.a
-libimtable_a_SOURCES= table.c table.h 
+libimtable_a_SOURCES= table.c table.h \
+					  tableconfig.c
 

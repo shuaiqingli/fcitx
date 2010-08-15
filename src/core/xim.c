@@ -38,6 +38,8 @@
 #include "ui/ui.h"
 
 #include "interface/DBus.h"
+#include "fcitx-config/profile.h"
+#include "tools/util.h"
 
 CONNECT_ID     *connectIDsHead = (CONNECT_ID *) NULL;
 ICID	       *icidsHead = (ICID *) NULL;
@@ -57,13 +59,11 @@ int		iClientCursorY = INPUTWND_STARTY;
 
 #ifdef _ENABLE_RECORDING
 FILE		*fpRecord = NULL;
-Bool		bRecording = True;
 Bool		bWrittenRecord = False;			//是否写入过记录
 char 		strRecordingPath[PATH_MAX]="";		//空字串表示使用默认的路径~/.fcitx/record.dat
 #endif
 
 extern IM      *im;
-extern INT8     iIMIndex;
 
 extern Display *dpy;
 extern int      iScreen;
@@ -71,19 +71,13 @@ extern Window   mainWindow;
 extern Window   inputWindow;
 extern VKWindow   vkWindow;
 
-extern int      iMainWindowX;
-extern int      iMainWindowY;
-extern int      iInputWindowX;
-extern int      iInputWindowY;
 extern uint     iInputWindowHeight;
 extern uint     iInputWindowWidth;
-extern Bool     bTrackCursor;
 extern Bool     bCenterInputWindow;
 extern int      iCodeInputCount;
 extern uint     uMessageDown;
 extern uint     uMessageUp;
 extern Bool     bVK;
-extern Bool     bCorner;
 extern HIDE_MAINWINDOW hideMainWindow;
 
 //计算打字速度
@@ -92,7 +86,6 @@ extern uint     iHZInputed;
 
 extern Bool     bShowInputWindowTriggering;
 
-extern Bool     bUseGBKT;
 extern CARD16 g_last_connect_id;
 
 extern Bool	bUseDBus;
@@ -150,7 +143,7 @@ void SetTrackPos(IMChangeICStruct * call_data)
     if (CurrentIC != (IC *) FindIC (call_data->icid))
         return;
 
-    if (bTrackCursor) {
+    if (fcitxProfile.bTrackCursor) {
 	int             i;
 	Window          window;
 	XICAttribute   *pre_attr = ((IMChangeICStruct *) call_data)->preedit_attr;
@@ -239,7 +232,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	bStartRecordType = False;
 	iHZInputed = 0;
 	
-	if (ConnectIDGetTrackCursor (connect_id) && bTrackCursor) {
+	if (ConnectIDGetTrackCursor (connect_id) && fcitxProfile.bTrackCursor) {
 	    position * pos = ConnectIDGetPos(connect_id);
 	    
 	    if (pos) {
@@ -285,7 +278,7 @@ Bool MyCloseHandler (IMOpenStruct * call_data)
 
 #ifdef _ENABLE_RECORDING
     CloseRecording();
-    if ( bRecording )
+    if ( fcitxProfile.bRecording )
         OpenRecording( True );
 #endif
 
@@ -337,8 +330,8 @@ void EnterChineseMode (Bool bState)
 	ResetInput ();
 	ResetInputWindow ();
 
-	if (im[iIMIndex].ResetIM)
-	    im[iIMIndex].ResetIM ();
+	if (im[gs.iIMIndex].ResetIM)
+	    im[gs.iIMIndex].ResetIM ();
     }
 
     if (!bUseDBus) {
@@ -370,7 +363,7 @@ Bool MyTriggerNotifyHandler (IMTriggerNotifyStruct * call_data)
     }
 
     SetTrackPos( (IMChangeICStruct *)call_data );
-    if (bShowInputWindowTriggering && !bCorner) {
+    if (bShowInputWindowTriggering && !fcitxProfile.bCorner) {
 	DisplayInputWindow ();
 
 #ifdef _ENABLE_TRAY
@@ -496,7 +489,7 @@ Bool OpenRecording(Bool bMode)
 	}
 	else if (strRecordingPath[0]!='/') {	//应该是个绝对路径
 #ifdef _DEBUG
-	    fprintf (stderr, "Recording file must be an absolute path.\n");
+	    FcitxLog(DEBUG, _("Recording file must be an absolute path."));
 #endif
 	    strRecordingPath[0]='\0';
 	}
@@ -529,7 +522,7 @@ void SendHZtoClient (IMForwardEventStruct * call_data, char *strHZ)
     char           *pS2T = (char *) NULL;
 
 #ifdef _DEBUG
-    fprintf (stderr, "Sending %s  icid=%d connectid=%d\n", strHZ, CurrentIC->id, connect_id);
+    FcitxLog(DEBUG, _("Sending %s  icid=%d connectid=%d\n"), strHZ, CurrentIC->id, connect_id);
 #endif
 
     /* avoid Seg fault */
@@ -537,7 +530,7 @@ void SendHZtoClient (IMForwardEventStruct * call_data, char *strHZ)
         return;
 
 #ifdef _ENABLE_RECORDING
-    if (bRecording) {
+    if (fcitxProfile.bRecording) {
         if (OpenRecording(True)) {
 	    if ( !bWrittenRecord ) {
 		char    buf[20];
@@ -556,7 +549,7 @@ void SendHZtoClient (IMForwardEventStruct * call_data, char *strHZ)
     }
 #endif
 
-    if (bUseGBKT)
+    if (fcitxProfile.bUseGBKT)
 	pS2T = strHZ = ConvertGBKSimple2Tradition (strHZ);
 
 	ps = strHZ;
@@ -578,7 +571,7 @@ void SendHZtoClient (IMForwardEventStruct * call_data, char *strHZ)
     IMCommitString (ims, (XPointer) & cms);
     XFree (tp.value);
 
-    if (bUseGBKT)
+    if (fcitxProfile.bUseGBKT)
 	free (pS2T);
 }
 
@@ -591,7 +584,7 @@ Bool InitXIM (char *imname)
     
     ximWindow = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 1, 0, 0);
     if (ximWindow == (Window)NULL) {
-	fprintf(stderr, "Can't Create imWindow\n");
+	FcitxLog(FATAL, _("Can't Create imWindow"));
 	exit(1);
     }
     
@@ -601,12 +594,12 @@ Bool InitXIM (char *imname)
             if (strstr (imname, "@im="))
             	imname += 4;
             else {
-                fprintf (stderr, "XMODIFIERS Error...\n");
+                FcitxLog(WARNING, _("XMODIFIERS Error."));
                 imname = DEFAULT_IMNAME;
             }
         }
         else {
-            fprintf (stderr, "Please set XMODIFIERS...\n");
+            FcitxLog(WARNING, _("Please set XMODIFIERS."));
             imname = DEFAULT_IMNAME;
         }
     }
@@ -657,7 +650,7 @@ Bool InitXIM (char *imname)
             NULL);
 
     if (ims == (XIMS) NULL) {
-	fprintf (stderr, "Start FCITX error. Another XIM daemon named %s is running?\n", imname);
+	FcitxLog(ERROR, _("Start FCITX error. Another XIM daemon named %s is running?"), imname);
 	return False;
     }
 
@@ -937,7 +930,7 @@ void icidSetIMState (CARD16 icid, IME_STATE imState)
 	if (temp->icid == icid) {
 	    temp->imState = imState;
 #if _DEBUG
-	    fprintf(stderr,"Set icid=%d(connect_id=%d) to %d\n",icid,temp->connect_id, imState);
+	    FcitxLog(DEBUG, _("Set icid=%d(connect_id=%d) to %d"),icid,temp->connect_id, imState);
 #endif
 	    return;
 	}
