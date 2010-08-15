@@ -61,8 +61,6 @@ reloadfont:
     FcFontSetDestroy(fs);
 
     FcitxLog(INFO, _("your current font is: %s"), skin_config.skin_font.font_zh);
-
-    setlocale (LC_CTYPE, "");
     return;
 
 nofont:

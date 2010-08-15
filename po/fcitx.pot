@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx 4.0 beta1\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-08-15 00:11+0800\n"
+"POT-Creation-Date: 2010-08-15 13:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -265,37 +265,47 @@ msgstr ""
 msgid "Cannot Save Pinyin Index: %s"
 msgstr ""
 
-#: src/im/table/table.c:240
+#: src/im/table/table.c:166
+#, c-format
+msgid "Load Table Config File:%s"
+msgstr ""
+
+#: src/im/table/table.c:176
+#, c-format
+msgid "Table Config %s is %s"
+msgstr ""
+
+#: src/im/table/table.c:242
 msgid "Loading Table Dict"
 msgstr ""
 
-#: src/im/table/table.c:249
+#: src/im/table/table.c:251
 #, c-format
 msgid "Cannot load table file: %s"
 msgstr ""
 
-#: src/im/table/table.c:370
+#: src/im/table/table.c:372
 msgid "Load Table Dict OK"
 msgstr ""
 
-#: src/im/table/table.c:414
+#: src/im/table/table.c:416
 msgid "Loading Autophrase."
 msgstr ""
 
-#: src/im/table/table.c:455
+#: src/im/table/table.c:457
 msgid "Load Autophrase OK"
 msgstr ""
 
-#: src/im/table/table.c:596
+#: src/im/table/table.c:598
 #, c-format
 msgid "Cannot create table file: %s"
 msgstr ""
 
-#: src/im/table/table.c:602
+#: src/im/table/table.c:604
 msgid "Saving TABLE Dict."
 msgstr ""
 
-#: src/im/table/table.c:683
+#: src/im/table/table.c:685
 msgid "Rename OK"
 msgstr ""
 
@@ -331,35 +341,35 @@ msgstr ""
 msgid "error: configure file: no group name at beginning"
 msgstr ""
 
-#: src/tools/util.c:315
+#: src/tools/util.c:305
 msgid "pthread mutexattr init failed"
 msgstr ""
 
-#: src/tools/util.c:322
+#: src/tools/util.c:312
 msgid "pthread mutex init failed"
 msgstr ""
 
-#: src/tools/util.c:351
+#: src/tools/util.c:345
 #, c-format
 msgid "Info:"
 msgstr ""
 
-#: src/tools/util.c:354
+#: src/tools/util.c:348
 #, c-format
 msgid "Error:"
 msgstr ""
 
-#: src/tools/util.c:357
+#: src/tools/util.c:351
 #, c-format
 msgid "Debug:"
 msgstr ""
 
-#: src/tools/util.c:360
+#: src/tools/util.c:354
 #, c-format
 msgid "Warning:"
 msgstr ""
 
-#: src/tools/util.c:363
+#: src/tools/util.c:357
 #, c-format
 msgid "Fatal:"
 msgstr ""

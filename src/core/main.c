@@ -89,8 +89,8 @@ extern void* remoteThread(void*);
 int main (int argc, char *argv[])
 {
     setlocale(LC_ALL, "");
-    bindtextdomain("fcitx", ".");
-    textdomain("fcitx");
+    bindtextdomain(PACKAGE, LOCALEDIR); 
+    textdomain(PACKAGE);
 
     XEvent          event;
     int             c; 	//用于保存用户输入的参数
@@ -135,11 +135,6 @@ int main (int argc, char *argv[])
                 return 0;
         }
     }
-
-    /*下面两行代码用于检查当前系统使用的是否是UTF字符集。相当于在字符终端执行
-     * “locale charmap”
-     */
-    setlocale (LC_CTYPE, "");
 
 #ifdef _ENABLE_DBUS
     if (bUseDBus && !InitDBus ())

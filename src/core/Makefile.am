@@ -1,4 +1,5 @@
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
+DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\" -DLOCALEDIR=\"$(localedir)\"
 
 bin_PROGRAMS=fcitx
 fcitx_SOURCES= IC.c IC.h\
