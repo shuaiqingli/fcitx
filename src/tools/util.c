@@ -25,6 +25,7 @@
  * @version 4.0.0
  * @date 2010-05-02
  */
+#include "core/fcitx.h"
 
 #include <unistd.h>
 #include <ctype.h>

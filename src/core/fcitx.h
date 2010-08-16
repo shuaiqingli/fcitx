@@ -1,9 +1,9 @@
 #ifndef _FCITX_H_
 #define _FCITX_H_
 
-#include "tools/utf8.h"
+#define _GNU_SOURCE
 
-#define FCITX_CONFIG_DIR "/fcitx/"
+#include "tools/utf8.h"
 
 #define EIM_MAX		4
 

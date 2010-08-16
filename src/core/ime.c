@@ -151,6 +151,7 @@ extern ChnPunc *chnPunc;
 extern Bool     bShowPrev;
 extern Bool     bShowNext;
 extern Bool     bShowCursor;
+extern IC      *CurrentIC;
 
 extern Window   inputWindow;
 extern HIDE_MAINWINDOW hideMainWindow;
@@ -209,6 +210,8 @@ char *sCornerTrans[] = {
     "｀", "ａ", "ｂ", "ｃ", "ｄ", "ｅ", "ｆ", "ｇ", "ｈ", "ｉ", "ｊ", "ｋ", "ｌ", "ｍ", "ｎ", "ｏ",
     "ｐ", "ｑ", "ｒ", "ｓ", "ｔ", "ｕ", "ｖ", "ｗ", "ｘ", "ｙ", "ｚ", "｛", "｜", "｝", "￣",
 };
+
+static void DoForwardEvent(IMForwardEventStruct *call_data);
 
 void ResetInput (void)
 {
@@ -325,6 +328,21 @@ void ConvertPunc (void)
     strcpy (strStringGet, strTemp);
 }
 
+void DoForwardEvent(IMForwardEventStruct *call_data)
+{
+    IMForwardEventStruct fe;
+    memset(&fe, 0, sizeof (fe));
+ 
+    fe.major_code = XIM_FORWARD_EVENT;
+    fe.icid = call_data->icid;
+    fe.connect_id = call_data->connect_id;
+    fe.sync_bit = 0;
+    fe.serial_number = 0L;
+    fe.event = call_data->event;
+
+    IMForwardEvent(ims, (XPointer) &fe);
+}
+
 void ProcessKey (IMForwardEventStruct * call_data)
 {
     KeySym          keysym;
@@ -336,6 +354,18 @@ void ProcessKey (IMForwardEventStruct * call_data)
     int             iKey;
     char           *pstr;
     int             iLen;
+    
+ 
+    if (!CurrentIC)
+    {
+        CurrentIC = FindIC(call_data->icid);
+        if (CurrentIC)
+            return;
+    }
+
+    if (CurrentIC->id != call_data->icid) {
+        CurrentIC = FindIC(call_data->icid);
+    }
 
     kev = (XKeyEvent *) & call_data->event;
     memset (strbuf, 0, STRBUFLEN);
@@ -345,7 +375,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     iKey = GetKey (keysym, iKeyState, keyCount);
 
     if (!iKey) {
-    IMForwardEvent (ims, (XPointer) call_data);
+    DoForwardEvent (call_data);
     return;
     }
 
@@ -719,7 +749,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         				else if ((iKey == (XK_BackSpace & 0x00FF) || iKey == CTRL_H) && cLastIsAutoConvert ) {
         				    char *pPunc;
 
-        				    IMForwardEvent (ims, (XPointer) call_data);
+        				    DoForwardEvent (call_data);
         				    pPunc = GetPunc(cLastIsAutoConvert);
         				    if ( pPunc )
         				        SendHZtoClient(call_data, pPunc);
@@ -904,7 +934,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
     case IRV_TO_PROCESS:
     case IRV_DONOT_PROCESS:
     case IRV_DONOT_PROCESS_CLEAN:
-    IMForwardEvent (ims, (XPointer) call_data);
+    DoForwardEvent (call_data);
 
     if (retVal != IRV_DONOT_PROCESS_CLEAN)
         return;

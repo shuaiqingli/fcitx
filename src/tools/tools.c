@@ -1565,7 +1565,7 @@ FILE *UserConfigFile (char *strFileName, char *strMode, char **strFullPath)
         strcat (strPath, "/.config");
     }
 
-    strcat (strPath, FCITX_CONFIG_DIR);
+    strcat (strPath, "fcitx");
     if (strMode) {
 	if (access (strPath, 0))
 	    mkdir (strPath, S_IRWXU);

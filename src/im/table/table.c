@@ -106,7 +106,7 @@ void LoadTableInfo (void)
     tbl.iTableCount = 0;
     utarray_init(tbl.table, &table_icd);
 
-    tablePath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , DATADIR, FCITX_CONFIG_DIR "data/table" );
+    tablePath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , DATADIR, "fcitx/data/table" );
 
     for(i = 0; i< len; i++)
     {
@@ -244,7 +244,7 @@ Bool LoadTableDict (void)
 
     TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    snprintf(strPath, sizeof(strPath), FCITX_CONFIG_DIR "data/table/%s", table->strPath);
+    snprintf(strPath, sizeof(strPath), "fcitx/data/table/%s", table->strPath);
     fpDict = GetXDGFileData(strPath, "r");
 	
     if (!fpDict) {

@@ -353,30 +353,30 @@ void EnterChineseMode (Bool bState)
 Bool MyTriggerNotifyHandler (IMTriggerNotifyStruct * call_data)
 {
     if (call_data->flag == 0) {
-	/* Mainwindow always shows wrong input status, so fix it here */
-	CurrentIC = (IC *) FindIC (call_data->icid);
+        /* Mainwindow always shows wrong input status, so fix it here */
+        CurrentIC = (IC *) FindIC (call_data->icid);
         connect_id = call_data->connect_id;
-
-	SetConnectID (call_data->connect_id, IS_CHN);
-	icidSetIMState(call_data->icid, IS_CHN);
-
-	EnterChineseMode (False);
-	if (!bUseDBus)
-	    DrawMainWindow ();
+        
+        SetConnectID (call_data->connect_id, IS_CHN);
+        icidSetIMState(call_data->icid, IS_CHN);
+        
+        EnterChineseMode (False);
+        if (!bUseDBus)
+            DrawMainWindow ();
     }
-
+    
     SetTrackPos( (IMChangeICStruct *)call_data );
     if (bShowInputWindowTriggering && !fcitxProfile.bCorner) {
-	DisplayInputWindow ();
-
+        DisplayInputWindow ();
+        
 #ifdef _ENABLE_TRAY
-	if (!bUseDBus)
-	    DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
+        if (!bUseDBus)
+            DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
     }
     else
-	return False;
-
+        return False;
+    
     return True;
 }
 

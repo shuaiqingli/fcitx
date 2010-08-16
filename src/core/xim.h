@@ -80,12 +80,12 @@ void            ConnectIDSetReset (CARD16 connect_id, Bool bReset);
 void            ConnectIDResetReset (void);
 */
 void            ConnectIDSetPos (CARD16 connect_id, int x, int y);
-position	*ConnectIDGetPos (CARD16 connect_id);
+position	   *ConnectIDGetPos (CARD16 connect_id);
 void            ConnectIDSetTrackCursor (CARD16 connect_id, Bool bTrack);
 Bool            ConnectIDGetTrackCursor (CARD16 connect_id);
 void            SetIMState (Bool bState);
+void		    SetTrackPos(IMChangeICStruct * call_data);
 void            MyIMForwardEvent (CARD16 connectId, CARD16 icId, int keycode);
-void		SetTrackPos(IMChangeICStruct * call_data);
 
 /* char           *ConnectIDGetLocale(CARD16 connect_id); */
 void		CreateICID (IMChangeICStruct * call_data);

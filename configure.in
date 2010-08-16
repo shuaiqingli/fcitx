@@ -178,6 +178,10 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([memmove memset mkdir setlocale strcasecmp strstr strtol asprintf vasprintf])
 
 ALL_LINGUAS="zh_CN"
+GETTEXT_PACKAGE=fcitx
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package])
+IT_PROG_INTLTOOL([0.35.0])
 AM_GNU_GETTEXT([external])
 
 AC_CONFIG_FILES([
