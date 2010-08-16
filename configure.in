@@ -181,8 +181,14 @@ ALL_LINGUAS="zh_CN"
 GETTEXT_PACKAGE=fcitx
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package])
-IT_PROG_INTLTOOL([0.35.0])
+AC_PROG_INTLTOOL([0.35.0])
 AM_GNU_GETTEXT([external])
+
+#dirty workaround for old intltool autoconf and automake
+if test "x$DATADIRNAME" = "x"; then
+    DATADIRNAME=share
+    AC_SUBST(DATADIRNAME)
+fi
 
 AC_CONFIG_FILES([
            Makefile
