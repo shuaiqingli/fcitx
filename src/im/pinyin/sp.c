@@ -109,14 +109,12 @@ char            cNonS = 'o';
 
 //extern Bool     bSingleHZMode;
 
-#define STR_SPCONF_DEFAULT 0
-#define STR_SPCONF_NAME 1
+#define STR_SPCONF_NAME 0
 
 #define cstr(b) (strConstSPConf[STR_SPCONF_##b])
 #define cstrlen(b) (strlen(cstr(b)))
 
 char* strConstSPConf[] = {
-    "默认方案=",
     "方案名称="
 };
 
@@ -150,14 +148,6 @@ void LoadSPData (void)
 	    pstr++;
 	if (!strlen (pstr) || pstr[0] == '#')
 	    continue;
-
-	if (!strncmp (pstr, cstr(DEFAULT), cstrlen(DEFAULT))) {
-		pstr += cstrlen(DEFAULT);
-		if (*pstr == ' ' || *pstr == '\t')
-		    pstr++;
-		strcpy (fc.strDefaultSP, pstr);
-	    continue;
-	}
 
 	if (!strncmp (pstr, cstr(NAME), cstrlen(NAME))) {
 	    pstr += cstrlen(NAME);
