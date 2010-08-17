@@ -40,7 +40,8 @@
 
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"
-#include "tools/util.h"
+#include "fcitx-config/configfile.h"
+#include "tools/xdg.h"
 
 #define CHECK_ENV(env, value) (!getenv(env) || (0 != strcmp(getenv(env), (value))))
 
@@ -57,13 +58,12 @@ CARD16          lastConnectID = 0;
 IC             *CurrentIC = NULL;
 char            strLocale[201] = "zh_CN.GB18030,zh_CN.GB2312,zh_CN,zh_CN.GBK,zh_CN.UTF-8,zh_CN.UTF8,en_US.UTF-8,en_US.UTF8";
 
-int		iClientCursorX = INPUTWND_STARTX;
-int		iClientCursorY = INPUTWND_STARTY;
+int		iClientCursorX = 0;
+int		iClientCursorY = 0;
 
 #ifdef _ENABLE_RECORDING
 FILE		*fpRecord = NULL;
 Bool		bWrittenRecord = False;			//是否写入过记录
-char 		strRecordingPath[PATH_MAX]="";		//空字串表示使用默认的路径~/.fcitx/record.dat
 #endif
 
 extern IM      *im;
@@ -75,23 +75,16 @@ extern VKWindow   vkWindow;
 
 extern uint     iInputWindowHeight;
 extern uint     iInputWindowWidth;
-extern Bool     bCenterInputWindow;
 extern int      iCodeInputCount;
 extern uint     uMessageDown;
 extern uint     uMessageUp;
 extern Bool     bVK;
-extern HIDE_MAINWINDOW hideMainWindow;
-Bool     bHintWindow;
 
 //计算打字速度
 extern Bool     bStartRecordType;
 extern uint     iHZInputed;
 
-extern Bool     bShowInputWindowTriggering;
-
 extern CARD16 g_last_connect_id;
-
-extern Bool	bUseDBus;
 
 #ifdef _ENABLE_DBUS
 extern Property logo_prop;
@@ -104,7 +97,6 @@ extern Property legend_prop;
 #endif
 
 #ifdef _DEBUG
-extern char     strUserLocale[];
 char            strXModifiers[100];
 #endif
 
@@ -194,7 +186,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 
 	EnterChineseMode (lastConnectID == connect_id);
 
-	if (!bUseDBus)
+	if (!fc.bUseDBus)
 	    DrawMainWindow ();
 
 	if (ConnectIDGetState (connect_id) == IS_CHN) {
@@ -213,11 +205,11 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	CloseInputWindow();
 	XUnmapWindow (dpy, vkWindow.window);
 
-    if (!bUseDBus) {
+    if (!fc.bUseDBus) {
 #ifdef _ENABLE_TRAY
 	    DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
-	    if (hideMainWindow == HM_SHOW) {
+	    if (fc.hideMainWindow == HM_SHOW) {
 		DisplayMainWindow ();
 		DrawMainWindow ();
 	    }
@@ -225,7 +217,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 		XUnmapWindow (dpy, mainWindow);
 	}
 #ifdef _ENABLE_DBUS
-	if (bUseDBus)
+	if (fc.bUseDBus)
 	    updatePropertyByConnectID(connect_id);
 #endif
 
@@ -241,7 +233,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	    if (pos) {
 		iClientCursorX = pos->x;
 		iClientCursorY = pos->y;
-		if (!bUseDBus)
+		if (!fc.bUseDBus)
 		    XMoveWindow (dpy, inputWindow, iClientCursorX, iClientCursorY);
 #ifdef _ENABLE_DBUS
 		else
@@ -251,7 +243,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 	}
 
 #ifdef _ENABLE_DBUS
-	if (bUseDBus)
+	if (fc.bUseDBus)
 	    registerProperties();
 #endif
     }
@@ -298,7 +290,7 @@ Bool MyCreateICHandler (IMChangeICStruct * call_data)
     }
 
 #ifdef _ENABLE_DBUS
-    if (bUseDBus)
+    if (fc.bUseDBus)
 	updatePropertyByConnectID(connect_id);
 #endif
 
@@ -318,7 +310,7 @@ Bool MyDestroyICHandler (IMChangeICStruct * call_data)
     DestroyICID(call_data->icid);
 
 #ifdef _ENABLE_DBUS
-    if (bUseDBus) {
+    if (fc.bUseDBus) {
 	strcpy(logo_prop.label, "Fcitx");
 	updateProperty(&logo_prop);
     }
@@ -337,7 +329,7 @@ void EnterChineseMode (Bool bState)
 	    im[gs.iIMIndex].ResetIM ();
     }
 
-    if (!bUseDBus) {
+    if (!fc.bUseDBus) {
 	DisplayMainWindow ();
 #ifdef _ENABLE_TRAY
 	DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
@@ -345,7 +337,7 @@ void EnterChineseMode (Bool bState)
     }
 
 #ifdef _ENABLE_DBUS
-    if (bUseDBus)
+    if (fc.bUseDBus)
 	updatePropertyByConnectID(connect_id);
 #endif
 }
@@ -361,16 +353,16 @@ Bool MyTriggerNotifyHandler (IMTriggerNotifyStruct * call_data)
         icidSetIMState(call_data->icid, IS_CHN);
         
         EnterChineseMode (False);
-        if (!bUseDBus)
+        if (!fc.bUseDBus)
             DrawMainWindow ();
     }
     
     SetTrackPos( (IMChangeICStruct *)call_data );
-    if (bShowInputWindowTriggering && !fcitxProfile.bCorner) {
+    if (fc.bShowInputWindowTriggering && !fcitxProfile.bCorner) {
         DisplayInputWindow ();
         
 #ifdef _ENABLE_TRAY
-        if (!bUseDBus)
+        if (!fc.bUseDBus)
             DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size);
 #endif
     }
@@ -484,21 +476,24 @@ void MyIMForwardEvent (CARD16 connectId, CARD16 icId, int keycode)
 Bool OpenRecording(Bool bMode)
 {
     if ( !fpRecord ) {
-        if ( strRecordingPath[0]=='\0' ) {
+        if ( fc.strRecordingPath[0]=='\0' ) {
 	    char    *pbuf;
 
-	    UserConfigFile("record.dat", NULL, &pbuf);
-	    strcpy(strRecordingPath, pbuf);
+        GetXDGFileData("record.dat", NULL, &pbuf);
+        if (fc.strRecordingPath)
+            free(fc.strRecordingPath);
+	    fc.strRecordingPath = strdup(pbuf);
+        free(pbuf);
 	}
-	else if (strRecordingPath[0]!='/') {	//应该是个绝对路径
+	else if (fc.strRecordingPath[0]!='/') {	//应该是个绝对路径
 #ifdef _DEBUG
 	    FcitxLog(DEBUG, _("Recording file must be an absolute path."));
 #endif
-	    strRecordingPath[0]='\0';
+	    fc.strRecordingPath[0]='\0';
 	}
 
-	if ( strRecordingPath[0]!='\0' )
-	    fpRecord = fopen(strRecordingPath, (bMode)? "a+" : "wt");
+	if ( fc.strRecordingPath[0]!='\0' )
+	    fpRecord = fopen(fc.strRecordingPath, (bMode)? "a+" : "wt");
     }
 
     return (fpRecord? True:False);
@@ -607,7 +602,7 @@ Bool InitXIM (char *imname)
         }
     }
     
-    if (bHintWindow)
+    if (fc.bHintWindow)
     {
         char strTemp[PATH_MAX];
         snprintf(strTemp, PATH_MAX, "@im=%s", imname);
@@ -672,6 +667,10 @@ Bool InitXIM (char *imname)
             IMFilterEventMask, KeyPressMask | KeyReleaseMask,
             IMOnKeysList, on_keys,
             NULL);
+
+    free(input_styles);
+    free(on_keys);
+    free(encodings);
 
     if (ims == (XIMS) NULL) {
 	FcitxLog(ERROR, _("Start FCITX error. Another XIM daemon named %s is running?"), imname);

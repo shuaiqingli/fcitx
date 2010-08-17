@@ -25,6 +25,7 @@
 
 #include "im/qw/qw.h"
 #include "ui/InputWindow.h"
+#include "fcitx-config/configfile.h"
 
 extern char     strCodeInput[];
 extern int      iCodeInputCount;
@@ -32,7 +33,6 @@ extern int      iCandWordCount;
 extern int      iCandPageCount;
 extern int	iCurrentCandPage;
 extern char     strStringGet[];
-extern Bool	bPointAfterNumber;
     
 char     strQWHZ[3];
 char     strQWHZUTF8[UTF8_MAX_LENGTH + 1];
@@ -107,7 +107,7 @@ INPUT_RETURN_VALUE QWGetCandWords (SEARCH_MODE mode)
     int             i;
     char            strTemp[3];
 
-    if ( bPointAfterNumber ) {
+    if ( fc.bPointAfterNumber ) {
 	    strTemp[1] = '.';
 	    strTemp[2] = '\0';
     }

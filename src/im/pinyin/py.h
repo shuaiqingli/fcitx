@@ -20,7 +20,6 @@
 #ifndef _PY_H
 #define _PY_H
 
-#include	"core/main.h"
 #include	"core/ime.h"
 
 #define PY_BASE_FILE	"pybase.mb"

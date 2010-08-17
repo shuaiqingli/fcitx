@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "im/special/AutoEng.h"
 #include "tools/tools.h"
+#include "tools/xdg.h"
 
 #include <limits.h>
 
@@ -40,7 +41,7 @@ void LoadAutoEng (void)
     FILE	*fp;
     char	strPath[PATH_MAX];
 
-    fp = UserConfigFile("AutoEng.dat", "rt", NULL);
+    fp = GetXDGFileData("AutoEng.dat", "rt", NULL);
     if (!fp) {
 	strcpy (strPath, PKGDATADIR "/data/");
 	strcat (strPath, "AutoEng.dat");

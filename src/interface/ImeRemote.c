@@ -33,12 +33,12 @@
 #include "core/xim.h"
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
-#include "tools/util.h"
+#include "fcitx-config/configfile.h"
+#include "tools/tools.h"
 #ifdef _ENABLE_DBUS
-#include "DBus.h"
+#include "interface/DBus.h"
 extern Property state_prop;
 #endif
-extern Bool bUseDBus; 
 extern Display* dpy;
 char socketfile[PATH_MAX]="";
 CARD16 g_last_connect_id;
@@ -118,17 +118,17 @@ static void main_loop (int socket_fd)
 			O >>= 16;
 			SetIMState(O);
 			if (O) {
-				if (!bUseDBus) {
+				if (!fc.bUseDBus) {
 					DisplayMainWindow();
 					DrawMainWindow();
 				}
 			}
 #ifdef _ENABLE_DBUS
-			if (bUseDBus)
+			if (fc.bUseDBus)
 				updateProperty(&state_prop);
 #endif
 #ifdef _ENABLE_TRAY
-			if (!bUseDBus) {
+			if (!fc.bUseDBus) {
 				if (ConnectIDGetState (g_last_connect_id) == IS_CHN)
 					DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
 				else

@@ -33,7 +33,7 @@
 #include <search.h>
 #include "fcitx-config/sprintf.h"
 #include "fcitx-config/fcitx-config.h"
-#include "tools/util.h"
+#include "tools/tools.h"
 
 ConfigFile *ParseConfigFile(char *filename, ConfigFileDesc* fileDesc)
 {
@@ -229,6 +229,8 @@ ConfigFileDesc *ParseConfigFileDescFp(FILE *fp)
                 codesc->type = T_File;
             else if (!strcmp(option->rawValue, "Font"))
                 codesc->type = T_Font;
+            else if (!strcmp(option->rawValue, "Image"))
+                codesc->type = T_Image;
             else if (!strcmp(option->rawValue, "Hotkey"))
                 codesc->type = T_Hotkey;
             else if (!strcmp(option->rawValue, "Enum"))
@@ -461,11 +463,64 @@ ConfigSyncResult ConfigOptionChar(ConfigOption *option, ConfigSync sync)
     return SyncInvalid;
 }
 
+ConfigSyncResult ConfigOptionImage(ConfigOption *option, ConfigSync sync)
+{
+    if (!option->value.image)
+        return SyncNoBinding;
 
+    FcitxImage *img = option->value.image;
+
+    switch(sync)
+    {
+        case Raw2Value:
+            memset(img, 0 , sizeof(FcitxImage));
+            if(sscanf(option->rawValue, "%s %d %d %d %d %d %d %d %d", img->img_name,&img->position_x,\
+		&img->position_y,&img->width,&img->height,&img->response_x,&img->response_y,\
+		&img->response_w,&img->response_h) <= 0 )
+            {
+                strcpy(img->img_name, "");
+            }
+            else
+            {
+                if( img->response_x ==0 && img->response_y ==0)
+                {
+                    img->response_x=img->position_x;
+                    img->response_y=img->position_y;
+                }
+            }
+            return SyncSuccess;
+        case Value2Raw:
+            break;
+    }
+
+    return SyncInvalid;
+}
 
 ConfigSyncResult ConfigOptionHotkey(ConfigOption *option, ConfigSync sync)
 {
     /* we assume all hotkey can have 2 candiate key */
+    if (!option->value.hotkey)
+        return SyncNoBinding;
+
+    switch(sync)
+    {
+        case Raw2Value:
+            SetHotKey(option->rawValue, option->value.hotkey);
+            return SyncSuccess;
+        case Value2Raw:
+            if (option->rawValue)
+                free(option->rawValue);
+            if (option->value.hotkey[1].desc)
+                asprintf(&option->rawValue, "%s %s", option->value.hotkey[0].desc, option->value.hotkey[1].desc);
+            else if (option->value.hotkey[0].desc)
+            {
+                option->rawValue = strdup(option->value.hotkey[0].desc);
+            }
+            else
+                option->rawValue = strdup("");
+            return SyncSuccess;
+    }
+
     return SyncInvalid;
 }
 
@@ -706,6 +761,10 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
     if (codesc == NULL)
         return;
 
+    if (sync == Value2Raw)
+        if (option->filter)
+            option->filter(option->value.untype, sync);
+
     switch (codesc->type)
     {
         case T_Integer:
@@ -725,6 +784,9 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
             break;
         case T_Hotkey:
             f = ConfigOptionHotkey;
+            break;
+        case T_Image:
+            f = ConfigOptionImage;
             break;
         case T_File:
             f = ConfigOptionFile;
@@ -753,6 +815,10 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
             FcitxLog(ERROR, _("Option %s is Invalid."), option->optionName);
         }
     }
+
+    if (sync == Raw2Value)
+        if (option->filter)
+            option->filter(option->value.untype, sync);
 }
 
 Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc)
@@ -812,6 +878,9 @@ void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void*
             }
             switch(codesc->type)
             {
+                case T_Image:
+                    option->value.image = (FcitxImage*)var;
+                    break;
                 case T_Char:
                     option->value.chr = (char*) var;
                     break;

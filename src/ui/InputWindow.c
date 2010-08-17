@@ -37,6 +37,7 @@
 #include "interface/DBus.h"
 #include "skin.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/configfile.h"
 
 Window          inputWindow;
 
@@ -56,8 +57,6 @@ XImage         *pNext = NULL, *pPrev = NULL;
 
 Bool            bShowPrev = False;
 Bool            bShowNext = False;
-Bool            bCenterInputWindow = True;
-Bool            bShowInputWindowTriggering = True;
 Bool		bIsDisplaying = False;
 
 int             iCursorPos = 0;
@@ -75,11 +74,8 @@ extern Display *dpy;
 extern int iScreen;
 //计算速度
 extern Bool     bStartRecordType;
-extern Bool     bShowUserSpeed;
-extern Bool     bShowVersion;
 extern time_t   timeStart;
 extern uint     iHZInputed;
-extern Bool	bUseDBus;
 
 extern CARD16	connect_id;
 
@@ -87,7 +83,6 @@ extern int	iClientCursorX;
 extern int	iClientCursorY;
 
 #ifdef _DEBUG
-extern char     strUserLocale[];
 extern char     strXModifiers[];
 #endif
 
@@ -127,6 +122,7 @@ Bool CreateInputWindow (void)
 	gc = XCreateGC(dpy,pm_input_bar, GCForeground, &xgv);
 	XFillRectangle(dpy, pm_input_bar, gc, 0, 0,INPUT_BAR_MAX_LEN, iInputWindowHeight);
 	cs_input_bar=cairo_xlib_surface_create(dpy, pm_input_bar, vs, INPUT_BAR_MAX_LEN, iInputWindowHeight);
+    XFreeGC(dpy, gc);
 	
 	load_input_msg();
     XSelectInput (dpy, inputWindow, ButtonPressMask | ButtonReleaseMask  | PointerMotionMask | ExposureMask);
@@ -146,7 +142,7 @@ Bool CreateInputWindow (void)
  */
 void CalculateInputWindowHeight (void)
 {
-	iInputWindowHeight=skin_config.skin_input_bar.ibbg_img.height;
+	iInputWindowHeight=sc.skinInputBar.backImg.height;
 	//printf("iInputWindowHeight:%d \n",iInputWindowHeight);
 }
 
@@ -159,7 +155,7 @@ void DisplayInputWindow (void)
     MoveInputWindow(connect_id);
     if (MESSAGE_IS_NOT_EMPTY)
 	{
-		if (!bUseDBus)
+		if (!fc.bUseDBus)
 			XMapRaised (dpy, inputWindow);
 #ifdef _ENABLE_DBUS
 		else
@@ -188,7 +184,7 @@ void CalInputWindow (void)
 
     if (MESSAGE_IS_EMPTY) {
 	bShowCursor = False;
-	if (bShowVersion) {
+	if (fc.bShowVersion) {
         AddMessageAtLast(&messageUp, MSG_TIPS, "FCITX " FCITX_VERSION);
 	}
 
@@ -196,7 +192,7 @@ void CalInputWindow (void)
     AddMessageAtLast(&messageDown, MSG_CODE, "%s - %s", strUserLocale, strXModifiers);
 #else
 	//显示打字速度
-	if (bStartRecordType && bShowUserSpeed) {
+	if (bStartRecordType && fc.bShowUserSpeed) {
 	    double          timePassed;
 
 	    timePassed = difftime (time (NULL), timeStart);
@@ -283,7 +279,7 @@ void DrawInputWindow(void)
 
 void MoveInputWindow(CARD16 connect_id)
 {
-	iInputWindowWidth=(iInputWindowWidth>skin_config.skin_input_bar.ibbg_img.width)?iInputWindowWidth:skin_config.skin_input_bar.ibbg_img.width;
+	iInputWindowWidth=(iInputWindowWidth>sc.skinInputBar.backImg.width)?iInputWindowWidth:sc.skinInputBar.backImg.width;
 	iInputWindowWidth=(iInputWindowWidth>=INPUT_BAR_MAX_LEN)?INPUT_BAR_MAX_LEN:iInputWindowWidth;
 	
     if (ConnectIDGetTrackCursor (connect_id) && fcitxProfile.bTrackCursor)
@@ -310,7 +306,7 @@ void MoveInputWindow(CARD16 connect_id)
 	        iTempInputWindowY = iTempInputWindowY - 2 * iInputWindowHeight;
 	}
 
-	if (!bUseDBus)
+	if (!fc.bUseDBus)
 	{
 		//printf("iInputWindowWidth:%d\n",iInputWindowWidth);
 		XMoveWindow (dpy, inputWindow, iTempInputWindowX, iTempInputWindowY);
@@ -336,7 +332,7 @@ void MoveInputWindow(CARD16 connect_id)
     else
     {
 		position * pos = ConnectIDGetPos(connect_id);
-		if (bCenterInputWindow) {
+		if (fc.bCenterInputWindow) {
 		    fcitxProfile.iInputWindowOffsetX = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
 		    if (fcitxProfile.iInputWindowOffsetX < 0)
 			fcitxProfile.iInputWindowOffsetX = 0;
@@ -344,7 +340,7 @@ void MoveInputWindow(CARD16 connect_id)
 		else
 		    fcitxProfile.iInputWindowOffsetX = pos ? pos->x : fcitxProfile.iInputWindowOffsetX;
 	
-		if (!bUseDBus)
+		if (!fc.bUseDBus)
 		{
 			XMoveResizeWindow (dpy, inputWindow, fcitxProfile.iInputWindowOffsetX, pos ? pos->y : fcitxProfile.iInputWindowOffsetY, iInputWindowWidth, iInputWindowHeight); 
 		}
@@ -360,7 +356,7 @@ void CloseInputWindow()
 {
 	XUnmapWindow (dpy, inputWindow);
 #ifdef _ENABLE_DBUS
-	if (bUseDBus)
+	if (fc.bUseDBus)
 	{
 		KIMShowAux(False);
 		KIMShowPreedit(False);

@@ -7,7 +7,7 @@ fcitx_SOURCES= IC.c IC.h\
 			   ime.c ime.h \
 			   internalVersion.c \
 			   xim.c xim.h \
-			   main.c main.h \
+			   main.c  \
 			   fcitx.h
 
 fcitx_LDADD=../../lib/libXimd.a \

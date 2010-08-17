@@ -42,7 +42,7 @@
 #include "tools/utarray.h"
 #include <sys/types.h>
 #include <dirent.h>
-#include "tools/util.h"
+#include "tools/xdg.h"
 #include "fcitx-config/profile.h"
 
 UT_icd table_icd = {sizeof(TABLE), NULL ,NULL, NULL};
@@ -64,14 +64,9 @@ extern int      iLegendCandWordCount;
 extern int      iLegendCandPageCount;
 extern int      iCurrentLegendCandPage;
 extern int      iCodeInputCount;
-extern int      iMaxCandWord;
 extern char     strStringGet[];
-extern Bool     bPointAfterNumber;
-extern Bool	bUseDBus;
-
 extern Bool     bIsInLegend;
 extern INT8     lastIsSingleHZ;
-extern Bool     bDisablePagingInLegend;
 extern Bool     bShowCursor;
 
 extern ADJUSTORDER baseOrder;
@@ -86,6 +81,14 @@ extern char     strFindString[];
 extern ParsePYStruct findMap;
 
 ConfigFileDesc* tableConfigDesc = NULL;
+
+int TablePriorityCmp(const void *a, const void *b)
+{
+    TABLE *ta, *tb;
+    ta = (TABLE*)a;
+    tb = (TABLE*)b;
+    return ta->iPriority - tb->iPriority;
+}
 
 /*
  * 读取码表输入法的名称和文件路径
@@ -106,7 +109,7 @@ void LoadTableInfo (void)
     tbl.iTableCount = 0;
     utarray_init(tbl.table, &table_icd);
 
-    tablePath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , DATADIR, "fcitx/data/table" );
+    tablePath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/table" , DATADIR, "fcitx/data/table" );
 
     for(i = 0; i< len; i++)
     {
@@ -184,6 +187,8 @@ void LoadTableInfo (void)
         }
     }
 
+    utarray_sort(tbl.table, TablePriorityCmp);
+
     for (i = 0;i < len ;i ++)
         free(paths[i]);
     free(paths);
@@ -208,7 +213,7 @@ ConfigFileDesc *GetTableConfigDesc()
 	if (!tableConfigDesc)
 	{
 		FILE *tmpfp;
-		tmpfp = GetXDGFileData("table.desc", "r");
+		tmpfp = GetXDGFileData("table.desc", "r", NULL);
 		tableConfigDesc = ParseConfigFileDescFp(tmpfp);
 		fclose(tmpfp);
 	}
@@ -244,8 +249,15 @@ Bool LoadTableDict (void)
 
     TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    snprintf(strPath, sizeof(strPath), "fcitx/data/table/%s", table->strPath);
-    fpDict = GetXDGFileData(strPath, "r");
+    {
+        size_t len;
+        char *pstr = NULL;
+        char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/table" , DATADIR, "fcitx/data/table" );
+        fpDict = GetXDGFile(table->strPath, path, "r", len, &pstr);
+        FcitxLog(INFO, _("Load Table Dict from %s"), pstr); 
+        free(pstr);
+        FreeXDGPath(path);
+    }
 	
     if (!fpDict) {
 	    FcitxLog( DEBUG, _("Cannot load table file: %s"), strPath);
@@ -318,7 +330,7 @@ Bool LoadTableDict (void)
 	fread (&iTemp, sizeof (unsigned int), 1, fpDict);
 	fread (strHZ, sizeof (char), iTemp, fpDict);
 	recTemp = (RECORD *) malloc (sizeof (RECORD));
-	recTemp->strCode = (char *) malloc (sizeof (char) * (strlen (strCode) + 1));
+	recTemp->strCode = (char *) malloc0 (sizeof (char) * (table->iPYCodeLength + 1));
 	strcpy (recTemp->strCode, strCode);
 	recTemp->strHZ = (char *) malloc (sizeof (char) * iTemp);
 	strcpy (recTemp->strHZ, strHZ);
@@ -373,21 +385,7 @@ Bool LoadTableDict (void)
 #endif
 
     //读取相应的特殊符号表
-    fpDict = UserConfigFile (table->strSymbolFile, "rt", NULL);
-    if (!fpDict) {
-	snprintf (strPath, sizeof(strPath), PKGDATADIR "/data/%s",
-                  table->strSymbolFile);
-
-	/* zxd add begin */
-	if( access( strPath, 0 ) && getenv( "FCITXDIR") ) {
-	    strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat( strPath, "/share/fcitx/data/" );
-            strcat( strPath, table->strSymbolFile );
-	}
-	/* zxd add end */
-                  
-        fpDict = fopen (strPath, "rt");
-    }
+    fpDict = GetXDGFileTable(table->strSymbolFile, "rt", NULL, False);
 
     if (fpDict) {
 	tbl.iFH = CalculateRecordNumber (fpDict);
@@ -418,7 +416,7 @@ Bool LoadTableDict (void)
 
 	strcpy (strPath, table->strName);
 	strcat (strPath, "_LastAutoPhrase.tmp");
-	fpDict = UserConfigFile (strPath, "rb", NULL);
+	fpDict = GetXDGFileTable(strPath, "rb", NULL, True);
 	i = 0;
 	if (fpDict) {
 	    fread (&tbl.iAutoPhrase, sizeof (unsigned int), 1, fpDict);
@@ -466,7 +464,7 @@ Bool LoadTableDict (void)
 void TableInit (void)
 {
     bSP = False;
-    tbl.PYBaseOrder = baseOrder;
+    tbl.PYBaseOrder = fc.baseOrder;
     strPYAuto[0] = '\0';
 }
 
@@ -507,9 +505,6 @@ void FreeTableIM (void)
     
     TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
-    free (table->strInputCode);
-    free (table->strIgnoreChars);
-    free (table->strEndCode);
     table->iRecordCount = 0;
     tbl.bTableDictLoaded = False;
 
@@ -541,7 +536,7 @@ void FreeTableIM (void)
 	tbl.autoPhrase = (AUTOPHRASE *) NULL;
     }
 
-    baseOrder = tbl.PYBaseOrder;
+    fc.baseOrder = tbl.PYBaseOrder;
 }
 
 void TableResetStatus (void)
@@ -573,6 +568,8 @@ void SaveTableDict (void)
     FILE	*logfile = (FILE *)NULL;;
 #endif
 
+    FcitxLock();
+
     if ( tbl.isSavingTableDic )
 	return;
 
@@ -582,7 +579,7 @@ void SaveTableDict (void)
     tbl.isSavingTableDic = True;
     
 #ifdef _ENABLE_LOG       
-    logfile = UserConfigFile("fcitx-dict.log", "wt", NULL);
+    logfile = GetXDGFileUser("fcitx-dict.log", "wt", NULL);
     if ( logfile ) {
 	now = time(NULL);
 	ts = localtime(&now);
@@ -592,13 +589,14 @@ void SaveTableDict (void)
 #endif
 
     
-    fpDict = UserConfigFile(TEMP_FILE, "wb", &pstr);
+    fpDict = GetXDGFileTable(TEMP_FILE, "wb", &pstr, True);
     if (!fpDict) {
 	tbl.isSavingTableDic = False;
 	FcitxLog(ERROR, _("Cannot create table file: %s"), pstr);
 	return;
     }
     strcpy(strPathTemp, pstr);
+    free(pstr);
 
 #ifdef _DEBUG
     FcitxLog(DEBUG, _("Saving TABLE Dict."));
@@ -676,10 +674,11 @@ void SaveTableDict (void)
     }
 #endif
 
-    fpDict = UserConfigFile(table->strPath, NULL, &pstr);
+    fpDict = GetXDGFileTable(table->strPath, NULL, &pstr, True);
     if (access (pstr, 0))
-	unlink (pstr);
+        unlink (pstr);
     rename (strPathTemp, pstr);
+    free(pstr);
 
 #ifdef _DEBUG
     FcitxLog(DEBUG, _("Rename OK"));
@@ -689,7 +688,7 @@ void SaveTableDict (void)
 
     if (tbl.autoPhrase) {
 	//保存上次的自动词组信息
-	fpDict = UserConfigFile(TEMP_FILE, "wb", &pstr);
+	fpDict = GetXDGFileTable(TEMP_FILE, "wb", NULL, True);
 	strcpy (strPathTemp,pstr);
 	if (fpDict) {
 	    fwrite (&tbl.iAutoPhrase, sizeof (int), 1, fpDict);
@@ -704,13 +703,15 @@ void SaveTableDict (void)
 
 	strcpy (strPath, table->strName);
 	strcat (strPath, "_LastAutoPhrase.tmp");
-	fpDict = UserConfigFile(strPath, NULL, &pstr);
+	fpDict = GetXDGFileTable(strPath, NULL, &pstr, True);
 	if (access (pstr, 0))
 	    unlink (pstr);
 	rename (strPathTemp, pstr);
+    free(pstr);
     }
 
     tbl.isSavingTableDic = False;
+    FcitxUnlock();
 }
 
 Bool IsInputKey (int iKey)
@@ -979,7 +980,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 
 	    return retVal;
 	}
-	else if (IsHotKey (iKey, tbl.hkGetPY)) {
+	else if (IsHotKey (iKey, fc.hkGetPY)) {
 	    char            strPY[100];
 
 	    //如果拼音单字字库没有读入，则读入它
@@ -1332,10 +1333,10 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	    }
 	}
 
-	if (iCandWordCount < iMaxCandWord) {
+	if (iCandWordCount < fc.iMaxCandWord) {
 	    while (tbl.currentRecord && tbl.currentRecord != tbl.recordHead) {
 		if ((mode == SM_PREV) ^ (!tbl.currentRecord->flag)) {
-		    if (!TableCompareCode (strCodeInput, tbl.currentRecord->strCode) && CheckHZCharset (tbl.currentRecord->strHZ)) {
+		    if (!TableCompareCode (strCodeInput, tbl.currentRecord->strCode)) {
 			if (mode == SM_FIRST)
 			    tbl.iTableTotalCandCount++;
 			TableAddCandWord (tbl.currentRecord, mode);
@@ -1371,7 +1372,7 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	/* **************************************************** */
     }
 
-    if (bPointAfterNumber) {
+    if (fc.bPointAfterNumber) {
 	strTemp[1] = '.';
 	strTemp[2] = '\0';
     }
@@ -1394,22 +1395,22 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
 		if (pstr)
-		    iWidth += StringWidth (pstr, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
-		iWidth += StringWidth (strTemp, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (pstr, sc.skinFont.fontZh, sc.skinFont.fontSize);
+		iWidth += StringWidth (strTemp, sc.skinFont.fontZh, sc.skinFont.fontSize);
 		switch (tableCandWord[i].flag) {
 		case CT_NORMAL:
-		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
 		    break;
 		case CT_AUTOPHRASE:
-		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
 		default:
 		    ;
 		}
-		iWidth += StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
 
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == 0) {
-			iWidth -= StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+			iWidth -= StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
 			if (iWidth > iFixedInputWindowWidth)
 			    i = 1;
 		    }
@@ -1450,13 +1451,13 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 		else
 		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
 
-		iWidth += StringWidth (pstr, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
-		iWidth += StringWidth (strTemp, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
-		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
-		iWidth += StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+		iWidth += StringWidth (pstr, sc.skinFont.fontZh, sc.skinFont.fontSize);
+		iWidth += StringWidth (strTemp, sc.skinFont.fontZh, sc.skinFont.fontSize);
+		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
+		iWidth += StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
 		if (iWidth > iFixedInputWindowWidth) {
 		    if (i == (iCandWordCount - 1)) {
-			iWidth -= StringWidth (" ", skin_config.skin_font.font_zh, skin_config.skin_font.font_size);
+			iWidth -= StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
 			if (iWidth <= iFixedInputWindowWidth)
 			    i = iCandWordCount;
 		    }
@@ -1552,7 +1553,7 @@ void TableAddAutoCandWord (INT16 which, SEARCH_MODE mode)
     TABLECANDWORD* tableCandWord = tbl.tableCandWord;
 
     if (mode == SM_PREV) {
-	if (iCandWordCount == iMaxCandWord) {
+	if (iCandWordCount == fc.iMaxCandWord) {
 	    i = iCandWordCount - 1;
 	    for (j = 0; j < iCandWordCount - 1; j++)
 		tableCandWord[j].candWord.autoPhrase = tableCandWord[j + 1].candWord.autoPhrase;
@@ -1563,7 +1564,7 @@ void TableAddAutoCandWord (INT16 which, SEARCH_MODE mode)
 	tableCandWord[i].candWord.autoPhrase = &tbl.autoPhrase[which];
     }
     else {
-	if (iCandWordCount == iMaxCandWord)
+	if (iCandWordCount == fc.iMaxCandWord)
 	    return;
 
 	tableCandWord[iCandWordCount].flag = CT_AUTOPHRASE;
@@ -1580,7 +1581,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
     switch (table->tableOrder) {
     case AD_NO:
 	if (mode == SM_PREV) {
-	    if (iCandWordCount == iMaxCandWord)
+	    if (iCandWordCount == fc.iMaxCandWord)
 		i = iCandWordCount - 1;
 	    else {
 		for (i = 0; i < iCandWordCount; i++) {
@@ -1590,7 +1591,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 	    }
 	}
 	else {
-	    if (iCandWordCount == iMaxCandWord)
+	    if (iCandWordCount == fc.iMaxCandWord)
 		return;
 	    tableCandWord[iCandWordCount].flag = CT_NORMAL;
 	    tableCandWord[iCandWordCount++].candWord.record = record;
@@ -1606,7 +1607,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 		}
 	    }
 
-	    if (iCandWordCount == iMaxCandWord) {
+	    if (iCandWordCount == fc.iMaxCandWord) {
 		if (i < 0)
 		    return;
 	    }
@@ -1618,7 +1619,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 		if (strcmp (tableCandWord[i].candWord.record->strCode, record->strCode) > 0 || (strcmp (tableCandWord[i].candWord.record->strCode, record->strCode) == 0 && tableCandWord[i].candWord.record->iHit < record->iHit))
 		    break;
 	    }
-	    if (i == iMaxCandWord)
+	    if (i == fc.iMaxCandWord)
 		return;
 	}
 	break;
@@ -1632,7 +1633,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 		}
 	    }
 
-	    if (iCandWordCount == iMaxCandWord) {
+	    if (iCandWordCount == fc.iMaxCandWord) {
 		if (i < 0)
 		    return;
 	    }
@@ -1645,14 +1646,14 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
 		    break;
 	    }
 
-	    if (i == iMaxCandWord)
+	    if (i == fc.iMaxCandWord)
 		return;
 	}
 	break;
     }
 
     if (mode == SM_PREV) {
-	if (iCandWordCount == iMaxCandWord) {
+	if (iCandWordCount == fc.iMaxCandWord) {
 	    for (j = 0; j < i; j++) {
 		tableCandWord[j].flag = tableCandWord[j + 1].flag;
 		if (tableCandWord[j].flag == CT_NORMAL)
@@ -1673,7 +1674,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
     }
     else {
 	j = iCandWordCount;
-	if (iCandWordCount == iMaxCandWord)
+	if (iCandWordCount == fc.iMaxCandWord)
 	    j--;
 	for (; j > i; j--) {
 	    tableCandWord[j].flag = tableCandWord[j - 1].flag;
@@ -1687,7 +1688,7 @@ void TableAddCandWord (RECORD * record, SEARCH_MODE mode)
     tableCandWord[i].flag = CT_NORMAL;
     tableCandWord[i].candWord.record = record;
 
-    if (iCandWordCount != iMaxCandWord)
+    if (iCandWordCount != fc.iMaxCandWord)
 	iCandWordCount++;
 }
 
@@ -1773,7 +1774,6 @@ int TableFindFirstMatchCode (void)
 
     while (tbl.currentRecord != tbl.recordHead) {
 	if (!TableCompareCode (strCodeInput, tbl.currentRecord->strCode)) {
-	    if (CheckHZCharset (tbl.currentRecord->strHZ))
 		return i;
 	}
 	tbl.currentRecord = tbl.currentRecord->next;
@@ -2090,7 +2090,7 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 	
     while (tableLegend != tbl.recordHead) {
 	if (((mode == SM_PREV) ^ (!tableLegend->flag)) && ((iLength + 2) == strlen (tableLegend->strHZ))) {
-	    if (!strncmp (tableLegend->strHZ, tbl.strTableLegendSource, iLength) && tableLegend->strHZ[iLength] && CheckHZCharset (tableLegend->strHZ)) {
+	    if (!strncmp (tableLegend->strHZ, tbl.strTableLegendSource, iLength) && tableLegend->strHZ[iLength]) {
 		if (mode == SM_FIRST)
 		    iTableTotalLengendCandCount++;
 	
@@ -2103,14 +2103,14 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 
     TableSetCandWordsFlag (iLegendCandWordCount, True);
 
-    if (mode == SM_FIRST && bDisablePagingInLegend)
-	iLegendCandPageCount = iTableTotalLengendCandCount / iMaxCandWord - ((iTableTotalLengendCandCount % iMaxCandWord) ? 0 : 1);
+    if (mode == SM_FIRST && fc.bDisablePagingInLegend)
+	iLegendCandPageCount = iTableTotalLengendCandCount / fc.iMaxCandWord - ((iTableTotalLengendCandCount % fc.iMaxCandWord) ? 0 : 1);
 
     SetMessageCount(&messageUp, 0);
     AddMessageAtLast(&messageUp, MSG_TIPS, "联想：");
     AddMessageAtLast(&messageUp, MSG_INPUT, tbl.strTableLegendSource);
 
-    if (bPointAfterNumber) {
+    if (fc.bPointAfterNumber) {
 	strTemp[1] = '.';
 	strTemp[2] = '\0';
     }
@@ -2147,7 +2147,7 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 		break;
 	}
 
-	if (iLegendCandWordCount == iMaxCandWord) {
+	if (iLegendCandWordCount == fc.iMaxCandWord) {
 	    if (i < 0)
 		return;
 	}
@@ -2160,12 +2160,12 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 		break;
 	}
 	
-	if (i == iMaxCandWord)
+	if (i == fc.iMaxCandWord)
 	    return;
     }
 
     if (mode == SM_PREV) {
-	if (iLegendCandWordCount == iMaxCandWord) {
+	if (iLegendCandWordCount == fc.iMaxCandWord) {
 	    for (j = 0; j < i; j++)
 		tableCandWord[j].candWord.record = tableCandWord[j + 1].candWord.record;
 	}
@@ -2176,7 +2176,7 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
     }
     else {
 	j = iLegendCandWordCount;
-	if (iLegendCandWordCount == iMaxCandWord)
+	if (iLegendCandWordCount == fc.iMaxCandWord)
 	    j--;
 	for (; j > i; j--)
 	    tableCandWord[j].candWord.record = tableCandWord[j - 1].candWord.record;
@@ -2185,7 +2185,7 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
     tableCandWord[i].flag = CT_NORMAL;
     tableCandWord[i].candWord.record = record;
 
-    if (iLegendCandWordCount != iMaxCandWord)
+    if (iLegendCandWordCount != fc.iMaxCandWord)
 	iLegendCandWordCount++;
 }
 
@@ -2213,7 +2213,7 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
     if (!tbl.iFH)
 	return IRV_DISPLAY_MESSAGE;
 
-    if (bPointAfterNumber) {
+    if (fc.bPointAfterNumber) {
 	strTemp[1] = '.';
 	strTemp[2] = '\0';
     }
@@ -2223,7 +2223,7 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
     SetMessageCount(&messageDown, 0);
 
     if (mode == SM_FIRST) {
-	iCandPageCount = tbl.iFH / iMaxCandWord - ((tbl.iFH % iMaxCandWord) ? 0 : 1);
+	iCandPageCount = tbl.iFH / fc.iMaxCandWord - ((tbl.iFH % fc.iMaxCandWord) ? 0 : 1);
 	iCurrentCandPage = 0;
     }
     else {
@@ -2244,16 +2244,16 @@ INPUT_RETURN_VALUE TableGetFHCandWords (SEARCH_MODE mode)
 	}
     }
 
-    for (i = 0; i < iMaxCandWord; i++) {
+    for (i = 0; i < fc.iMaxCandWord; i++) {
 	strTemp[0] = i + 1 + '0';
 	if (i == 9)
 	    strTemp[0] = '0';
     AddMessageAtLast(&messageDown, MSG_INDEX, strTemp);
-    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), tbl.fh[iCurrentCandPage * iMaxCandWord + i].strFH);
-	if (i != (iMaxCandWord - 1)) {
+    AddMessageAtLast(&messageDown, ((i == 0) ? MSG_FIRSTCAND : MSG_OTHER), tbl.fh[iCurrentCandPage * fc.iMaxCandWord + i].strFH);
+	if (i != (fc.iMaxCandWord - 1)) {
         MessageConcatLast(&messageDown, " ");
 	}
-	if ((iCurrentCandPage * iMaxCandWord + i) >= (tbl.iFH - 1)) {
+	if ((iCurrentCandPage * fc.iMaxCandWord + i) >= (tbl.iFH - 1)) {
 	    i++;
 	    break;
 	}
@@ -2271,7 +2271,7 @@ char           *TableGetFHCandWord (int iIndex)
 	if (iIndex > (iCandWordCount - 1))
 	    iIndex = iCandWordCount - 1;
 
-	return tbl.fh[iCurrentCandPage * iMaxCandWord + iIndex].strFH;
+	return tbl.fh[iCurrentCandPage * fc.iMaxCandWord + iIndex].strFH;
     }
     return NULL;
 }

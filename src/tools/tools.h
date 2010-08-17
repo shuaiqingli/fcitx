@@ -36,16 +36,43 @@
 
 #define TABLE_GBKS2T "gbks2t.tab"
 
-void            LoadConfig (Bool bMode);
-void            SaveConfig (void);
-void            SetHotKey (char *strKey, HOTKEYS * hotkey);
+#include <stdlib.h>
+
+#include <libintl.h>
+
+#include "fcitx-config/uthash.h"
+#define _(msgid) gettext(msgid)
+
+typedef enum ErrorLevel
+{
+    DEBUG,
+    ERROR,
+    INFO,
+    FATAL,
+    WARNING
+} ErrorLevel;
+
+typedef struct StringHashSet {
+    char *name;
+    UT_hash_handle hh;
+} StringHashSet;
+
+char *trim(char *s);
+void *malloc0(size_t bytes);
+
+void *custom_bsearch(const void *key, const void *base,
+        size_t nmemb, size_t size, int accurate,
+        int (*compar)(const void *, const void *));
+
+void FcitxInitThread();
+int FcitxLock();
+int FcitxUnlock();
+#define FcitxLog(e, fmt, arg...) FcitxLogFunc(e, __FILE__, __LINE__, fmt, ##arg)
+void FcitxLogFunc(ErrorLevel, const char* filename, const int line, const char* fmt, ...);
+
 int             CalculateRecordNumber (FILE * fpDict);
 void            SetSwitchKey (char *str);
-void            SetTriggerKeys (char *str);
-Bool            CheckHZCharset (char *strHZ);
-Bool            MyStrcmp (char *str1, char *str2);
 int             CalHZIndex (char *strHZ);
-FILE		*UserConfigFile (char *strFileName, char *strMode, char **strFullPath);
 char           *ConvertGBKSimple2Tradition (char *text);
 
 /*

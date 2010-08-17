@@ -52,14 +52,12 @@ typedef struct {
 } StrPixel;
 
 Bool            InitX (void);
-void            Draw3DEffect (Window window, int x, int y, int width, int height, _3D_EFFECT effect);
-void            InitGC (Window window);
 void            MyXEventHandler (XEvent * event);
 Bool            IsInBox (int x0, int y0, int x1, int y1, int x2, int y2);
 
 /*void		SetLocale (void);*/
 
-void OutputString (cairo_t* c, char *str, char *font, int fontSize, int x, int y, cairo_color_t* color);
+void OutputString (cairo_t* c, char *str, char *font, int fontSize, int x, int y, ConfigColor* color);
 void OutputStringWithContext (cairo_t *c, char *str, int x, int y);
 int  StringWidth (char *str, char *font, int fontSize);
 int             StringWidthWithContext (cairo_t *c, char *str);

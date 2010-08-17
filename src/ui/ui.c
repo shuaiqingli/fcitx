@@ -52,7 +52,8 @@
 #include "ui/skin.h"
 #include "core/ime.h"
 #include "fcitx-config/profile.h"
-#include "tools/util.h"
+#include "fcitx-config/configfile.h"
+#include "tools/xdg.h"
 #include "ui/AboutWindow.h"
 
 Display        *dpy;
@@ -66,18 +67,14 @@ extern VKWindow vkWindow;
 extern WINDOW_COLOR mainWindowColor;
 extern WINDOW_COLOR inputWindowColor;
 extern WINDOW_COLOR VKWindowColor;
-extern HIDE_MAINWINDOW hideMainWindow;
 extern Bool     bMainWindow_Hiden;
 unsigned char   iCurrentVK;
 extern CARD16   connect_id;
-extern Bool     bShowVK;
 extern Bool     bVK;
 extern Bool     bIsDisplaying;
 
 // added by yunfan
 // **********************************
-
-char            strUserLocale[50] = "zh_CN.UTF-8";
 
 Bool
 InitX(void)
@@ -146,10 +143,17 @@ MyXEventHandler(XEvent * event)
                 imMenu.mark = gs.iIMIndex;
             DrawXlibMenu(dpy, &imMenu);
         } else if (event->xexpose.window == skinMenu.menuWindow) {
-            int             i;
-            for (i = 0; i < 12; i++) {
-                if (strcmp(skinType, skinBuf[i].dirbase) == 0)
+            int             i = 0;
+            for (i = 0;
+                 i < skinBuf->i ;
+                 i ++)
+            {
+                char **s = (char**)utarray_eltptr(skinBuf, i);
+                if (strcmp(*s, fc.skinType) == 0)
+                {
                     skinMenu.mark = i;
+                    break;
+                }
             }
             DrawXlibMenu(dpy, &skinMenu);
         }
@@ -185,7 +189,7 @@ MyXEventHandler(XEvent * event)
 
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.logo_img)) {
+                     sc.skinMainBar.logo)) {
                     fcitxProfile.iMainWindowOffsetX = event->xbutton.x;
                     fcitxProfile.iMainWindowOffsetY = event->xbutton.y;
                     ms_logo = PRESS;
@@ -209,56 +213,56 @@ MyXEventHandler(XEvent * event)
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.zhpunc_img)
+                         sc.skinMainBar.zhpunc)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       enpunc_img)) {
+                                       sc.skinMainBar.
+                                       enpunc)) {
                     ms_punc = PRESS;
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.half_corner_img)
+                         sc.skinMainBar.halfcorner)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       full_corner_img)) {
+                                       sc.skinMainBar.
+                                       fullcorner)) {
                     ms_corner = PRESS;
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.lxoff_img)
+                         sc.skinMainBar.nolegend)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       lxon_img)) {
+                                       sc.skinMainBar.
+                                       legend)) {
                     ms_lx = PRESS;
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.chs_img)
+                         sc.skinMainBar.chs)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       cht_img)) {
+                                       sc.skinMainBar.
+                                       cht)) {
                     ms_chs = PRESS;
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.unlock_img)
+                         sc.skinMainBar.unlock)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       lock_img)) {
+                                       sc.skinMainBar.
+                                       lock)) {
                     ms_lock = PRESS;
                 } else
                     if (IsInRspArea
                         (event->xbutton.x, event->xbutton.y,
-                         skin_config.skin_main_bar.vkhide_img)
+                         sc.skinMainBar.novk)
                         || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                       skin_config.skin_main_bar.
-                                       vkshow_img)) {
+                                       sc.skinMainBar.
+                                       vk)) {
                     ms_vk = PRESS;
                 } else if (!fcitxProfile.bCorner
                            && IsInRspArea(event->xbutton.x,
                                           event->xbutton.y,
-                                          skin_config.skin_main_bar.
-                                          pinyin_img)) {
+                                          sc.skinMainBar.
+                                          chs)) {
                     ms_py = PRESS;
                 }
                 DrawMainWindow();
@@ -325,14 +329,14 @@ MyXEventHandler(XEvent * event)
                 // 皮肤切换在此进行
                 int             i;
                 i = selectShellIndex(&skinMenu, event->xbutton.y);
-                // 
-                if (strcmp(skinType, skinBuf[i].dirbase) != 0) {
+                char **sskin = (char**) utarray_eltptr(skinBuf, i);
+                if (strcmp(fc.skinType, *sskin) != 0) {
                     clearSelectFlag(&mainMenu);
                     XUnmapWindow(dpy, mainMenu.menuWindow);
                     XUnmapWindow(dpy, vkMenu.menuWindow);
                     XUnmapWindow(dpy, imMenu.menuWindow);
                     XUnmapWindow(dpy, skinMenu.menuWindow);
-                    DisplaySkin(skinBuf[i].dirbase);
+                    DisplaySkin(*sskin);
                     SaveConfig();
                 }
             } else if (event->xbutton.window == vkMenu.menuWindow) {
@@ -379,12 +383,12 @@ MyXEventHandler(XEvent * event)
                                       iScreen) - mainMenu.height -
                         event->xbutton.y - 15;
                 else
-                    mainMenu.pos_y = event->xbutton.y_root - event->xbutton.y + 25;     // +skin_config.skin_tray_icon.active_img.height;
+                    mainMenu.pos_y = event->xbutton.y_root - event->xbutton.y + 25;     // +sc.skin_tray_icon.active_img.height;
 
                 /*
                  * printf("%d %d :%d %d :%d
                  * \n",event->xbutton.x,event->xbutton.y,event->xbutton.x_root,\
-                 * event->xbutton.y_root,skin_config.skin_tray_icon.active_img.height);
+                 * event->xbutton.y_root,sc.skin_tray_icon.active_img.height);
                  */
                 DrawXlibMenu(dpy, &mainMenu);
                 DisplayXlibMenu(dpy, &mainMenu);
@@ -398,7 +402,7 @@ MyXEventHandler(XEvent * event)
                 mainMenu.pos_x = fcitxProfile.iMainWindowOffsetX;
                 mainMenu.pos_y =
                     fcitxProfile.iMainWindowOffsetY +
-                    skin_config.skin_main_bar.mbbg_img.height + 5;
+                    sc.skinMainBar.backImg.height + 5;
                 if ((mainMenu.pos_y + mainMenu.height) >
                     DisplayHeight(dpy, iScreen))
                     mainMenu.pos_y = fcitxProfile.iMainWindowOffsetY - 5 - mainMenu.height;
@@ -416,53 +420,53 @@ MyXEventHandler(XEvent * event)
                 set_mouse_status(RELEASE);
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.logo_img))
+                     sc.skinMainBar.logo))
                     DrawMainWindow();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.zhpunc_img)
+                          sc.skinMainBar.zhpunc)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        enpunc_img))
+                                        sc.skinMainBar.
+                                        enpunc))
                     ChangePunc();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.half_corner_img)
+                          sc.skinMainBar.halfcorner)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        full_corner_img))
+                                        sc.skinMainBar.
+                                        fullcorner))
                     ChangeCorner();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.lxoff_img)
+                          sc.skinMainBar.nolegend)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        lxon_img))
+                                        sc.skinMainBar.
+                                        legend))
                     ChangeLegend();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.chs_img)
+                          sc.skinMainBar.chs)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.cht_img))
+                                        sc.skinMainBar.cht))
                     ChangeGBKT();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.unlock_img)
+                          sc.skinMainBar.unlock)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        lock_img))
+                                        sc.skinMainBar.
+                                        lock))
                     ChangeLock();
                 else if (IsInRspArea
                          (event->xbutton.x, event->xbutton.y,
-                          skin_config.skin_main_bar.vkhide_img)
+                          sc.skinMainBar.novk)
                          || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        vkshow_img))
+                                        sc.skinMainBar.
+                                        vk))
                     SwitchVK();
                 else if (!fcitxProfile.bCorner
                          && IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                        skin_config.skin_main_bar.
-                                        pinyin_img)) {
+                                        sc.skinMainBar.
+                                        chn)) {
                     SwitchIM(-1);
                 }
 
@@ -512,7 +516,7 @@ MyXEventHandler(XEvent * event)
     case FocusIn:
         if (ConnectIDGetState(connect_id) == IS_CHN)
             DisplayInputWindow();
-        if (hideMainWindow != HM_HIDE)
+        if (fc.hideMainWindow != HM_HIDE)
             XMapRaised(dpy, mainWindow);
         break;
     default:
@@ -522,55 +526,55 @@ MyXEventHandler(XEvent * event)
         if (event->xany.window == mainWindow) {
             if (IsInRspArea
                 (event->xbutton.x, event->xbutton.y,
-                 skin_config.skin_main_bar.logo_img)) {
+                 sc.skinMainBar.logo)) {
                 ms_logo = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.zhpunc_img)
+                     sc.skinMainBar.zhpunc)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.enpunc_img)) {
+                                   sc.skinMainBar.enpunc)) {
                 ms_punc = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.half_corner_img)
+                     sc.skinMainBar.halfcorner)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.
-                                   full_corner_img)) {
+                                   sc.skinMainBar.
+                                   fullcorner)) {
                 ms_corner = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.lxoff_img)
+                     sc.skinMainBar.nolegend)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.lxon_img)) {
+                                   sc.skinMainBar.legend)) {
                 ms_lx = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.chs_img)
+                     sc.skinMainBar.chs)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.cht_img)) {
+                                   sc.skinMainBar.cht)) {
                 ms_chs = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.unlock_img)
+                     sc.skinMainBar.unlock)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.lock_img)) {
+                                   sc.skinMainBar.lock)) {
                 ms_lock = MOTION;
             } else
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
-                     skin_config.skin_main_bar.vkhide_img)
+                     sc.skinMainBar.novk)
                     || IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                   skin_config.skin_main_bar.vkshow_img)) {
+                                   sc.skinMainBar.vk)) {
                 ms_vk = MOTION;
             } else if (!fcitxProfile.bCorner
                        && IsInRspArea(event->xbutton.x, event->xbutton.y,
-                                      skin_config.skin_main_bar.
-                                      pinyin_img)) {
+                                      sc.skinMainBar.
+                                      chn)) {
                 ms_py = MOTION;
             }
             DrawMainWindow();
@@ -601,7 +605,7 @@ IsInBox(int x0, int y0, int x1, int y1, int x2, int y2)
 }
 
 Bool
-IsInRspArea(int x0, int y0, skin_img_t img)
+IsInRspArea(int x0, int y0, FcitxImage img)
 {
     return IsInBox(x0, y0, img.response_x, img.response_y,
                    img.response_x + img.response_w,
@@ -649,7 +653,7 @@ FontHeight(char *font)
     cairo_t        *c = cairo_create(surface);
     cairo_select_font_face(c, font, CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
-    cairo_set_font_size(c, skin_config.skin_font.font_size);
+    cairo_set_font_size(c, sc.skinFont.fontSize);
 
     int             height = FontHeightWithContext(c);
 
@@ -674,7 +678,7 @@ FontHeightWithContext(cairo_t * c)
  */
 void
 OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
-             int y, cairo_color_t * color)
+             int y, ConfigColor * color)
 {
     if (!str || str[0] == 0)
         return;
@@ -682,7 +686,7 @@ OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
     cairo_save(c);
 
     cairo_set_source_rgb(c, color->r, color->g, color->b);
-    cairo_select_font_face(c, skin_config.skin_font.font_zh,
+    cairo_select_font_face(c, sc.skinFont.fontZh,
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(c, fontSize);

@@ -41,7 +41,6 @@
 
 #include "version.h"
 
-#include "core/main.h"
 #include "core/MyErrorsHandlers.h"
 #include "core/ime.h"
 #include "tools/tools.h"
@@ -68,7 +67,6 @@
 #include "ui/MessageWindow.h"
 #include "im/special/QuickPhrase.h"
 #include "im/special/AutoEng.h"
-#include "tools/util.h"
 
 #include "fcitx-config/profile.h"
 
@@ -80,12 +78,13 @@
 extern Display *dpy;
 extern Window   inputWindow;
 extern Window   ximWindow;
-
-extern Bool	bUseDBus;
-
-extern HIDE_MAINWINDOW hideMainWindow;
+extern int iClientCursorX;
+extern int iClientCursorY;
 
 extern void* remoteThread(void*);
+
+static void Usage();
+static void Version();
 
 int main (int argc, char *argv[])
 {
@@ -138,14 +137,14 @@ int main (int argc, char *argv[])
     }
 
 #ifdef _ENABLE_DBUS
-    if (bUseDBus && !InitDBus ())
+    if (fc.bUseDBus && !InitDBus ())
 	exit (5);
 #endif
 	
 	/**
 	*  加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
 	*/
-	load_skin_config();
+	LoadSkinConfig();
 
     InitFont();
 
@@ -159,6 +158,9 @@ int main (int argc, char *argv[])
      */
     LoadProfile ();
 
+    iClientCursorX = fcitxProfile.iInputWindowOffsetX;
+    iClientCursorY = fcitxProfile.iInputWindowOffsetY;
+
     //加载字典文件
     LoadPuncDict ();
     //加载成语
@@ -171,7 +173,7 @@ int main (int argc, char *argv[])
 
     //以下是界面的处理
 
-    if (!bUseDBus)
+    if (!fc.bUseDBus)
 	CreateMainWindow ();	//创建主窗口，即输入法状态窗口
 #ifdef _ENABLE_DBUS
     else
@@ -186,15 +188,15 @@ int main (int argc, char *argv[])
 	CreateVKMenuWindow();	//创建软键盘布局选择菜单窗口
 	CreateMessageWindow();	//创建软键盘布局选择菜单窗口
 
-    if (!bUseDBus)
+    if (!fc.bUseDBus)
 	CreateAboutWindow ();	//创建关于窗口
 
     //将本程序加入到输入法组，告诉系统，使用我输入字符
     SetIM ();
 
-    if (!bUseDBus) {
+    if (!fc.bUseDBus) {
 	//处理主窗口的显示
-	if (hideMainWindow != HM_HIDE) {
+	if (fc.hideMainWindow != HM_HIDE) {
 	    DisplayMainWindow ();
 	    DrawMainWindow ();
 	}
@@ -217,8 +219,14 @@ int main (int argc, char *argv[])
 	    exit (0);
     }
 
+    DisplaySkin(fc.skinType);
+
 #ifdef _ENABLE_RECORDING
     OpenRecording(True);
+#endif
+
+#ifdef _ENABLE_DBUS
+    dbus_threads_init_default();
 #endif
 	
     FcitxInitThread();
@@ -226,13 +234,13 @@ int main (int argc, char *argv[])
     pthread_create(&pid, NULL, remoteThread, NULL);
 
 #ifdef _ENABLE_DBUS
-    if (bUseDBus)
+    if (fc.bUseDBus)
         pthread_create(&pid, NULL, (void *)DBusLoop, NULL);
 #endif
 
 #ifdef _ENABLE_TRAY
     tray.window = (Window) NULL;
-    if (!bUseDBus) {
+    if (!fc.bUseDBus) {
         CreateTrayWindow ();		//创建系统托盘窗口
     	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);	//显示托盘图标
     }

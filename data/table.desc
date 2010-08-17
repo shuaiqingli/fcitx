@@ -19,6 +19,11 @@ Enum0=AdjustNo
 Enum1=AdjustFast
 Enum2=AdjustFreq
 
+[CodeTable/Priority]
+Description=Order of Code Table
+Type=Integer
+DefaultValue=99
+
 [CodeTable/UsePY]
 Description=Use Pinyin
 Type=Boolean

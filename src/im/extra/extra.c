@@ -5,6 +5,7 @@
 
 #include "im/extra/extra.h"
 #include "ui/InputWindow.h"
+#include "fcitx-config/configfile.h"
 
 #include <dlfcn.h>
 #include <limits.h>
@@ -27,10 +28,8 @@ static char StringGetEngine[MAX_CAND_LEN+1];
 extern INT8 iIMCount;
 extern INT8 iInCap;
 
-extern Bool	bPointAfterNumber;
 extern int      iCursorPos;
 
-extern int      iMaxCandWord;
 extern int      iCandWordCount;
 extern int      iCandPageCount;
 extern int	iCurrentCandPage;
@@ -79,12 +78,12 @@ static void ExtraReset(void)
 	bShowCursor=False;
 	bCursorAuto=False;
 	if(!eim) return;
-	if(eim->CandWordMax) eim->CandWordMax=iMaxCandWord;
+	if(eim->CandWordMax) eim->CandWordMax=fc.iMaxCandWord;
 	if(eim->Reset) eim->Reset();
 	eim->StringGet[0]=0;
 	eim->CodeInput[0]=0;
 	eim->CaretPos=-1;
-	eim->CandWordMax=iMaxCandWord;
+	eim->CandWordMax=fc.iMaxCandWord;
 	eim->Reset();
 }
 
@@ -93,7 +92,7 @@ static void DisplayEIM(EXTRA_IM *im)
 	int i;
 	char strTemp[3];
 
-	if ( bPointAfterNumber )
+	if ( fc.bPointAfterNumber )
 	{
 		strTemp[1] = '.';
 		strTemp[2] = '\0';
@@ -403,7 +402,7 @@ int InitExtraIM(EXTRA_IM *eim,char *arg)
 	eim->CodeTips=CodeTipsEngine;
 	eim->GetSelect=ExtraGetSelect;
 	eim->GetPath=ExtraGetPath;
-	eim->CandWordMax=iMaxCandWord;
+	eim->CandWordMax=fc.iMaxCandWord;
 	eim->CaretPos=-1;
 
 	if(eim->Init(arg))

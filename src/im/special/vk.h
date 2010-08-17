@@ -39,7 +39,7 @@ typedef struct {
 typedef struct VKWindow
 {
     Window          window;
-    cairo_color_t fontColor;
+    ConfigColor fontColor;
     int fontSize;
     cairo_surface_t* surface;
 } VKWindow;

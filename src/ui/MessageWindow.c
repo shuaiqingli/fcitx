@@ -21,7 +21,7 @@
 #include "ui/MessageWindow.h"
 #include "ui/ui.h"
 #include "core/xim.h"
-#include "tools/util.h"
+#include "tools/xdg.h"
 #include "version.h"
 
 #include <ctype.h>
@@ -40,6 +40,7 @@ static void            InitMessageWindowProperty (void);
 
 Bool CreateMessageWindow (void)
 {
+    memset(&messageWindow, 0, sizeof(MessageWindow));
     messageWindow.color.r = messageWindow.color.g = messageWindow.color.b = 220.0 / 256;
     messageWindow.fontColor.r = messageWindow.fontColor.g = messageWindow.fontColor.b = 0;
     messageWindow.fontSize = 15;
@@ -91,13 +92,11 @@ void DrawMessageWindow (char *title, char **msg, int length)
             return;
     
     title = messageWindow.title;
+    FcitxLog(INFO, "%s", title);
 
     XTextProperty   tp;
-    tp.value = (void *) title;
-    tp.encoding = XA_STRING;
-    tp.format = 16;
-    tp.nitems = strlen (title);
-    XSetWMName (dpy, messageWindow.window, &tp);
+    Xutf8TextListToTextProperty(dpy, &title, 1, XUTF8StringStyle, &tp);
+    XSetWMName(dpy, messageWindow.window, &tp);
 
     if (msg)
     {
@@ -123,13 +122,13 @@ void DrawMessageWindow (char *title, char **msg, int length)
     if (!msg || length == 0)
         return;
 
-    int height = FontHeight(skin_config.skin_font.font_zh);
+    int height = FontHeight(sc.skinFont.fontZh);
     messageWindow.height = MESSAGE_WINDOW_MARGIN * 2 + length *(height + MESSAGE_WINDOW_LINESPACE);
     messageWindow.width = 0;
 
     for (i = 0; i< length ;i ++)
     {
-        int width = StringWidth(msg[i], skin_config.skin_font.font_zh, messageWindow.fontSize);
+        int width = StringWidth(msg[i], sc.skinFont.fontZh, messageWindow.fontSize);
         if (width > messageWindow.width)
             messageWindow.width = width;
     }
@@ -141,7 +140,7 @@ void DrawMessageWindow (char *title, char **msg, int length)
     cairo_t *c = cairo_create(messageWindow.surface);
     cairo_set_source_rgb(c, messageWindow.color.r, messageWindow.color.g, messageWindow.color.b);
     cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
-    cairo_select_font_face(c, skin_config.skin_font.font_zh,
+    cairo_select_font_face(c, sc.skinFont.fontZh,
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(c, messageWindow.fontSize);

@@ -44,6 +44,7 @@
 #include "core/IC.h"
 #include "core/ime.h"
 #include "tools/tools.h"
+#include "tools/utarray.h"
 
 #define SIZEX 800
 #define SIZEY 200
@@ -52,128 +53,92 @@
 
 typedef enum
 {
-	RELEASE,//鼠标释放状态
-	PRESS,//鼠标按下
-	MOTION//鼠标停留
-}mouse_e;
-
-typedef struct
-{
-	char img_name[32];
-	//图片绘画区域
-	int  position_x;
-	int  position_y;
-	int  width;
-	int  height;
-	//按键响应区域
-	int  response_x;
-	int  response_y;
-	int  response_w;
-	int  response_h;
-	//鼠标不同状态mainnMenuwindow不同的显示状态.
-	mouse_e mouse;
-}skin_img_t;
-
+    R_COPY = 0,
+    R_RESIZE = 1,
+    R_FIX = 2
+} RESIZERULE;
 
 typedef struct 
 {
-	char skin_name[64];
-	char skin_version[32];
-	char skin_author[64];
-	char shin_remark[128];
-}skin_info_t;
+	char *skinName;
+	char *skinVersion;
+	char *skinAuthor;
+	char *shinDesc;
+} SkinInfo;
 
 typedef struct 
 {
-	int font_size;
-	char font_en[32];
-	char font_zh[32];
-	char input_char_color[16];
-	char output_char_color[16];
-	char char_no_color[16];
-	char first_char_color[16];
-}skin_font_t;
+	int fontSize;
+	char *fontEn;
+	char *fontZh;
+	ConfigColor inputCharColor;
+	ConfigColor outputCharColor;
+	ConfigColor charNoColor;
+	ConfigColor firstCharColor;
+} SkinFont;
 
 typedef struct 
 {
-	skin_img_t mbbg_img;
-	skin_img_t logo_img;
-	skin_img_t zhpunc_img;
-	skin_img_t enpunc_img;
-	skin_img_t chs_img;
-	skin_img_t cht_img;
-	skin_img_t half_corner_img;
-	skin_img_t full_corner_img;
-	skin_img_t unlock_img;
-	skin_img_t lock_img;
-	skin_img_t lxoff_img;
-	skin_img_t lxon_img;
-	skin_img_t vkhide_img;
-	skin_img_t vkshow_img;
-	skin_img_t english_img;
-	skin_img_t pinyin_img;
-	skin_img_t shuangpin_img;
-	skin_img_t quwei_img;
-	skin_img_t wubi_img;
-	skin_img_t mixpywb_img;
-	skin_img_t erbi_img;
-	skin_img_t cj_img;
-	skin_img_t wanfeng_img;
-	skin_img_t bingchan_img;
-	skin_img_t ziran_img;
-	skin_img_t dianbao_img;
-	skin_img_t otherim_img;
-}skin_main_bar_t;
+	FcitxImage backImg;
+	FcitxImage logo;
+	FcitxImage zhpunc;
+	FcitxImage enpunc;
+	FcitxImage chs;
+	FcitxImage cht;
+	FcitxImage halfcorner;
+	FcitxImage fullcorner;
+	FcitxImage unlock;
+	FcitxImage lock;
+	FcitxImage legend;
+	FcitxImage nolegend;
+	FcitxImage vk;
+	FcitxImage novk;
+	FcitxImage eng;
+	FcitxImage chn;
+} SkinMainBar;
 
 typedef struct 
 {	
-	skin_img_t ibbg_img;
-	unsigned char resize;
-	int	resize_pos;
-	int resize_w;
-	int input_pos;
-	int output_pos;
-	int layout_left;
-	int layout_right;
-	char cursor_color[16];
-	skin_img_t back_arrow_img;
-	skin_img_t forward_arrow_img;
-}skin_input_bar_t;
+	FcitxImage backImg;
+	RESIZERULE resize;
+	int	resizePos;
+	int resizeWidth;
+	int inputPos;
+	int outputPos;
+	int layoutLeft;
+	int layoutRight;
+	ConfigColor cursorColor;
+	FcitxImage backArrow;
+	FcitxImage forwardArrow;
+} SkinInputBar;
 
 
 typedef struct 
 {
-	skin_img_t active_img;
-	skin_img_t inactive_img;
-}skin_tray_icon_t;
+	FcitxImage active;
+	FcitxImage inactive;
+} SkinTrayIcon;
 
 /** 
 * 配置文件结构,方便处理,结构固定
 */
 typedef struct 
-{	
-		skin_info_t skin_info;
-		skin_font_t skin_font;
-		skin_main_bar_t skin_main_bar;
-		skin_input_bar_t skin_input_bar;
-		skin_tray_icon_t skin_tray_icon;	
-}skin_config_t;
+{
+    GenericConfig config;
+    SkinInfo skinInfo;
+    SkinFont skinFont;
+    SkinMainBar skinMainBar;
+    SkinInputBar skinInputBar;
+    SkinTrayIcon skinTrayIcon;	
+} FcitxSkin;
 
 /**
 *
 */
 typedef struct
 {
-	char  dirbuf[128];
-	char  dirbase[64];
-}skin_dir_t;
-
-typedef struct
-{
-	double r;
-	double b;
-	double g;
-}cairo_color_t;
+	char *dirbase[64];
+} SkinDir;
 
 extern cairo_surface_t *cs_main_bar;
 extern cairo_surface_t *cs_input_bar;
@@ -209,7 +174,7 @@ extern cairo_surface_t *  otherim;
 extern cairo_surface_t *  trayActive;
 extern cairo_surface_t *  trayInactive;
 
-extern mouse_e ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
+extern MouseE ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
 
 extern Display *dpy;
 extern Window  mainWindow;
@@ -220,27 +185,24 @@ extern INT8	iIMCount;
 extern IM	*im;
 extern Bool	bShowPrev;
 extern Bool	bShowNext;
-extern int skinCount;
-extern skin_config_t skin_config;
-extern char  skinType[64];
-extern skin_dir_t skinBuf[10];
-extern HIDE_MAINWINDOW hideMainWindow;
+extern FcitxSkin sc;
+extern UT_array *skinBuf;
 /**
 *解析skin_xpm结构的值
 */
-extern int str2skin_img(char * str,skin_img_t * img);
+extern int str2skin_img(char * str,FcitxImage * img);
 extern Visual * find_argb_visual (Display *dpy, int scr);
 extern void load_main_img();
 void load_tray_img();
 void load_input_img();
 void load_input_msg();
-void draw_a_img(cairo_t **c,skin_img_t img,cairo_surface_t * png,mouse_e mouse);
+void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse);
 extern void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
-extern void set_mouse_status(mouse_e m);
+extern void set_mouse_status(MouseE m);
 /**
 * 加载皮肤配置文件
 */
-int load_skin_config();
+int LoadSkinConfig();
 
 /*
 **
@@ -255,12 +217,14 @@ void DisplaySkin(char * skinname);
 int loadSkinDir();
 
 extern Bool IsInBox (int x0, int y0, int x1, int y1, int x2, int y2);
-extern Bool IsInRspArea(int x0,int y0,skin_img_t img);
+extern Bool IsInRspArea(int x0,int y0,FcitxImage img);
 
 extern Visual * find_argb_visual (Display *dpy, int scr);
 
 extern void SelectIM(int imidx);
 extern void SelectVK(int );
+
+CONFIG_BINDING_DECLARE(FcitxSkin);
 #endif
 
 

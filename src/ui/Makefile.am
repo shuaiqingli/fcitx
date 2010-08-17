@@ -1,5 +1,5 @@
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
-DEFS = -DPKGDATADIR=\"$(pkgdatadir)\"
+DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\"
 
 noinst_LIBRARIES=libui.a
 libui_a_SOURCES= InputWindow.c InputWindow.h\
@@ -10,5 +10,6 @@ libui_a_SOURCES= InputWindow.c InputWindow.h\
 				 AboutWindow.c AboutWindow.h \
 				 ui.c ui.h \
 				 skin.c skin.h \
+				 skinconfig.c \
 				 MenuWindow.c MenuWindow.h \
 				 font.c font.h

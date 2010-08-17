@@ -33,8 +33,10 @@
 #include "core/IC.h"
 #include "core/xim.h"
 #include "tools/tools.h"
+#include "tools/xdg.h"
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/configfile.h"
 
 VKWindow vkWindow;
 
@@ -64,7 +66,6 @@ extern CARD16   icid;
 extern XIMS     ims;
 
 extern uint     iHZInputed;
-extern Bool	bUseDBus;
 
 #ifdef _ENABLE_DBUS
 extern Property vk_prop;
@@ -119,35 +120,35 @@ void DrawVKWindow (void)
 	cairo_paint(cr);
     /* 显示字符 */
     /* 名称 */
-    OutputString (cr, vks[iCurrentVK].strName, skin_config.skin_font.font_zh, vkWindow.fontSize , (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, skin_config.skin_font.font_zh, skin_config.skin_font.font_size)) / 2, vkWindow.fontSize + 6, &vkWindow.fontColor);
+    OutputString (cr, vks[iCurrentVK].strName, sc.skinFont.fontZh, vkWindow.fontSize , (VK_WINDOW_WIDTH - StringWidth (vks[iCurrentVK].strName, sc.skinFont.fontZh, sc.skinFont.fontSize)) / 2, vkWindow.fontSize + 6, &vkWindow.fontColor);
 
     /* 第一排 */
     iPos = 13;
     for (i = 0; i < 13; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 39, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 52, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], sc.skinFont.fontZh, vkWindow.fontSize, iPos, 39, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], sc.skinFont.fontZh, vkWindow.fontSize, iPos - 5, 52, &vkWindow.fontColor);
 	iPos += 24;
     }
     /* 第二排 */
     iPos = 48;
     for (i = 13; i < 26; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 67, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 80, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], sc.skinFont.fontZh, vkWindow.fontSize, iPos, 67, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], sc.skinFont.fontZh, vkWindow.fontSize, iPos - 5, 80, &vkWindow.fontColor);
 	iPos += 24;
     }
     /* 第三排 */
     iPos = 55;
     for (i = 26; i < 37; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 95, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], sc.skinFont.fontZh, vkWindow.fontSize, iPos, 95, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], sc.skinFont.fontZh, vkWindow.fontSize, iPos - 5, 108, &vkWindow.fontColor);
 	iPos += 24;
     }
 
     /* 第四排 */
     iPos = 72;
     for (i = 37; i < 47; i++) {
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos, 123, &vkWindow.fontColor);
-	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], skin_config.skin_font.font_zh, vkWindow.fontSize, iPos - 5, 136, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][1], sc.skinFont.fontZh, vkWindow.fontSize, iPos, 123, &vkWindow.fontColor);
+	OutputString (cr, vks[iCurrentVK].strSymbol[i][0], sc.skinFont.fontZh, vkWindow.fontSize, iPos - 5, 136, &vkWindow.fontColor);
 	iPos += 24;
     }
     
@@ -299,21 +300,7 @@ void LoadVKMapFile (void)
 	vks[j].strName[0] = '\0';
     }
 
-    fp = UserConfigFile(VK_FILE, "rt", NULL);
-    if (!fp) {
-	strcpy (strPath, PKGDATADIR "/data/");
-	strcat (strPath, VK_FILE);
-
-	/* zxd add begin */
-        if( access(strPath,0) && getenv( "FCITXDIR" ) ) {
-	    strcpy (strPath, getenv( "FCITXDIR" ) );
-       	    strcat (strPath, "/share/fcitx/data/");
-       	    strcat (strPath, VK_FILE );
-        }
-        /* zxd add end */
-	
-	fp = fopen (strPath, "rt");
-    }
+    fp = GetXDGFileData(VK_FILE, "rt", NULL);
 
     if (!fp)
 	return;
@@ -437,7 +424,7 @@ void ChangVK (void)
     DrawVKWindow ();
     SwitchIM (-2);
 
-    if (!bUseDBus)
+    if (!fc.bUseDBus)
         DrawMainWindow ();
 }
 
@@ -463,7 +450,7 @@ void SwitchVK (void)
     if (bVK) {
 	int             x, y;
 
-	if (bUseDBus)
+	if (fc.bUseDBus)
 		x = DisplayWidth (dpy, iScreen) / 2 - VK_WINDOW_WIDTH / 2;
 	else
 		x = fcitxProfile.iMainWindowOffsetX;
@@ -472,10 +459,10 @@ void SwitchVK (void)
 	if (x < 0)
 	    x = 0;
 
-	if (bUseDBus)
+	if (fc.bUseDBus)
 		y = 0;
 	else
-		y = fcitxProfile.iMainWindowOffsetY + skin_config.skin_main_bar.mbbg_img.height + 2;
+		y = fcitxProfile.iMainWindowOffsetY + sc.skinMainBar.backImg.height + 2;
 	if ((y + VK_WINDOW_HEIGHT) >= DisplayHeight (dpy, iScreen))
 	    y = fcitxProfile.iMainWindowOffsetY - VK_WINDOW_HEIGHT - 2;
 	if (y < 0)
@@ -493,7 +480,7 @@ void SwitchVK (void)
 
     SwitchIM (-2);
 
-    if ( !bUseDBus )
+    if ( !fc.bUseDBus )
 	DrawMainWindow ();
 #ifdef _ENABLE_DBUS
 	else

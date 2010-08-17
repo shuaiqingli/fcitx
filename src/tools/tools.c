@@ -48,1361 +48,10 @@
 #include "im/table/table.h"
 #include "im/qw/qw.h"
 #include "fcitx-config/uthash.h"
-#include "tools/util.h"
 
-extern Display *dpy;
-extern int      iScreen;
-extern int      iInputWindowWidth;
-extern int      iInputWindowHeight;
+#include "utf8_in_gb18030.h"
 
-extern int      iMaxCandWord;
-extern Bool     _3DEffectMainWindow;
-extern _3D_EFFECT _3DEffectInputWindow;
-extern WINDOW_COLOR inputWindowColor;
-extern WINDOW_COLOR mainWindowColor;
-extern MESSAGE_COLOR IMNameColor[];
-extern MESSAGE_COLOR messageColor[];
-extern MESSAGE_COLOR inputWindowLineColor;
-extern MESSAGE_COLOR mainWindowLineColor;
-extern MESSAGE_COLOR cursorColor;
-extern ENTER_TO_DO enterToDo;
-extern char  skinType[];
-char  colorScheme[64];
-
-extern HOTKEYS  hkTrigger[];
-extern HOTKEYS  hkCorner[];
-extern HOTKEYS  hkPunc[];
-extern HOTKEYS  hkPrevPage[];
-extern HOTKEYS  hkNextPage[];
-extern HOTKEYS  hkWBAddPhrase[];
-extern HOTKEYS  hkWBDelPhrase[];
-extern HOTKEYS  hkWBAdjustOrder[];
-extern HOTKEYS  hkPYAddFreq[];
-extern HOTKEYS  hkPYDelFreq[];
-extern HOTKEYS  hkPYDelUserPhr[];
-extern HOTKEYS  hkLegend[];
-extern HOTKEYS  hkTrack[];
-extern HOTKEYS  hkGBT[];
-extern HOTKEYS	hkHideMainWindow[];
-extern HOTKEYS	hkSaveAll[];
-extern HOTKEYS	hkVK[];
-
-extern KEY_CODE switchKey;
-extern XIMTriggerKey *Trigger_Keys;
-extern INT8     iTriggerKeyCount;
-
-extern Bool     bEngPuncAfterNumber;
-
-//extern Bool     bAutoHideInputWindow;
-extern XColor   colorArrow;
-extern Bool     bCenterInputWindow;
-extern HIDE_MAINWINDOW hideMainWindow;
-extern HIDE_MAINWINDOW hideMainWindow;
-extern int      iFontSize;
-
-extern Bool     bPYCreateAuto;
-extern Bool     bPYSaveAutoAsPhrase;
-extern Bool     bPhraseTips;
-extern SEMICOLON_TO_DO semicolonToDo;
-extern Bool     bEngAfterCap;
-
-//显示打字速度
-extern Bool     bShowUserSpeed;
-extern Bool     bShowVersion;
-extern Bool     bShowVK;
-
-extern Bool     bFullPY;
-extern Bool     bDisablePagingInLegend;
-extern Bool     bSendTextWhenSwitchEng;
-
-extern int      i2ndSelectKey;
-extern int      i3rdSelectKey;
-
-extern ADJUSTORDER baseOrder;
-extern ADJUSTORDER phraseOrder;
-extern ADJUSTORDER freqOrder;
-
-extern MHPY     MHPY_C[];
-extern MHPY     MHPY_S[];
-
-extern char     strDefaultSP[];
-extern SP_FROM  iSPFrom;
-
-extern char     cPYYCDZ[];
-extern char	strExternIM[];
-
-extern Bool     bDoubleSwitchKey;
-extern Bool     bPointAfterNumber;
-extern Bool     bConvertPunc;
-extern unsigned int iTimeInterval;
-extern int     iFixedInputWindowWidth;
-extern Bool     bShowInputWindowTriggering;
-
-extern char     strUserLocale[];
-extern Bool     bUseBold;
-extern Bool     bHintWindow;
-
-extern int      iOffsetX;
-extern int      iOffsetY;
-extern int	inputMethods[];
-
-#ifdef _ENABLE_TRAY
-extern Bool	bUseTrayIcon;
-#endif
-
-#ifdef _ENABLE_DBUS
-extern Bool bUseDBus;
-#endif
-
-#ifdef _ENABLE_RECORDING
-extern HOTKEYS  hkRecording[];
-extern HOTKEYS	hkResetRecording[];
-extern char     strRecordingPath[];
-#endif
-
-extern char *sVKHotkey; 
-extern int utf8_in_gb18030[];
-
-Bool MyStrcmp (char *str1, char *str2)
-{
-    return !strncmp (str1, str2, strlen (str2));
-}
-
-/* 其他函数需要知道传递给 LoadConfig 的参数 */
-Bool    bIsReloadConfig = True;
-/* 在载入 profile 文件过程中传递状态信息 */
-Bool    bNeedSaveConfig = True;
-
-/*
- * 配置项值的类型：
- *
- * 整数(integer)、字符串(string)、颜色(color) 都可以用通用读写函数来读写。
- * 但是其他(other)类型，则需要提供专门的读写函数。
- */
-
-#define CONFIG_INTEGER  1
-#define CONFIG_STRING   2
-#define CONFIG_COLOR    3
-#define CONFIG_SWITCHKEY    4
-#define CONFIG_HOTKEY   5
-#define CONFIG_OTHER    6
-
-/*
- * int(*configure_readwrite)(Configure *c, void *str_file, int isread)
- *
- * 用来读取或者写入对应的配置项
- *
- * c        -   读取/写入的配置项
- * str_file - 如果是读取，则为 char *；如果是写入，则为 FILE *
- * isread   - 如果是读取，则为 True，否则为 False
- *
- * configure_readwrite 返回零表示成功，其他值为失败。
- */
-
-typedef struct Configure Configure;
-typedef int(*config_readwrite)(Configure *, void *, int);
-
-struct Configure {
-    char *name;         /* configure name */
-    char *comment;      /* configure comment */
-    config_readwrite config_rw; /* read/write configure */
-    int value_type;     /* type of this configure's value */
-    union {
-        struct {
-            char *string;
-            int string_length;
-        } str_value;
-        int *integer;
-        XColor *color;
-        HOTKEYS *hotkey;
-    } value;
-};
-
-typedef struct Configure_group {
-    char *name;     /* configure group's name */
-    char *comment;  /* configure group's comment */
-    struct Configure *configure;    /* configures belong to this group */
-} Configure_group;
-
-static int generic_config_integer(Configure *c, void *a, int isread)
- {
-    if(isread)
-        *(c->value.integer) = atoi(a);
-    else
-        fprintf((FILE *)a, "%s=%d\n", c->name, *(c->value.integer));
-
-    return 0;
-}
-
-static int generic_config_string(Configure *c, void *a, int isread)
-{
-    if(isread){
-        strncpy(c->value.str_value.string, (char *)a, c->value.str_value.string_length);
-        c->value.str_value.string[c->value.str_value.string_length - 1] = '\0';
-    } else
-        fprintf((FILE *)a, "%s=%s\n", c->name, c->value.str_value.string);
-
-    return 0;
-}
-
-static int generic_config_color(Configure *c, void *a, int isread)
-{
-    int r, g, b;
-
-    if(isread){
-        if(sscanf((char *)a, "%d %d %d", &r, &g, &b) != 3){
-            FcitxLog(FATAL, _("error: configure file: color"));
-            exit(1);
-        }
-        c->value.color->red   = r << 8;
-        c->value.color->green = g << 8;
-        c->value.color->blue  = b << 8;
-    }else
-        fprintf((FILE *)a, "%s=%d %d %d\n", c->name,
-                c->value.color->red   >> 8,
-                c->value.color->green >> 8,
-                c->value.color->blue  >> 8);
-
-    return 0;
-}
-
-/* FIXME: 实现通用读写设置 switch key 的配置 */
-#if 0
-static int generic_config_switchkey(Configure *c, void *a, int isread)
-{
-    return -1;
-}
-#endif
-
-/* FIXME: 实现通用读写设置 hot key 的配置 */
-#if 0
-static int generic_config_hotkey(Configure *c, void *a, int isread)
-{
-    return -1;
-}
-#endif
-
-/** 将 configures 中的配置信息写入 fp */
-static int write_configures(FILE *fp, Configure *configures)
-{
-    Configure *tc;
-
-    for(tc = configures; tc->name; tc++){
-        if(tc->comment)
-            fprintf(fp, "# %s\n", tc->comment);
-        if(tc->config_rw)
-            tc->config_rw(tc, fp, 0);
-        else{
-            switch(tc->value_type){
-                case CONFIG_INTEGER:
-                    generic_config_integer(tc, fp, 0);
-                    break;
-                case CONFIG_STRING:
-                    generic_config_string(tc, fp, 0);
-                    break;
-                case CONFIG_COLOR:
-                    generic_config_color(tc, fp, 0);
-                    break;
-                default:
-                    FcitxLog(FATAL, _("error: shouldn't be here"));
-                    exit(1);
-            }
-        }
-    }
-    return 0;
-}
-
-/* 从 str 读取配置信息 */
-static int read_configure(Configure *config, char *str)
-{
-    if(config->config_rw)
-        config->config_rw(config, str, 1);
-    else{
-        switch(config->value_type){
-            case CONFIG_INTEGER:
-                generic_config_integer(config, str, 1);
-                break;
-            case CONFIG_STRING:
-                generic_config_string(config, str, 1);
-                break;
-            case CONFIG_COLOR:
-                generic_config_color(config, str, 1);
-                break;
-            default:
-                FcitxLog(FATAL, _("error: shouldn't be here"));
-                exit(1);
-        }
-    }
-    return 0;
-}
-
-/* 主窗口输入法名称色 */
-inline static int main_window_input_method_name_color(char * a)//(Configure *c, void *a, int isread)
-{
-    int r[3], b[3], g[3], i;
-//    FILE *fp;
-//    if(isread){
-        if(sscanf((char *)a, "%d %d %d %d %d %d %d %d %d",
-                    &r[0], &g[0], &b[0], &r[1], &g[1], &b[1], &r[2], &g[2], &b[2]) != 9)
-        {
-            FcitxLog(FATAL, _("error: invalid configure format"));
-            exit(1);
-        }
-
-        for(i = 0; i < 3; i++){
-            IMNameColor[i].color.red   = r[i] << 8;
-            IMNameColor[i].color.green = g[i] << 8;
-            IMNameColor[i].color.blue  = b[i] << 8;
-        }
-/*    }else{
-        fp = (FILE *)a;
-        fprintf(fp, "%s=", c->name);
-        for(i = 0; i < 3; i++)
-            fprintf(fp, "%d %d %d ",
-                    IMNameColor[i].color.red   >> 8,
-                    IMNameColor[i].color.green >> 8,
-                    IMNameColor[i].color.blue  >> 8);
-        fprintf(fp, "\n");
-    }
-*/
-    return 0;
-}
-
-/* 打开/关闭输入法 */
-inline static int trigger_input_method(Configure *c, void *a, int isread)
-{
-    if(isread){
-        if(bIsReloadConfig){
-            SetTriggerKeys((char *)a);
-            SetHotKey((char *)a, hkTrigger);
-        }
-    }else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_SPACE");
-
-    return 0;
-}
-
-/* 中英文快速切换键 */
-inline static int fast_chinese_english_switch(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetSwitchKey((char *)a);
-    else {
-	if ( switchKey == XKeysymToKeycode (dpy, XK_Control_R) )
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "R_CTRL");
-	else if ( switchKey == XKeysymToKeycode (dpy, XK_Shift_R) )
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "R_SHIFT");
-	else if ( switchKey == XKeysymToKeycode (dpy, XK_Shift_L) )
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "L_SHIFT");
-	else if ( switchKey == XKeysymToKeycode (dpy, XK_Super_R) )
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "R_SUPER");
-	else if ( switchKey == XKeysymToKeycode (dpy, XK_Super_L) )
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "L_SUPER");
-	else
-	    fprintf((FILE *)a, "%s=%s\n", c->name, "L_CTRL");
-    }
-
-    return 0;
-}
-
-/* 光标跟随 */
-inline static int cursor_follow(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkTrack);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_K");
-    return 0;
-}
-
-/* 隐藏主窗口 */
-inline static int hide_main_window(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkHideMainWindow);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_H");
-    return 0;
-}
-
-/* 切换虚拟键盘 */
-inline static int switch_vk(Configure *c, void *a, int isread)
-{
-    if(isread) {
-		sVKHotkey = strdup((char*)a);
-        SetHotKey((char *)a, hkVK);
-	}
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_K");
-
-    return 0;
-}
-
-/* GBK繁体切换键 */
-inline static int gbk_traditional_simplified_switch(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkGBT);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_F");
-
-    return 0;
-}
-
-/* 联想 */
-inline static int association(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkLegend);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_L");
-
-    return 0;
-}
-
-/* 反查拼音 */
-inline static int lookup_pinyin(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, tbl.hkGetPY);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_E");
-
-    return 0;
-}
-
-/*
- * DBC case = Double Byte Character case
- * SBC case = Single Byte Character case
- */
-
-/* 全半角 */
-inline static int sbc_dbc_switch(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkCorner);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "SHIFT_SPACE");
-
-    return 0;
-}
-
-/* 中文标点 */
-inline static int chinese_punctuation(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkPunc);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "ALT_SPACE");
-
-    return 0;
-}
-
-/* 上一页 */
-inline static int prev_page(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkPrevPage);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "-");
-
-    return 0;
-}
-
-/* 下一页 */
-inline static int next_page(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkNextPage);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "=");
-
-    return 0;
-}
-
-/* 第二三候选词选择键 */
-inline static int second_third_candidate_word(Configure *c, void *a, int isread)
-{
-    char *pstr = a;
-
-    if(isread){
-        if (!strcasecmp (pstr, "SHIFT")) {
-            i2ndSelectKey = 50;        //左SHIFT的扫描码
-            i3rdSelectKey = 62;        //右SHIFT的扫描码
-        }
-        else if (!strcasecmp (pstr, "CTRL")) {
-            i2ndSelectKey = 37;        //左CTRL的扫描码
-            i3rdSelectKey = 109;       //右CTRL的扫描码
-        }
-        else {
-	    if (pstr[0] && pstr[0]!='0')
-		i2ndSelectKey = pstr[0] ^ 0xFF;
-	    else
-		i2ndSelectKey = 0;
-	
-	    if (pstr[1] && pstr[1]!='0')
-		i3rdSelectKey = pstr[1] ^ 0xFF;
-	    else
-		i3rdSelectKey = 0;
-        }
-    }else {
-	if ( i2ndSelectKey == 50 )
-            fprintf((FILE *)a, "%s=%s\n", c->name, "SHIFT");
-        else if ( i2ndSelectKey == 37 )
-            fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL");
-        else
-            fprintf((FILE *)a, "%s=%c%c\n", c->name, (!i2ndSelectKey)? '0':i2ndSelectKey, (!i3rdSelectKey)? '0':i3rdSelectKey);
-    }
-
-    return 0;
-}
-
-/* 保存词库 */
-inline static int save_all(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkSaveAll);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_S");
-
-    return 0;
-}
-
-#ifdef _ENABLE_RECORDING
-/* 设置记录模式 */
-inline static int set_recording(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkRecording);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_J");
-
-    return 0;
-}
-
-/* 重置记录模式 */
-inline static int reset_recording(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkResetRecording);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_ALT_A");
-
-    return 0;
-}
-#endif
-
-/* 默认双拼方案 */
-inline static int default_shuangpin_scheme(Configure *c, void *a, int isread)
-{
-    if(isread){
-        strncpy(strDefaultSP, (char *)a, 100);  /* FIXME: 不应在此硬编码字符串长度，下同 */
-        iSPFrom = SP_FROM_SYSTEM_CONFIG;
-    }
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, strDefaultSP);
-
-    return 0;
-}
-
-/* 增加拼音常用字 */
-inline static int add_pinyin_frequently_used_word(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkPYAddFreq);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_8");
-
-    return 0;
-}
-
-/* 删除拼音用户词组 */
-inline static int delete_pinyin_user_create_phrase(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkPYDelUserPhr);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_DELETE");
-
-    return 0;
-}
-
-/* 删除拼音常用字 */
-inline static int delete_pinyin_frequently_used_word(Configure *c, void *a, int isread)
-{
-    if(isread)
-        SetHotKey((char *)a, hkPYDelFreq);
-    else
-        fprintf((FILE *)a, "%s=%s\n", c->name, "CTRL_7");
-
-    return 0;
-}
-
-/* 拼音以词定字键 */
-inline static int pinyin_get_word_from_phrase(Configure *c, void *a, int isread)
-{
-    char *pstr = a;
-    if(isread){
-        cPYYCDZ[0] = pstr[0];
-        cPYYCDZ[1] = pstr[1];
-    }else
-        fprintf((FILE *)a, "%s=%c%c\n", c->name, cPYYCDZ[0], cPYYCDZ[1]);
-
-    return 0;
-}
-
-/* 模糊an和ang */
-inline static int blur_an_ang(Configure *c, void *a, int isread)
-{
-    if(isread){
-        MHPY_C[0].bMode = MHPY_S[5].bMode = atoi(a);
-    }else
-        fprintf((FILE *)a, "%s=%d\n", c->name, MHPY_C[0].bMode);
-
-    return 0;
-}
-
-Configure program_config[] = {
-    {
-        .name = "字体区域",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strUserLocale,
-        .value.str_value.string_length = 50,
-    },
-#ifdef _ENABLE_RECORDING
-    {
-        .name = "记录文件",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strRecordingPath,
-        .value.str_value.string_length = PATH_MAX,
-    },
-#endif
-#ifdef _ENABLE_TRAY
-    {
-        .name = "使用托盘图标",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bUseTrayIcon,
-    },
- #endif
- #ifdef _ENABLE_DBUS
-	{
-		.name = "使用DBus接口",
-		.value_type = CONFIG_INTEGER,
-		.value.integer = &bUseDBus,
-	},
- #endif
-    {
-        .name = NULL,
-    },
-};
-
-/* piaoairy: gcc 默认enum 类型使用int */
-Configure output_config[] = {
-    {
-        .name = "数字后跟半角符号",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bEngPuncAfterNumber,
-    },
-    {
-        .name = "Enter键行为",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&enterToDo, /* FIXME: 这种转换方式也许并不是个好主意，下同 */
-    },
-    {
-        .name = "分号键行为",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&semicolonToDo,
-    },
-    {
-        .name = "大写字母输入英文",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bEngAfterCap,
-    },
-    {
-        .name = "转换英文中的标点",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bConvertPunc,
-    },
-    {
-        .name = "联想方式禁止翻页",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bDisablePagingInLegend,
-    },
-    {
-        .name = "切换临时英文时将已有英文输入",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bSendTextWhenSwitchEng
-    },
-    {
-        .name = NULL,
-    },
-};
-
-Configure interface_config[] = {
-    {
-        .name = "候选词个数",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &iMaxCandWord,
-    },
-    {
-        .name = "主窗口隐藏模式",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&hideMainWindow,
-    },
-    {
-        .name = "显示虚拟键盘",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bShowVK,
-    },
-    {
-        .name = "输入条是否居中",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bCenterInputWindow,
-    },
-    {
-        .name = "首次显示输入条",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bShowInputWindowTriggering,
-    },
-    {
-        .name = "序号后加点",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bPointAfterNumber,
-    },
-    {
-        .name = "显示打字速度",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bShowUserSpeed,
-    },
-    {
-        .name = "显示版本",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bShowVersion,
-    },
-    {
-        .name = "是否显示提示窗口",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bHintWindow,
-    },
- 		{
-        .name = "皮肤类型",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = skinType,
-        .value.str_value.string_length = 64,  
- 		},
-    {
-        .name = NULL,
-    },
-};
-
-Configure hotkey_config[] = {
-    {
-        .name = "打开/关闭输入法",
-        .value_type = CONFIG_OTHER,
-        .config_rw = trigger_input_method,
-    },
-    {
-        .name = "中英文快速切换键",
-        .comment = "中英文快速切换键 可以设置为L_CTRL R_CTRL L_SHIFT R_SHIFT L_SUPER R_SUPER",
-        .value_type = CONFIG_OTHER, /* FIXME: 应该为 CONFIG_SWITCHKEY */
-        .config_rw = fast_chinese_english_switch,
-    },
-    {
-        .name = "双击中英文切换",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bDoubleSwitchKey,
-    },
-    {
-        .name = "击键时间间隔",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&iTimeInterval,
-    },
-    {
-        .name = "光标跟随",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = cursor_follow,
-    },
-    {
-        .name = "隐藏主窗口",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = hide_main_window,
-    },
-    {
-        .name = "切换虚拟键盘",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = switch_vk,
-    },
-    {
-        .name = "GBK繁体切换键",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = gbk_traditional_simplified_switch,
-    },
-    {
-        .name = "联想",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = association,
-    },
-    {
-        .name = "反查拼音",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = lookup_pinyin,
-    },
-    {
-        .name = "全半角",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = sbc_dbc_switch,
-    },
-    {
-        .name = "中文标点",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = chinese_punctuation,
-    },
-    {
-        .name = "上一页",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = prev_page,
-    },
-    {
-        .name = "下一页",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = next_page,
-    },
-    {
-        .name = "第二三候选词选择键",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = second_third_candidate_word,
-    },
-    {
-        .name = "保存词库",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = save_all,
-    },
-#ifdef _ENABLE_RECORDING
-    {
-        .name = "记录模式",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = set_recording,
-    },
-    {
-        .name = "重置记录模式",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = reset_recording,
-    },
-#endif
-    {
-        .name = NULL,
-    },
-};
-
-Configure input_method_config[] = {
-    {
-        .name = "使用拼音",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &inputMethods[IM_PY],
-    },
-    {
-        .name = "使用双拼",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &inputMethods[IM_SP],
-    },
-    {
-        .name = "默认双拼方案",
-        .value_type = CONFIG_OTHER,
-        .config_rw = default_shuangpin_scheme,
-    },
-    {
-        .name = "使用区位",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &inputMethods[IM_QW],
-    },
-    {
-        .name = "使用码表",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &inputMethods[IM_TABLE],
-    },
-    {
-        .name = "提示词库中的词组",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bPhraseTips,
-    },
-    {
-        .name = "其他输入法",
-        .value_type = CONFIG_STRING,
-        .value.str_value.string = strExternIM,
-        .value.str_value.string_length = PATH_MAX,
-    },
-    {
-        .name = NULL,
-    },
-};
-
-Configure pinyin_config[] = {
-    {
-        .name = "使用全拼",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bFullPY,
-    },
-    {
-        .name = "拼音自动组词",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bPYCreateAuto,
-    },
-    {
-        .name = "保存自动组词",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &bPYSaveAutoAsPhrase,
-    },
-    {
-       .name = "增加拼音常用字",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = add_pinyin_frequently_used_word,
-    },
-    {
-        .name = "删除拼音常用字",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = delete_pinyin_frequently_used_word,
-    },
-    {
-        .name = "删除拼音用户词组",
-        .value_type = CONFIG_HOTKEY,
-        .config_rw = delete_pinyin_user_create_phrase,
-    },
-    {
-        .name = "拼音以词定字键",
-        .comment = "拼音以词定字键，等号后面紧接键，不要有空格",
-        .value_type = CONFIG_OTHER,
-        .config_rw = pinyin_get_word_from_phrase,
-    },
-    {
-        .name = "拼音单字重码调整方式",
-        .comment = "重码调整方式说明：0-->不调整  1-->快速调整  2-->按频率调整",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&baseOrder,
-    },
-    {
-        .name = "拼音词组重码调整方式",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&phraseOrder,
-    },
-    {
-        .name = "拼音常用词重码调整方式",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = (int *)&freqOrder,
-    },
-    {
-        .name = "模糊an和ang",
-        .value_type = CONFIG_OTHER,
-        .config_rw = blur_an_ang,
-    },
-    {
-        .name = "模糊en和eng",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_C[1].bMode),
-    },
-    {
-        .name = "模糊ian和iang",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_C[2].bMode),
-    },
-    {
-        .name = "模糊in和ing",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_C[3].bMode),
-    },
-    {
-        .name = "模糊ou和u",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_C[4].bMode),
-    },
-    {
-        .name = "模糊uan和uang",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_C[5].bMode),
-    },
-    {
-        .name = "模糊c和ch",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_S[0].bMode),
-    },
-    {
-        .name = "模糊f和h",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_S[1].bMode),
-    },
-    {
-        .name = "模糊l和n",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_S[2].bMode),
-    },
-    {
-        .name = "模糊s和sh",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_S[3].bMode),
-    },
-    {
-        .name = "模糊z和zh",
-        .value_type = CONFIG_INTEGER,
-        .value.integer = &(MHPY_S[4].bMode),
-    },
-    {
-        .name = NULL,
-    },
-};
-
-Configure_group configure_groups[] = {
-    {
-        .name = "程序",
-        .configure = program_config,
-    },
-    {
-        .name = "输出",
-        .configure = output_config,
-    },
-    {
-        .name = "界面",
-        .configure = interface_config,
-    },
-    {
-        .name = "热键",
-        .comment = "除了“中英文快速切换键”外，其它的热键均可设置为两个，中间用空格分隔",
-        .configure = hotkey_config,
-    },
-    {
-        .name = "输入法",
-        .configure = input_method_config,
-    },
-    {
-        .name = "拼音",
-        .configure = pinyin_config,
-    },
-    {
-        .name = NULL,
-    },
-};
-
-/**
-* 加载配色方案文件
-*/
-void load_CS_config()
-{
-
-}
-
-
-/**
- * @brief 读取用户的配置文件
- * @param bMode 标识配置文件是用户家目录下的，还是从安装目录下拷贝过来的
- * @return void
- */
-void LoadConfig (Bool bMode)
-{
-    FILE    *fp;
-    char    *strBuf = NULL, *pbuf, *pbuf1, strPath[PATH_MAX];
-    size_t  bufLen = 0;
-    //用于标示group的index，在配置文件里面配置是分组的，类似与ini文件的分组
-    int     group_idx;
-    int		i;
-    Configure   *tmpconfig;
-
-    for (i = 0;i < INPUT_METHODS; i++ )
-        inputMethods[i] = 1;
-
-    //用以标识是否是重新读取配置文件
-    bIsReloadConfig = bMode;
-
-    fp = UserConfigFile("config", "rt", NULL);
-    if(!fp && errno == ENOENT){ /* $HOME/.fcitx/config does not exist */
-    
-        snprintf(strPath, PATH_MAX, PKGDATADIR "/data/config");
-
-	/* zxd add begin */
-        if( access( strPath, 0 ) && getenv( "FCITXDIR" ) ) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat( strPath, "/share/fcitx/data/config" );
-        }
-        /* zxd add end */
-        
-        fp = fopen(strPath, "rt");
-        if(!fp)
-            SaveConfig();
-    }
-    
-    if (fp) {
-	group_idx = -1;
-
-	while(getline(&strBuf, &bufLen, fp) != -1){
-	    i = strlen(strBuf);
-
-        if(strBuf[i-1] != '\n'){
-            FcitxLog(FATAL, _("error: configure file: line length"));
-            exit(1);
-	    } else
-		strBuf[i-1] = '\0';
-
-	    pbuf = strBuf;
-	    while(*pbuf && isspace(*pbuf))	//将pbuf指向第一个非空字符
-		pbuf++;
-            if(!*pbuf || *pbuf == '#')		//如果改行是空数据或者是注释(以#开头为注释)
-		continue;
-
-            if(*pbuf == '['){ /* get a group name(组名的格式为"[组名]")*/
-		pbuf++;
-		pbuf1 = strchr(pbuf, ']');
-		if(!pbuf1){
-                    FcitxLog(FATAL, _("error: configure file: configure group name"));
-                    exit(1);
-                }
-
-                //根据group的名字找到其在全局变量configure_groups中的index
-                group_idx = -1;
-                for(i = 0; configure_groups[i].name; i++)
-                    if(strncmp(configure_groups[i].name, pbuf, pbuf1-pbuf) == 0){
-                        group_idx = i;
-                        break;
-                    }
-                if(group_idx < 0){
-                    FcitxLog(FATAL, _("error: invalid configure group name"));
-                    exit(1); /* 我认为这儿没有必要退出。此处完全可以忽略这个错误，
-                              * 并且在后面也忽略这个组的配置即可。
-                              * 因为这儿退出只会带来一个坏处，那就是扩展性。
-                              * 以后再添加新的组的时候，老版本的程序就无法使用
-                              * 新版本的配置文件了。或者，添加了一个可选扩展，
-                              * 该扩展新添加一个组等等。所以，此处应该给一个警告，
-                              * 而不是退出。*/
-		}
-		continue;
-	    }
-
-            //pbuf1指向第一个非空字符与=之间的字符
-            pbuf1 = strchr(pbuf, '=');
-            if(!pbuf1){
-                FcitxLog(FATAL, _("error: configure file: configure entry name"));
-                exit(1);	// 和前面一样，这儿也应该是一个警告而不应该是提示出错并退出。
-            }
-
-            /*
-	     * 这儿避免的是那样一种情况，即从文件头到第一个配置项(即类似与“配置名=配置值”
-             * 的一行字符串)并没有任何分组。也就是防止出现下面的“配置1”和“配置2”
-             * #文件头
-             * 配置1=123 配置2=123
-             * [组名]
-             * ...
-             * #文件尾
-             */
-
-
-            if(group_idx < 0){
-                FcitxLog(FATAL, _("error: configure file: no group name at beginning"));
-                exit(1);
-            }
-            //找到该组中的配置项，并将其保存到对应的全局变量里面去
-            for(tmpconfig = configure_groups[group_idx].configure;
-                tmpconfig->name; tmpconfig++)
-            {
-
-                if(strncmp(tmpconfig->name, pbuf, pbuf1-pbuf) == 0)
-                    read_configure(tmpconfig, ++pbuf1);
-            }
-        }
-
-        fclose(fp);
-    }
-
-    if (strBuf)
-        free(strBuf);
-
-    /* 如果配置文件中没有设置打开/关闭输入法的热键，那么设置CTRL-SPACE为默认热键 */
-    if (!Trigger_Keys) {
-	iTriggerKeyCount = 0;
-	Trigger_Keys = (XIMTriggerKey *) malloc (sizeof (XIMTriggerKey) * (iTriggerKeyCount + 2));
-	Trigger_Keys[0].keysym = XK_space;
-	Trigger_Keys[0].modifier = ControlMask;
-	Trigger_Keys[0].modifier_mask = ControlMask;
-	Trigger_Keys[1].keysym = 0;
-	Trigger_Keys[1].modifier = 0;
-	Trigger_Keys[1].modifier_mask = 0;
-    }
-    
-}
-
-/**
- * 保存配置信息
- */
-void SaveConfig (void)
-{
-    FILE    *fp;
-    Configure_group *tmpgroup;
-
-    fp = UserConfigFile("config", "wt", NULL);
-    if (!fp)
-        perror("fopen");
-
-    /* 实际上，写配置文件很简单，就是从全局数组configure_groups里面分别把每个组的配置
-     * 写入到文件里面去*/
-    for(tmpgroup = configure_groups; tmpgroup->name; tmpgroup++){
-        if(tmpgroup->comment)
-            fprintf(fp, "# %s\n", tmpgroup->comment);	// 如果存在注释，先写入
-        fprintf(fp, "[%s]\n", tmpgroup->name);		// 接下来写入组的名字
-        write_configures(fp, tmpgroup->configure);	// 最后将该组的每个配置项写入到文件中
-        fprintf(fp, "\n");		// 为增加可读性插入一个空行
-    }
-    fclose(fp);
-}
-
-/** 版本 */
-inline static int get_version(Configure *c, void *a, int isread)
-{
-    if(isread){
-        if(!strcasecmp(FCITX_VERSION, (char *)a))
-            bNeedSaveConfig = False;
-    }else
-        fprintf((FILE *)a, "%s=%s\n", c->name, FCITX_VERSION);
-    return 0;
-}
-
-/*
- * 计算文件中有多少行
- * 注意:文件中的空行也做为一行处理
- */
-int CalculateRecordNumber (FILE * fpDict)
-{
-    char           *strBuf = NULL;
-    size_t          bufLen = 0;
-    int             nNumber = 0;
-
-	while(getline(&strBuf, &bufLen, fpDict) != -1){
-	nNumber++;
-    }
-    rewind (fpDict);
-
-    if (strBuf)
-        free(strBuf);
-
-    return nNumber;
-}
-
-void SetSwitchKey (char *str)
-{
-    if (!strcasecmp (str, "R_CTRL"))
-	switchKey = XKeysymToKeycode (dpy, XK_Control_R);
-    else if (!strcasecmp (str, "R_SHIFT"))
-	switchKey = XKeysymToKeycode (dpy, XK_Shift_R);
-    else if (!strcasecmp (str, "L_SHIFT"))
-	switchKey = XKeysymToKeycode (dpy, XK_Shift_L);
-    else if (!strcasecmp (str, "R_SUPER"))
-	switchKey = XKeysymToKeycode (dpy, XK_Super_R);
-    else if (!strcasecmp (str, "L_SUPER"))
-	switchKey = XKeysymToKeycode (dpy, XK_Super_L);
-    else
-	switchKey = XKeysymToKeycode (dpy, XK_Control_L);
-}
-
-void SetTriggerKeys (char *str)
-{
-    int             i;
-    char            strKey[2][30];
-    char           *p;
-
-    //首先来判断用户设置了几个热键，最多为2
-    p = str;
-
-    i = 0;
-    iTriggerKeyCount = 0;
-    while (*p) {
-	if (*p == ' ') {
-	    iTriggerKeyCount++;
-	    while (*p == ' ')
-		p++;
-	    strcpy (strKey[1], p);
-	    break;
-	}
-	else
-	    strKey[0][i++] = *p++;
-    }
-    strKey[0][i] = '\0';
-
-    Trigger_Keys = (XIMTriggerKey *) malloc (sizeof (XIMTriggerKey) * (iTriggerKeyCount + 2));
-    for (i = 0; i <= (iTriggerKeyCount + 1); i++) {
-	Trigger_Keys[i].keysym = 0;
-	Trigger_Keys[i].modifier = 0;
-	Trigger_Keys[i].modifier_mask = 0;
-    }
-
-    for (i = 0; i <= iTriggerKeyCount; i++) {
-	if (MyStrcmp (strKey[i], "CTRL_")) {
-	    Trigger_Keys[i].modifier = Trigger_Keys[i].modifier | ControlMask;
-	    Trigger_Keys[i].modifier_mask = Trigger_Keys[i].modifier_mask | ControlMask;
-	}
-	else if (MyStrcmp (strKey[i], "SHIFT_")) {
-	    Trigger_Keys[i].modifier = Trigger_Keys[i].modifier | ShiftMask;
-	    Trigger_Keys[i].modifier_mask = Trigger_Keys[i].modifier_mask | ShiftMask;
-	}
-	else if (MyStrcmp (strKey[i], "ALT_")) {
-	    Trigger_Keys[i].modifier = Trigger_Keys[i].modifier | Mod1Mask;
-	    Trigger_Keys[i].modifier_mask = Trigger_Keys[i].modifier_mask | Mod1Mask;
-	}
-	else if (MyStrcmp (strKey[i], "SUPER_")) {
-	    Trigger_Keys[i].modifier = Trigger_Keys[i].modifier | Mod4Mask;
-	    Trigger_Keys[i].modifier_mask = Trigger_Keys[i].modifier_mask | Mod4Mask;
-	}
-
-	if (Trigger_Keys[i].modifier == 0) {
-	    Trigger_Keys[i].modifier = ControlMask;
-	    Trigger_Keys[i].modifier_mask = ControlMask;
-	}
-
-	p = strKey[i] + strlen (strKey[i]) - 1;
-	while (*p != '_') {
-	    p--;
-	    if (p == strKey[i] || (p == strKey[i] + strlen (strKey[i]) - 1)) {
-		Trigger_Keys = (XIMTriggerKey *) malloc (sizeof (XIMTriggerKey) * (iTriggerKeyCount + 2));
-		Trigger_Keys[i].keysym = XK_space;
-		return;
-	    }
-	}
-	p++;
-
-	if (strlen (p) == 1)
-	    Trigger_Keys[i].keysym = tolower (*p);
-	else if (!strcasecmp (p, "LCTRL"))
-	    Trigger_Keys[i].keysym = XK_Control_L;
-	else if (!strcasecmp (p, "RCTRL"))
-	    Trigger_Keys[i].keysym = XK_Control_R;
-	else if (!strcasecmp (p, "LSHIFT"))
-	    Trigger_Keys[i].keysym = XK_Shift_L;
-	else if (!strcasecmp (p, "RSHIFT"))
-	    Trigger_Keys[i].keysym = XK_Shift_R;
-	else if (!strcasecmp (p, "LALT"))
-	    Trigger_Keys[i].keysym = XK_Alt_L;
-	else if (!strcasecmp (p, "RALT"))
-	    Trigger_Keys[i].keysym = XK_Alt_R;
-	else if (!strcasecmp (p, "LSUPER"))
-	    Trigger_Keys[i].keysym = XK_Super_L;
-	else if (!strcasecmp (p, "RSUPER"))
-	    Trigger_Keys[i].keysym = XK_Super_R;
-	else
-	    Trigger_Keys[i].keysym = XK_space;
-    }
-}
-
-Bool CheckHZCharset (char *strHZ)
-{
-	// 由于utf8化，这个判断暂时失效
-/*  if (!bUseGBK) {
-	//GB2312的汉字编码规则为：第一个字节的值在0xA1到0xFE之间(实际为0xF7)，第二个字节的值在0xA1到0xFE之间
-	//由于查到的资料说法不一，懒得核实，就这样吧
-	int             i;
-
-	for (i = 0; i < strlen (strHZ); i++) {
-	    if ((unsigned char) strHZ[i] < (unsigned char) 0xA1 || (unsigned char) strHZ[i] > (unsigned char) 0xF7 || (unsigned char) strHZ[i + 1] < (unsigned char) 0xA1 || (unsigned char) strHZ[i + 1] > (unsigned char) 0xFE)
-		return False;
-	    i++;
-	}
-    }*/
-
-    return True;
-}
-
+pthread_mutex_t fcitxMutex;
 
 typedef struct simple2trad_t
 {
@@ -1514,12 +163,34 @@ static int cmpi(const void * a, const void *b)
 	return (*((int*)a)) - (*((int*)b));
 }
 
+/*
+ * 计算文件中有多少行
+ * 注意:文件中的空行也做为一行处理
+ */
+int CalculateRecordNumber (FILE * fpDict)
+{
+    char           *strBuf = NULL;
+    size_t          bufLen = 0;
+    int             nNumber = 0;
+
+        while(getline(&strBuf, &bufLen, fpDict) != -1){
+        nNumber++;
+    }
+    rewind (fpDict);
+
+    if (strBuf)
+        free(strBuf);
+
+    return nNumber;
+}
+
+
 int CalHZIndex (char *strHZ)
 {
 	unsigned int iutf = 0;
 	int l = utf8_char_len(strHZ);
 	unsigned char* utf = (unsigned char*) strHZ;
-	int *res;
+	unsigned int *res;
 	int idx;
 	
 	if (l == 2)
@@ -1550,34 +221,158 @@ int CalHZIndex (char *strHZ)
     return idx;
 }
 
-/**
- * 该函数访问指定的用户配置文件
+/** 
+ * @brief 去除字符串首末尾空白字符
+ * 
+ * @param s
+ * 
+ * @return malloc的字符串，需要free
  */
-FILE *UserConfigFile (char *strFileName, char *strMode, char **strFullPath)
+char *trim(char *s)
 {
-    static char	strPath[PATH_MAX];
-    FILE	*fp = (FILE *) NULL;
-
-    if( getenv("XDG_CONFIG_HOME") != NULL )
-        strcpy (strPath, (char *) getenv ("XDG_CONFIG_HOME"));
-    else{
-        strcpy (strPath, (char *) getenv ("HOME"));
-        strcat (strPath, "/.config");
-    }
-
-    strcat (strPath, "fcitx");
-    if (strMode) {
-	if (access (strPath, 0))
-	    mkdir (strPath, S_IRWXU);
-    }
+    register char *end;
+    register char csave;
     
-    strcat (strPath, strFileName);
+    while (isspace(*s))                 /* skip leading space */
+        ++s;
+    end = strchr(s,'\0') - 1;
+    while (end >= s && isspace(*end))               /* skip trailing space */
+        --end;
+    
+    csave = end[1];
+    end[1] = '\0';
+    s = strdup(s);
+    end[1] = csave;
+    return (s);
+}
 
-    if ( strFullPath!=NULL )
-        (*strFullPath) = strPath;
+/** 
+ * @brief 返回申请后的内存，并清零
+ * 
+ * @param 申请的内存长度
+ * 
+ * @return 申请的内存指针
+ */
+void *malloc0(size_t bytes)
+{
+    void *p = malloc(bytes);
+    if (!p)
+        return NULL;
 
-    if ( strMode )    
-	fp = fopen(strPath, strMode);
+    memset(p, 0, bytes);
+    return p;
+}
 
-    return fp;
+/** 
+ * @brief 自定义的二分查找，和bsearch库函数相比支持不精确位置的查询
+ * 
+ * @param key
+ * @param base
+ * @param nmemb
+ * @param size
+ * @param accurate
+ * @param compar
+ * 
+ * @return 
+ */
+void *custom_bsearch(const void *key, const void *base,
+        size_t nmemb, size_t size, int accurate,
+        int (*compar)(const void *, const void *))
+{
+    if (accurate)
+        return bsearch(key, base, nmemb, size, compar);
+    else
+    {
+        size_t l, u, idx;
+        const void *p;
+        int comparison;
+        
+        l = 0;
+        u = nmemb;
+        while (l < u)
+        {
+            idx = (l + u) / 2;
+            p = (void *) (((const char *) base) + (idx * size));
+            comparison = (*compar) (key, p);
+            if (comparison <= 0)
+                u = idx;
+            else if (comparison > 0)
+                l = idx + 1;
+        }
+
+        if (u >= nmemb)
+            return NULL;
+        else
+            return (void *) (((const char *) base) + (l * size));
+    }
+}
+
+void FcitxInitThread()
+{
+    pthread_mutexattr_t   mta;
+    int rc;
+    
+    rc = pthread_mutexattr_init(&mta);
+    if (rc != 0)
+        FcitxLog(ERROR, _("pthread mutexattr init failed"));
+
+    pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+
+    rc = pthread_mutex_init(&fcitxMutex, &mta);
+    gs.bMutexInited = True;
+    if (rc != 0)
+        FcitxLog(ERROR, _("pthread mutex init failed"));
+}
+
+int FcitxLock()
+{
+    if (gs.bMutexInited)
+        return pthread_mutex_lock(&fcitxMutex); 
+    return 0;
+}
+
+int FcitxUnlock()
+{
+    if (gs.bMutexInited)        
+        return pthread_mutex_unlock(&fcitxMutex);
+    return 0;
+}
+
+/** 
+ * @brief Fcitx记录Log的函数
+ * 
+ * @param ErrorLevel
+ * @param fmt
+ * @param ...
+ */
+void FcitxLogFunc(ErrorLevel e, const char* filename, const int line, const char* fmt, ...)
+{
+#ifndef _DEBUG
+    if (e == DEBUG)
+        return;
+#endif
+    switch (e)
+    {
+        case INFO:
+            fprintf(stderr, _("Info:"));
+            break;
+        case ERROR:
+            fprintf(stderr, _("Error:"));
+            break;
+        case DEBUG:
+            fprintf(stderr, _("Debug:"));
+            break;
+        case WARNING:
+            fprintf(stderr, _("Warning:"));
+            break;
+        case FATAL:
+            fprintf(stderr, _("Fatal:"));
+            break;
+    }
+    va_list ap;
+    fprintf(stderr, "%s:%u-", filename, line);
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
 }

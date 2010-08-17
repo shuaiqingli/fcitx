@@ -26,32 +26,10 @@
  * @date 2010-05-02
  */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef XDG_H
+#define XDG_H
 
-#include <stdlib.h>
-
-#include <libintl.h>
-
-#include "fcitx-config/uthash.h"
-#define _(msgid) gettext(msgid)
-
-typedef enum ErrorLevel
-{
-    DEBUG,
-    ERROR,
-    INFO,
-    FATAL,
-    WARNING
-} ErrorLevel;
-
-typedef struct StringHashSet {
-    char *name;
-    UT_hash_handle hh;
-} StringHashSet;
-
-char *trim(char *s);
-FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len);
+FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len, char **retFile);
 char **GetXDGPath(
         size_t *len,
         const char* homeEnv,
@@ -59,19 +37,9 @@ char **GetXDGPath(
         const char* suffixHome,
         const char* dirsDefault,
         const char* suffixGlobal);
-void *malloc0(size_t bytes);
 
-void *custom_bsearch(const void *key, const void *base,
-        size_t nmemb, size_t size, int accurate,
-        int (*compar)(const void *, const void *));
-
-void FcitxInitThread();
-int FcitxLock();
-int FcitxUnlock();
-FILE *GetXDGFileConfig(const char *fileName, const char *mode);
-FILE *GetXDGFileData(const char *fileName, const char *mode);
-FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len);
+FILE *GetXDGFileData(const char *fileName, const char *mode, char**retFile);
+FILE *GetXDGFileUser(const char *fileName, const char *mode, char **retFile);
+FILE *GetXDGFileTable(const char *fileName, const char *mode, char **retFile, Bool forceUser);
 void FreeXDGPath(char **path);
-#define FcitxLog(e, fmt, arg...) FcitxLogFunc(e, __FILE__, __LINE__, fmt, ##arg)
-void FcitxLogFunc(ErrorLevel, const char* filename, const int line, const char* fmt, ...);
 #endif

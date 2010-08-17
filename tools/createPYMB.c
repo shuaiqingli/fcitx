@@ -26,12 +26,14 @@
 #include "im/pinyin/pyMapTable.h"
 #include "im/pinyin/PYFA.h"
 #include "tools/utf8.h"
+#include "fcitx-config/configfile.h"
+
+FcitxConfig fc;
 
 extern PYTABLE  PYTable[];
 
 FILE           *fps, *fpt, *fp1, *fp2;
 Bool            bSingleHZMode = False;
-Bool            bFullPY = False;
 
 typedef struct _PY {
     char            strPY[3];
@@ -64,15 +66,6 @@ int             iPYFACount;
 __PYFA         *PYFAList;
 int             YY[1000];
 int             iAllCount;
-
-/**
- * 该函数访问指定的用户配置文件
- * 此处不做任何事，只是为了骗过编译器
- */
-FILE *UserConfigFile (char *strFileName, char *strMode, char **strFullPath)
-{
-    return (FILE *) NULL;
-}
 
 Bool LoadPY (void)
 {
@@ -163,7 +156,7 @@ void CreatePYPhrase (void)
     if (strlen (strPhrase) < 3)
         continue;
 
-    ParsePY (strPY, &strTemp, PY_PARSE_INPUT_SYSTEM);
+    ParsePY (strPY, &strTemp, PY_PARSE_INPUT_SYSTEM, False);
     s2++;
     kkk = 0;
     // printf("%s  %s  %d\n",strPY,strPhrase,strTemp.iHZCount);

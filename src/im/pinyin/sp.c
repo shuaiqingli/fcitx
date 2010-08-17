@@ -22,12 +22,13 @@
 #include <limits.h>
 #include <ctype.h>
 
-#include "core/main.h"
 #include "im/pinyin/sp.h"
 #include "im/pinyin/pyMapTable.h"
 #include "im/pinyin/pyParser.h"
 #include "ui/MainWindow.h"
 #include "tools/tools.h"
+#include "fcitx-config/configfile.h"
+#include "tools/xdg.h"
 
 SP_C            SPMap_C[] = {
     {"ai", 'l'}
@@ -105,8 +106,6 @@ SP_S            SPMap_S[] = {
 Bool            bSP_UseSemicolon = False;
 Bool            bSP = False;
 char            cNonS = 'o';
-char            strDefaultSP[100] = "自然码";
-SP_FROM         iSPFrom = SP_FROM_USER;	//从何处读取的双拼方案，0：用户目录，1：系统设置，2：系统双拼设置文件
 
 //extern Bool     bSingleHZMode;
 
@@ -132,35 +131,11 @@ void SPInit (void)
 void LoadSPData (void)
 {
     FILE           *fp;
-    char            strPath[PATH_MAX];
     char            str[100], strS[5], *pstr;
     int             i;
     Bool            bIsDefault = False;
-    Bool            bIsFromSystemSPConfig = False;
 
-    fp = UserConfigFile("sp.dat", "rt", NULL);
-    if (!fp) {
-	strcpy (strPath, PKGDATADIR "/data/");
-	strcat (strPath, "sp.dat");
-
-	/* add by zxd begin */
-        if( access( strPath, 0) && getenv( "FCITXDIR") ) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat (strPath, "/share/fcitx/data/sp.dat");
-        }
-        /* add by zxd end */
-	
-	bIsFromSystemSPConfig = True;
-	if (iSPFrom != SP_FROM_SYSTEM_CONFIG)
-	    iSPFrom = SP_FROM_SYSTEM_SP_CONFIG;
-	fp = fopen (strPath, "rt");
-
-        if (!fp)
-	    return;
-    }
-
-    if (!bIsFromSystemSPConfig)
-	iSPFrom = SP_FROM_USER;
+    fp = GetXDGFileData("sp.dat", "rt", NULL);
 
     while (1) {
 	if (!fgets (str, 100, fp))
@@ -177,12 +152,10 @@ void LoadSPData (void)
 	    continue;
 
 	if (!strncmp (pstr, cstr(DEFAULT), cstrlen(DEFAULT))) {
-	    if (iSPFrom != SP_FROM_SYSTEM_CONFIG) {
 		pstr += cstrlen(DEFAULT);
 		if (*pstr == ' ' || *pstr == '\t')
 		    pstr++;
-		strcpy (strDefaultSP, pstr);
-	    }
+		strcpy (fc.strDefaultSP, pstr);
 	    continue;
 	}
 
@@ -190,7 +163,7 @@ void LoadSPData (void)
 	    pstr += cstrlen(NAME);
 	    if (*pstr == ' ' || *pstr == '\t')
 		pstr++;
-	    bIsDefault = !(strcmp (strDefaultSP, pstr));
+	    bIsDefault = !(strcmp (fc.strDefaultSP, pstr));
 	    continue;
 	}
 

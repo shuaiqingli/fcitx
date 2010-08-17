@@ -35,9 +35,7 @@
 #include "IMdkit.h"
 #include "tools/utf8.h"
 
-#define INPUTWND_STARTX	300
 #define INPUTWND_WIDTH	50
-#define INPUTWND_STARTY	420
 #define INPUTWND_HEIGHT	40
 
 /* #define INPUTWND_START_POS_UP	8 */

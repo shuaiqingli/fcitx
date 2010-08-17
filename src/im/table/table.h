@@ -23,6 +23,7 @@
 #include <X11/Xlib.h>
 #include <limits.h>
 
+#include "fcitx-config/configfile.h"
 #include "core/ime.h"
 #include "tools/utarray.h"
 
@@ -66,6 +67,7 @@ typedef struct _TABLE {
     unsigned int    iRecordCount;
     ADJUSTORDER     tableOrder;
 
+    int             iPriority;
     Bool            bUsePY;	//使用拼音
     int             iTableAutoSendToClient;	//自动上屏
     int             iTableAutoSendToClientWhenNone;	//空码自动上屏
@@ -164,7 +166,6 @@ typedef struct TableState {
     HOTKEYS         hkTableAdjustOrder[HOT_KEY_COUNT];
     Bool            bIsTableAddPhrase;
     HOTKEYS         hkTableAddPhrase[HOT_KEY_COUNT];
-    HOTKEYS         hkGetPY[HOT_KEY_COUNT];
     
     INT8            iTableChanged;
     INT8            iTableNewPhraseHZCount;

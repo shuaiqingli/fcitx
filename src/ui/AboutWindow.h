@@ -32,8 +32,8 @@ typedef struct AboutWindow
 {
     Window window;
     cairo_surface_t* surface;
-    cairo_color_t color;
-    cairo_color_t fontColor;
+    ConfigColor color;
+    ConfigColor fontColor;
     int width;
     int fontSize;
     Atom     about_protocol_atom;

@@ -41,6 +41,30 @@ typedef struct ConfigColor
     double b;
 } ConfigColor;
 
+typedef enum
+{
+	RELEASE,//鼠标释放状态
+	PRESS,//鼠标按下
+	MOTION//鼠标停留
+} MouseE;
+
+typedef struct FcitxImage
+{
+	char img_name[32];
+	//图片绘画区域
+	int  position_x;
+	int  position_y;
+	int  width;
+	int  height;
+	//按键响应区域
+	int  response_x;
+	int  response_y;
+	int  response_w;
+	int  response_h;
+	//鼠标不同状态mainnMenuwindow不同的显示状态.
+	MouseE mouse;
+} FcitxImage;
+
 typedef enum ConfigType
 {
 	T_Integer,
@@ -51,7 +75,8 @@ typedef enum ConfigType
     T_Enum,
     T_File,
     T_Hotkey,
-    T_Font
+    T_Font,
+    T_Image
 } ConfigType;
 
 typedef enum ConfigSync
@@ -103,6 +128,7 @@ typedef struct ConfigOption
     char *optionName;
     char *rawValue;
     union {
+        void *untype;
         int *integer;
         Bool *boolean;
         HOTKEYS *hotkey;
@@ -110,6 +136,7 @@ typedef struct ConfigOption
         int *enumerate;
         char **string;
         char *chr;
+        FcitxImage* image;
     } value;
     SyncFilter filter;
     ConfigOptionDesc *optionDesc;
@@ -147,16 +174,16 @@ typedef struct GenericConfig
         if (gconfig->configFile) { \
             FreeConfigFile(gconfig->configFile); \
         } \
-        gconfig->configFile = cfile;
+        gconfig->configFile = cfile
 #define CONFIG_BINDING_REGISTER(g, o, var) \
-        { \
+        do { \
             ConfigBindValue(cfile, g, o, &config->var, NULL); \
-        }        
+        } while(0)      
 
-#define CONFIG_BINDING_REGISTER_WITH_FILTER(group, option, var, filter_func) \
-        { \
+#define CONFIG_BINDING_REGISTER_WITH_FILTER(g, o, var, filter_func) \
+        do { \
             ConfigBindValue(cfile, g, o, &config->var, filter_func); \
-        }
+        } while(0)
 #define CONFIG_BINDING_END() }
 
 #define IsColorValid(c) ((c) >=0 && (c) <= 255)
@@ -184,6 +211,7 @@ void ConfigBindSync(GenericConfig* config);
 
 typedef ConfigSyncResult (*ConfigOptionFunc)(ConfigOption *, ConfigSync);
 ConfigSyncResult ConfigOptionInteger(ConfigOption *option, ConfigSync sync);
+ConfigSyncResult ConfigOptionImage(ConfigOption *option, ConfigSync sync);
 ConfigSyncResult ConfigOptionBoolean(ConfigOption *option, ConfigSync sync);
 ConfigSyncResult ConfigOptionEnum(ConfigOption *option, ConfigSync sync);
 ConfigSyncResult ConfigOptionColor(ConfigOption *option, ConfigSync sync);

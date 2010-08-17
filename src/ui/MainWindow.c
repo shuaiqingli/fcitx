@@ -34,12 +34,10 @@
 #include "ui/skin.h"
 #include "MainWindow.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/configfile.h"
 
 Window          mainWindow = (Window) NULL;
 
-HIDE_MAINWINDOW hideMainWindow = HM_SHOW;
-
-Bool            bShowVK = False;
 Bool		bMainWindow_Hiden = False;
 
 char           *strFullCorner = "全角模式";
@@ -75,8 +73,8 @@ Bool CreateMainWindow (void)
 							  RootWindow(dpy, iScreen),
 							  fcitxProfile.iMainWindowOffsetX,
 							  fcitxProfile.iMainWindowOffsetY,
-							  skin_config.skin_main_bar.mbbg_img.width, 
-							  skin_config.skin_main_bar.mbbg_img.height,
+							  sc.skinMainBar.backImg.width, 
+							  sc.skinMainBar.backImg.height,
 							  0, depth,InputOutput, vs,attribmask, &attrib);
 
 	if(mainWindow == (Window)NULL)
@@ -84,11 +82,14 @@ Bool CreateMainWindow (void)
 		
 	xgv.foreground = WhitePixel(dpy, iScreen);
 	//创建pixmap缓冲区,创建主cs
-	pm_main_bar = XCreatePixmap(dpy,mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height, depth);
+	pm_main_bar = XCreatePixmap(dpy,mainWindow, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height, depth);
 	gc = XCreateGC(dpy,pm_main_bar, GCForeground, &xgv);
-	XFillRectangle(dpy, pm_main_bar, gc, 0, 0,skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);	
-	cs_main_bar=cairo_xlib_surface_create(dpy, pm_main_bar, vs, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);	
+	XFillRectangle(dpy, pm_main_bar, gc, 0, 0,sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);	
+	cs_main_bar=cairo_xlib_surface_create(dpy, pm_main_bar, vs, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);	
+    XFreeGC(dpy,gc);
 
+    if (main_win_gc != None)
+        XFreeGC(dpy, main_win_gc);
 	main_win_gc = XCreateGC( dpy, mainWindow, 0, NULL );
 	XChangeWindowAttributes (dpy, mainWindow, attribmask, &attrib);	
 	XSelectInput (dpy, mainWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask);
@@ -112,7 +113,6 @@ void DrawMainWindow (void)
     INT8            iIndex = 0;
 	cairo_t *c;
 	Bool btmpPunc;
-	char tmpstr[64]={0};
 
     if ( bMainWindow_Hiden )
     	return;
@@ -124,7 +124,7 @@ void DrawMainWindow (void)
 #ifdef _DEBUG
     FcitxLog(DEBUG, _("DRAW MainWindow"));
 #endif
-	//XResizeWindow(dpy, mainWindow, skin_config.skin_main_bar.mbbg_img.width, skin_config.skin_main_bar.mbbg_img.height);
+	//XResizeWindow(dpy, mainWindow, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);
 
 	c=cairo_create(cs_main_bar);
 	//把背景清空
@@ -135,62 +135,40 @@ void DrawMainWindow (void)
 	
 	cairo_set_operator(c, CAIRO_OPERATOR_OVER);
 
-	if (hideMainWindow == HM_SHOW || (hideMainWindow == HM_AUTO && (ConnectIDGetState (connect_id) != IS_CLOSED)))
+	if (fc.hideMainWindow == HM_SHOW || (fc.hideMainWindow == HM_AUTO && (ConnectIDGetState (connect_id) != IS_CLOSED)))
     {	
    // extern mouse_e ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
-		draw_a_img(&c, skin_config.skin_main_bar.mbbg_img,bar,RELEASE );
-		draw_a_img(&c, skin_config.skin_main_bar.logo_img,logo,ms_logo);
-		draw_a_img(&c, skin_config.skin_main_bar.zhpunc_img,punc[btmpPunc],ms_punc);
-		draw_a_img(&c, skin_config.skin_main_bar.chs_img,chs_t[fcitxProfile.bUseGBKT],ms_chs);
-		draw_a_img(&c, skin_config.skin_main_bar.half_corner_img,corner[fcitxProfile.bCorner],ms_corner);
-		draw_a_img(&c, skin_config.skin_main_bar.unlock_img,lock[fcitxProfile.bLocked],ms_lock);
-		draw_a_img(&c, skin_config.skin_main_bar.lxoff_img,lx[fcitxProfile.bUseLegend],ms_lx);
-		draw_a_img(&c, skin_config.skin_main_bar.vkhide_img,vk[bVK],ms_vk);
+		draw_a_img(&c, sc.skinMainBar.backImg,bar,RELEASE );
+		draw_a_img(&c, sc.skinMainBar.logo,logo,ms_logo);
+		draw_a_img(&c, sc.skinMainBar.zhpunc,punc[btmpPunc],ms_punc);
+		draw_a_img(&c, sc.skinMainBar.chs,chs_t[fcitxProfile.bUseGBKT],ms_chs);
+		draw_a_img(&c, sc.skinMainBar.halfcorner,corner[fcitxProfile.bCorner],ms_corner);
+		draw_a_img(&c, sc.skinMainBar.unlock,lock[fcitxProfile.bLocked],ms_lock);
+		draw_a_img(&c, sc.skinMainBar.nolegend,lx[fcitxProfile.bUseLegend],ms_lx);
+		draw_a_img(&c, sc.skinMainBar.novk,vk[bVK],ms_vk);
 		
 		iIndex = ConnectIDGetState (connect_id);
 		//printf("[iIndex:%d iIMIndex:%d imName:%s]\n",iIndex,iIMIndex,im[iIMIndex].strName);
 		if( iIndex == 1 || iIndex ==0 )
 		{
 			//英文
-			draw_a_img(&c, skin_config.skin_main_bar.english_img,english,ms_py);
+			draw_a_img(&c, sc.skinMainBar.eng,english,ms_py);
 		}
 		else 
 		{
-			strcpy(tmpstr,im[gs.iIMIndex].strName);
-			
 			//默认码表显示
-			if ( strcmp(tmpstr,"Pinyin") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.pinyin_img,pinyin,ms_py);
-			else if( strcmp(tmpstr,"Shuangpin") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.shuangpin_img,shuangpin,ms_py);
-			else if( strcmp(tmpstr,"Quwei") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.quwei_img,quwei,ms_py);
-			else if( strcmp(tmpstr,"Wubi") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.wubi_img,wubi,ms_py);
-			else if( strcmp(tmpstr,"WubiPinyin") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.mixpywb_img,mix,ms_py);					
-			else if( strcmp(tmpstr,"Erbi") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.erbi_img,erbi,ms_py);					
-			else if( strcmp(tmpstr,"Cangjie") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.cj_img,cangji,ms_py);					
-			else if( strcmp(tmpstr,"Wanfeng") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.wanfeng_img,wanfeng,ms_py);					
-			else if( strcmp(tmpstr,"Bingcan") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.bingchan_img,bingchan,ms_py);	
-			else if( strcmp(tmpstr,"Ziranma") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.ziran_img,ziran,ms_py);
-			else if( strcmp(tmpstr,"Dianbaoma") == 0)
-				draw_a_img(&c, skin_config.skin_main_bar.dianbao_img,dianbao,ms_py);
-			else
+            if (im[gs.iIMIndex].icon)
+                draw_a_img(&c, im[gs.iIMIndex].image, im[gs.iIMIndex].icon , ms_py);
+            else
 			{	//如果非默认码表的内容,则临时加载png文件.
 				//暂时先不能自定义码表图片.其他码表统一用一种图片。
 				//printf("[%s]\n",tmpstr);
-				draw_a_img(&c, skin_config.skin_main_bar.otherim_img,otherim,ms_py);
+				draw_a_img(&c, sc.skinMainBar.chn,otherim,ms_py);
 			}
 																		
 		}
-		XCopyArea (dpy, pm_main_bar, mainWindow, main_win_gc, 0, 0, skin_config.skin_main_bar.mbbg_img.width,\
-		 															skin_config.skin_main_bar.mbbg_img.height, 0, 0);		
+		XCopyArea (dpy, pm_main_bar, mainWindow, main_win_gc, 0, 0, sc.skinMainBar.backImg.width,\
+		 															sc.skinMainBar.backImg.height, 0, 0);		
     }
     else
 		XUnmapWindow (dpy, mainWindow);

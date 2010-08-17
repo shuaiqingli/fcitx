@@ -24,7 +24,8 @@
 #include "ui/InputWindow.h"
 #include "tools/tools.h"
 #include "tools/utarray.h"
-#include "tools/util.h"
+#include "tools/xdg.h"
+#include "fcitx-config/configfile.h"
 
 uint uQuickPhraseCount;
 UT_array *quickPhrases = NULL;
@@ -37,7 +38,6 @@ QUICK_PHRASE *quickPhraseCandWords[MAX_CAND_WORD];
 extern int iCandPageCount;
 extern int iCandWordCount;
 extern int iCurrentCandPage;
-extern int iMaxCandWord;
 extern char strCodeInput[];
 extern char strStringGet[];
 
@@ -80,7 +80,7 @@ void LoadQuickPhrase(void)
 
     uQuickPhraseCount=0;
 
-    fp = UserConfigFile("QuickPhrase.mb", "rt", NULL);
+    fp =  GetXDGFileData("QuickPhrase.mb", "rt", NULL);
     if (!fp) {
     strcpy (strPath, PKGDATADIR "/data/");
     strcat (strPath, "QuickPhrase.mb");
@@ -190,7 +190,7 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
     iFirstQuickPhrase = utarray_eltidx(quickPhrases, currentQuickPhrase);
     iLastQuickPhrase = utarray_eltidx(quickPhrases, utarray_custom_bsearch(&pKey, quickPhrases, False, PhraseCmpA));
 
-    iCandPageCount = (iLastQuickPhrase - iFirstQuickPhrase) / iMaxCandWord;
+    iCandPageCount = (iLastQuickPhrase - iFirstQuickPhrase) / fc.iMaxCandWord;
     if ( !currentQuickPhrase || strncmp(strCodeInput,currentQuickPhrase->strCode,iInputLen) ) {
         SetMessageCount(&messageDown, 0);
         currentQuickPhrase = NULL;
@@ -211,13 +211,13 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
     iCurrentCandPage--;
     }
 
-    for( currentQuickPhrase = (QUICK_PHRASE*) utarray_eltptr(quickPhrases, iFirstQuickPhrase + iCurrentCandPage * iMaxCandWord);
+    for( currentQuickPhrase = (QUICK_PHRASE*) utarray_eltptr(quickPhrases, iFirstQuickPhrase + iCurrentCandPage * fc.iMaxCandWord);
          currentQuickPhrase != NULL;
          currentQuickPhrase = (QUICK_PHRASE*) utarray_next(quickPhrases, currentQuickPhrase))
     {
         if (!strncmp(strCodeInput,currentQuickPhrase->strCode,iInputLen)) {
         quickPhraseCandWords[iCandWordCount++]=currentQuickPhrase;
-        if (iCandWordCount==iMaxCandWord) {
+        if (iCandWordCount==fc.iMaxCandWord) {
             break;
         }
         }

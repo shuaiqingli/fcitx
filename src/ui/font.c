@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ui/skin.h"
-#include "tools/util.h"
-
-extern char strUserLocale[];
+#include "fcitx-config/configfile.h"
 
 void InitFont()
 {
@@ -24,13 +22,13 @@ void CreateFont()
 
     char locale[3];
 
-    if (strUserLocale[0])
-        strncpy(locale, strUserLocale, 2);
+    if (fc.strUserLocale[0])
+        strncpy(locale, fc.strUserLocale, 2);
     else
         strcpy(locale, "zh");
     locale[2]='\0';
 reloadfont:
-    if (strcmp(skin_config.skin_font.font_zh, "") == 0)
+    if (strcmp(sc.skinFont.fontZh, "") == 0)
     {
         FcChar8 strpat[9];
         sprintf((char*)strpat, ":lang=%s", locale);
@@ -38,7 +36,7 @@ reloadfont:
     }
     else
     {
-        pat = FcNameParse ((FcChar8*)skin_config.skin_font.font_zh);
+        pat = FcNameParse ((FcChar8*)sc.skinFont.fontZh);
     }
     
     os = FcObjectSetBuild(FC_FAMILY, FC_STYLE, (char*)0);
@@ -56,17 +54,20 @@ reloadfont:
     FcChar8* family;
     if (FcPatternGetString (fs->fonts[0], FC_FAMILY, 0, &family) != FcResultMatch)
         goto nofont;
-    strcpy(skin_config.skin_font.font_zh, (const char*) family);
+    if (sc.skinFont.fontZh)
+        free(sc.skinFont.fontZh);
+
+    sc.skinFont.fontZh = strdup((const char*) family);
 
     FcFontSetDestroy(fs);
 
-    FcitxLog(INFO, _("your current font is: %s"), skin_config.skin_font.font_zh);
+    FcitxLog(INFO, _("your current font is: %s"), sc.skinFont.fontZh);
     return;
 
 nofont:
-    if (strcmp(skin_config.skin_font.font_zh, "") != 0)
+    if (strcmp(sc.skinFont.fontZh, "") != 0)
     {
-        strcpy(skin_config.skin_font.font_zh, "");
+        strcpy(sc.skinFont.fontZh, "");
         if (pat)
             FcPatternDestroy(pat);
         if (os)

@@ -32,15 +32,6 @@
 
 #include <X11/Xlib.h>
 
-#define MAINWND_STARTX	500
-#define MAINWND_STARTY 1
-
-typedef enum _HIDE_MAINWINDOW {
-    HM_SHOW,
-    HM_AUTO,
-    HM_HIDE
-} HIDE_MAINWINDOW;
-
 Bool            CreateMainWindow (void);
 void            DisplayMainWindow (void);
 void            DrawMainWindow (void);

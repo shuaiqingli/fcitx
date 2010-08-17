@@ -20,12 +20,17 @@
 #ifndef _PYFA_H
 #define _PYFA_H
 
-#include "core/main.h"
+#include <X11/Xlib.h>
 
-typedef struct MH_PY {
+struct MH_PY {
     char           *strMap;
-    int             bMode;
-} MHPY;
+    Bool           bMode;
+};
+
+#ifndef MHPY_DEFINED
+#define MHPY_DEFINED
+typedef struct MH_PY MHPY;
+#endif
 
 typedef struct {
     char            strPY[7];

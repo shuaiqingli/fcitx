@@ -42,7 +42,7 @@ void InitMenuDefault(xlibMenu * Menu)
 //	Menu->charcolor=0x111111;
 //	Menu->charselectcolor=(0xFFFFFF-0x111111);
 	Menu->font_size=14;
-	strcpy(Menu->font,skin_config.skin_font.font_zh);
+	strcpy(Menu->font,sc.skinFont.fontZh);
 	Menu->mark=-1;
 }
 
@@ -359,10 +359,11 @@ void MainMenuEvent(int x,int y)
 	{
 	//显示皮肤菜单
 		case 2:
-			skinMenu.useItemCount=skinCount;
-			for(j=0;j<skinCount;j++)
+			skinMenu.useItemCount=skinBuf->i;
+			for(j=0;j<skinBuf->i;j++)
 			{
-				strcpy(skinMenu.shell[j].tipstr,skinBuf[j].dirbase);
+                char **sskin = (char**)utarray_eltptr(skinBuf, j);
+				strcpy(skinMenu.shell[j].tipstr, *sskin);
 			}
 			skinMenu.pos_x=mainMenu.pos_x;
 			skinMenu.pos_y=mainMenu.pos_y;

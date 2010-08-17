@@ -40,7 +40,7 @@
 #include "core/ime.h"
 #include "core/MyErrorsHandlers.h"
 #include "tools/tools.h"
-#include "tools/util.h"
+#include "fcitx-config/configfile.h"
 
 #ifndef SIGUNUSED
 #define SIGUNUSED 32
@@ -104,7 +104,7 @@ void OnException (int signo)
     
     switch (signo) {
     case SIGHUP:
-	LoadConfig (False);
+	LoadConfig ();
 	SetIM ();
 	break;
     case SIGINT:

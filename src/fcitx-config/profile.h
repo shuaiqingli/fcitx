@@ -27,6 +27,5 @@ extern FcitxProfile fcitxProfile;
 
 void LoadProfile();
 void SaveProfile();
-ConfigFileDesc* GetProfileDesc();
 
 #endif

@@ -1,7 +1,6 @@
 #ifdef _ENABLE_DBUS
 
 #include <dbus/dbus.h>
-#include "core/main.h"
 #include "ui/InputWindow.h"
 #include "core/ime.h"
 #include "core/xim.h"
@@ -10,9 +9,6 @@ extern IM *im;
 
 extern INT8 iState;
 extern Bool bVK;
-extern Bool bUseTable;
-extern Bool bUseQW;
-extern Bool bUseSP;
 extern Bool bUseAA;
 extern Bool bUseMatchingKey;
 extern Bool bUsePinyin;

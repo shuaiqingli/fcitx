@@ -39,35 +39,8 @@
 
 #include "interface/DBus.h"
 
-#include "tools/util.h"
+#include "tools/xdg.h"
 #include "fcitx-config/sprintf.h"
-
-pthread_mutex_t fcitxMutex;
-
-/** 
- * @brief 去除字符串首末尾空白字符
- * 
- * @param s
- * 
- * @return malloc的字符串，需要free
- */
-char *trim(char *s)
-{
-    register char *end;
-    register char csave;
-    
-    while (isspace(*s))                 /* skip leading space */
-        ++s;
-    end = strchr(s,'\0') - 1;
-    while (end >= s && isspace(*end))               /* skip trailing space */
-        --end;
-    
-    csave = end[1];
-    end[1] = '\0';
-    s = strdup(s);
-    end[1] = csave;
-    return (s);
-}
 
 /** 
  * @brief 获得xdg路径的数据文件
@@ -77,38 +50,45 @@ char *trim(char *s)
  * 
  * @return 文件指针
  */
-FILE *GetXDGFileData(const char *fileName, const char *mode)
+FILE *GetXDGFileData(const char *fileName, const char *mode, char **retFile)
 {
     size_t len;
     char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , DATADIR, "fcitx/data" );
 
-    FILE* fp = GetXDGFile(fileName, path, mode, len);
+    FILE* fp = GetXDGFile(fileName, path, mode, len, retFile);
 
     FreeXDGPath(path);
 
     return fp;
 }
 
-/** 
- * @brief 获得xdg路径的配置文件
- * 
- * @param 文件名
- * @param 模式
- * 
- * @return 文件指针
- */
-FILE *GetXDGFileConfig(const char *fileName, const char *mode)
+FILE *GetXDGFileTable(const char *fileName, const char *mode, char **retFile, Bool forceUser)
 {
     size_t len;
-    char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx", DATADIR,
-                                        "fcitx/data");
+    char ** path;
+    if (forceUser)
+        path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/table" , NULL, NULL );
+    else
+        path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/table" , DATADIR, "fcitx/data/table" );
 
-    FILE* fp = GetXDGFile(fileName, path, mode, len);
+    FILE* fp = GetXDGFile(fileName, path, mode, len, retFile);
 
     FreeXDGPath(path);
 
     return fp;
+}
 
+
+FILE *GetXDGFileUser(const char *fileName, const char *mode, char **retFile)
+{
+    size_t len;
+    char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx" , NULL, NULL );
+
+    FILE* fp = GetXDGFile(fileName, path, mode, len, retFile);
+
+    FreeXDGPath(path);
+
+    return fp;
 }
 
 /** 
@@ -121,11 +101,21 @@ FILE *GetXDGFileConfig(const char *fileName, const char *mode)
  * 
  * @return 文件指针
  */
-FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len)
+FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len, char **retFile)
 {
     char buf[PATH_MAX];
     int i;
     FILE *fp = NULL;
+
+    if (!mode)
+    {
+        snprintf(buf, sizeof(buf), "%s/%s", path[0], fileName);
+        buf[sizeof(buf) - 1] = '\0';
+
+        if (retFile)
+            *retFile = strdup(buf);
+        return NULL;
+    }
 
     if (len <= 0)
         return NULL;
@@ -155,6 +145,8 @@ FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len
             free(dirc);
         }
     }
+    if (retFile)
+        *retFile = strdup(buf);
     return fp;
 }
 
@@ -202,7 +194,10 @@ char **GetXDGPath(
     }
 
     char *dirs;
-    asprintf(&dirs, "%s/%s:%s/%s", dirHome, suffixHome , dirsDefault, suffixGlobal);
+    if (dirsDefault)
+        asprintf(&dirs, "%s/%s:%s/%s", dirHome, suffixHome , dirsDefault, suffixGlobal);
+    else
+        asprintf(&dirs, "%s/%s", dirHome, suffixHome);
     
     free(dirHome);
     
@@ -232,136 +227,4 @@ char **GetXDGPath(
     return dirsArray;
 }
 
-/** 
- * @brief 返回申请后的内存，并清零
- * 
- * @param 申请的内存长度
- * 
- * @return 申请的内存指针
- */
-void *malloc0(size_t bytes)
-{
-    void *p = malloc(bytes);
-    if (!p)
-        return NULL;
 
-    memset(p, 0, bytes);
-    return p;
-}
-
-/** 
- * @brief 自定义的二分查找，和bsearch库函数相比支持不精确位置的查询
- * 
- * @param key
- * @param base
- * @param nmemb
- * @param size
- * @param accurate
- * @param compar
- * 
- * @return 
- */
-void *custom_bsearch(const void *key, const void *base,
-        size_t nmemb, size_t size, int accurate,
-        int (*compar)(const void *, const void *))
-{
-    if (accurate)
-        return bsearch(key, base, nmemb, size, compar);
-    else
-    {
-        size_t l, u, idx;
-        const void *p;
-        int comparison;
-        
-        l = 0;
-        u = nmemb;
-        while (l < u)
-        {
-            idx = (l + u) / 2;
-            p = (void *) (((const char *) base) + (idx * size));
-            comparison = (*compar) (key, p);
-            if (comparison <= 0)
-                u = idx;
-            else if (comparison > 0)
-                l = idx + 1;
-        }
-
-        if (u >= nmemb)
-            return NULL;
-        else
-            return (void *) (((const char *) base) + (l * size));
-    }
-}
-
-void FcitxInitThread()
-{
-#ifdef _ENABLE_DBUS
-    dbus_threads_init_default();
-#endif
-    pthread_mutexattr_t   mta;
-    int rc;
-    
-    rc = pthread_mutexattr_init(&mta);
-    if (rc != 0)
-        FcitxLog(ERROR, _("pthread mutexattr init failed"));
-
-    pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
-
-    rc = pthread_mutex_init(&fcitxMutex, &mta);
-    gs.bMutexInited = True;
-    if (rc != 0)
-        FcitxLog(ERROR, _("pthread mutex init failed"));
-}
-
-int FcitxLock()
-{
-    if (gs.bMutexInited)
-        return pthread_mutex_lock(&fcitxMutex); 
-    return 0;
-}
-
-int FcitxUnlock()
-{
-    if (gs.bMutexInited)        
-        return pthread_mutex_unlock(&fcitxMutex);
-    return 0;
-}
-
-/** 
- * @brief Fcitx记录Log的函数
- * 
- * @param ErrorLevel
- * @param fmt
- * @param ...
- */
-void FcitxLogFunc(ErrorLevel e, const char* filename, const int line, const char* fmt, ...)
-{
-#ifndef _DEBUG
-    if (e == DEBUG)
-        return;
-#endif
-    switch (e)
-    {
-        case INFO:
-            fprintf(stderr, _("Info:"));
-            break;
-        case ERROR:
-            fprintf(stderr, _("Error:"));
-            break;
-        case DEBUG:
-            fprintf(stderr, _("Debug:"));
-            break;
-        case WARNING:
-            fprintf(stderr, _("Warning:"));
-            break;
-        case FATAL:
-            fprintf(stderr, _("Fatal:"));
-            break;
-    }
-    va_list ap;
-    fprintf(stderr, "%s:%u-", filename, line);
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
-}

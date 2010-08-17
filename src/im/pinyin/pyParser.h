@@ -53,12 +53,12 @@ typedef struct {
 int             IsSyllabary (char *strPY, Bool bMode);
 int             IsConsonant (char *strPY, Bool bMode);
 int             FindPYFAIndex (char *strPY, Bool bMode);
-void            ParsePY (char *strPY, ParsePYStruct * parsePY, PYPARSEINPUTMODE mode);
+void            ParsePY (char *strPY, ParsePYStruct * parsePY, PYPARSEINPUTMODE mode, Bool bSP);
 Bool            MapPY (char *strPY, char strMap[3], PYPARSEINPUTMODE mode);
 
 Bool            MapToPY (char strMap[3], char *strPY);
-int             CmpMap (char *strMap1, char *strMap2, int *iMatchedLength);
-int		Cmp1Map (char map1, char map2, Bool b, Bool bUseMH);
-int             Cmp2Map (char map1[3], char map2[3]);
+int             CmpMap (char *strMap1, char *strMap2, int *iMatchedLength, Bool bSP);
+int		Cmp1Map (char map1, char map2, Bool b, Bool bUseMH, Bool bSP);
+int             Cmp2Map (char map1[3], char map2[3], Bool bSP);
 
 #endif

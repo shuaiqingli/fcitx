@@ -13,7 +13,6 @@
 #include "core/xim.h"
 
 TrayWindow tray;
-Bool bUseTrayIcon = True;
 
 extern Display *dpy;
 extern int iScreen;

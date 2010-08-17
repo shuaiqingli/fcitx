@@ -33,7 +33,11 @@
 #include <stdio.h>
 #include <X11/Xlib.h>
 
-typedef int HOTKEYS;
+typedef struct HOTKEYS
+{
+    char *desc;
+    int iKeyCode;
+} HOTKEYS;
 
 typedef enum _KEYCODE_LIST {
     L_CTRL = 37,
@@ -352,6 +356,7 @@ typedef enum _KEY {
     CTRL_ALT_SHIFT_9
 } KEY;
 
+void            SetHotKey (char *strKey, HOTKEYS * hotkey);
 int             GetKey (unsigned char iKeyCode, int iKeyState, int iCount);
 int             ParseKey (char *strKey);
 int             GetKeyList (char *strKey);

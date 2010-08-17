@@ -25,15 +25,14 @@
 #include "im/pinyin/PYFA.h"
 #include "im/pinyin/sp.h"
 #include "im/pinyin/pyParser.h"
+#include "fcitx-config/configfile.h"
 #include "core/ime.h"
 
+extern MHPY MHPY_C[];
 extern PYTABLE  PYTable[];
 extern ConsonantMap consonantMapTable[];
 extern SyllabaryMap syllabaryMapTable[];
 extern int      iIMEIndex;
-extern Bool     bSP;
-extern MHPY     MHPY_C[];
-extern Bool     bFullPY;
 
 int IsSyllabary (char *strPY, Bool bMode)
 {
@@ -99,7 +98,7 @@ int FindPYFAIndex (char *strPY, Bool bMode)
     return -1;
 }
 
-void ParsePY (char *strPY, ParsePYStruct * parsePY, PYPARSEINPUTMODE mode)
+void ParsePY (char *strPY, ParsePYStruct * parsePY, PYPARSEINPUTMODE mode, Bool bSP)
 {
     char           *strP;
     int             iIndex;
@@ -194,7 +193,7 @@ void ParsePY (char *strPY, ParsePYStruct * parsePY, PYPARSEINPUTMODE mode)
 		strcat (parsePY->strPYParsed[parsePY->iHZCount++], strTemp);
 	    }
 	    else {
-		if (bFullPY && *strP != PY_SEPARATOR)
+		if (fc.bFullPY && *strP != PY_SEPARATOR)
 		    parsePY->iMode = PARSE_ERROR;
 
 		iIndex = IsConsonant (strP, 1);
@@ -358,12 +357,12 @@ Bool MapToPY (char strMap[3], char *strPY)
  * 0表示相等
  * b指示是声母还是韵母，True表示声母
  */
-int Cmp1Map (char map1, char map2, Bool b, Bool bUseMH)
+int Cmp1Map (char map1, char map2, Bool b, Bool bUseMH, Bool bSP)
 {
     int             iVal1, iVal2;
 
     if (map2 == '0' || map1 == '0') {
-	if (map1 == ' ' || map2 == ' ' || !bFullPY || bSP)
+	if (map1 == ' ' || map2 == ' ' || !fc.bFullPY || bSP)
 	    return 0;
     }
     else {
@@ -389,19 +388,19 @@ int Cmp1Map (char map1, char map2, Bool b, Bool bUseMH)
  * >0表示前者大
  * <0表示后者大
  */
-int Cmp2Map (char map1[3], char map2[3])
+int Cmp2Map (char map1[3], char map2[3], Bool bSP)
 {
     int             i;
 
     if (IsZ_C_S(map2[0]) && map2[1]=='0')
-	i = Cmp1Map (map1[0], map2[0], True, True);
+	i = Cmp1Map (map1[0], map2[0], True, True, bSP);
     else
-	i = Cmp1Map (map1[0], map2[0], True, False);
+	i = Cmp1Map (map1[0], map2[0], True, False, bSP);
     
     if (i)
 	return i;
 
-    return Cmp1Map (map1[1], map2[1], False, False);
+    return Cmp1Map (map1[1], map2[1], False, False, bSP);
 }
 
 /*
@@ -410,7 +409,7 @@ int Cmp2Map (char map1[3], char map2[3])
  * 否 返回值不为0
  * *iMatchedLength 记录了二者能够匹配的长度
  */
-int CmpMap (char *strMap1, char *strMap2, int *iMatchedLength)
+int CmpMap (char *strMap1, char *strMap2, int *iMatchedLength, Bool bSP)
 {
     int             val;
 
@@ -419,9 +418,9 @@ int CmpMap (char *strMap1, char *strMap2, int *iMatchedLength)
 	if (!strMap2[*iMatchedLength])
 	    return (strMap1[*iMatchedLength] - strMap2[*iMatchedLength]);
 	if ( ((*iMatchedLength + 1) % 2) && (IsZ_C_S(strMap2[*iMatchedLength]) && (strMap2[*iMatchedLength + 1]=='0' || !strMap2[*iMatchedLength + 1]) ) )
-	    val = Cmp1Map (strMap1[*iMatchedLength], strMap2[*iMatchedLength], (*iMatchedLength + 1) % 2, True);
+	    val = Cmp1Map (strMap1[*iMatchedLength], strMap2[*iMatchedLength], (*iMatchedLength + 1) % 2, True, bSP);
 	else
-	    val = Cmp1Map (strMap1[*iMatchedLength], strMap2[*iMatchedLength], (*iMatchedLength + 1) % 2, False);
+	    val = Cmp1Map (strMap1[*iMatchedLength], strMap2[*iMatchedLength], (*iMatchedLength + 1) % 2, False, bSP);
 	    
 	if (val)
 	    return val;

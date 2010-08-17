@@ -26,7 +26,7 @@
 #include "im/special/punc.h"
 #include "core/ime.h"
 #include "tools/tools.h"
-#include "tools/util.h"
+#include "tools/xdg.h"
 
 ChnPunc        *chnPunc = (ChnPunc *) NULL;
 
@@ -48,7 +48,7 @@ int LoadPuncDict (void)
     char           *pstr;				// 临时指针
     int             i;
 
-    fpDict = UserConfigFile(PUNC_DICT_FILENAME, "rt", NULL);
+    fpDict = GetXDGFileData(PUNC_DICT_FILENAME, "rt", NULL);
 
     // 如果该文件不存在，就使用安装目录下的文件
     if (!fpDict) {

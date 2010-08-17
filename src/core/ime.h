@@ -31,6 +31,7 @@
 #define _IME_H
 
 #include <X11/keysym.h>
+#include <cairo.h>
 #include "core/xim.h"
 #include "fcitx-config/hotkey.h"
 #include "core/fcitx.h"
@@ -39,7 +40,6 @@
 
 #define MAX_CAND_WORD	10
 #define MAX_USER_INPUT	300
-#define INPUT_METHODS	5	//标示输入法的类别数量
 
 #define HOT_KEY_COUNT	2
 #define TEMP_FILE		"FCITX_DICT_TEMP"
@@ -58,12 +58,6 @@ typedef enum _SEARCH_MODE {
     SM_PREV
 } SEARCH_MODE;
 
-typedef enum ADJUST_ORDER {
-    AD_NO = 0,
-    AD_FAST = 1,
-    AD_FREQ = 2
-} ADJUSTORDER;
-
 typedef enum _INPUT_RETURN_VALUE {
     //IRV_UNKNOWN = -1,
     IRV_DO_NOTHING = 0,
@@ -80,18 +74,6 @@ typedef enum _INPUT_RETURN_VALUE {
     IRV_GET_CANDWORDS,
     IRV_GET_CANDWORDS_NEXT
 } INPUT_RETURN_VALUE;
-
-typedef enum _ENTER_TO_DO {
-    K_ENTER_NOTHING,
-    K_ENTER_CLEAN,
-    K_ENTER_SEND
-} ENTER_TO_DO;
-
-typedef enum _SEMICOLON_TO_DO {
-    K_SEMICOLON_NOCHANGE,
-    K_SEMICOLON_ENG,
-    K_SEMICOLON_QUICKPHRASE
-} SEMICOLON_TO_DO;
 
 typedef struct _SINGLE_HZ {
     char            strHZ[UTF8_MAX_LENGTH + 1];
@@ -117,6 +99,8 @@ typedef struct IM{
                     Bool (*PhraseTips) (void);
     void            (*Init) (void);
     void            (*Save) (void);
+    FcitxImage      image;
+    cairo_surface_t *icon;
 } IM;
 
 typedef struct FcitxState {

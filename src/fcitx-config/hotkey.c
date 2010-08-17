@@ -18,6 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "tools/tools.h"
 #include "fcitx-config/hotkey.h"
 #include <string.h>
 
@@ -410,41 +411,37 @@ int GetKeyList (char *strKey)
 void SetHotKey (char *strKeys, HOTKEYS * hotkey)
 {
     char           *p;
-    char            strKey[30];
-    int             i, j;
+    char           *strKey;
+    int             i = 0, j = 0, k;
 
+    strKeys = trim(strKeys);
     p = strKeys;
 
-    while (*p == ' ')
-       p++;
-    i = 0;
-    while (p[i] != ' ' && p[i] != '\0')
-       i++;
-    strncpy (strKey, p, i);
-    strKey[i] = '\0';
-    p += i + 1;
-    j = ParseKey (strKey);
-    if (j != -1)
-       hotkey[0] = j;
-    if (j == -1)
-       j = 0;
-    else
-       j = 1;
-
-    i = 0;
-    while (p[i] != ' ' && p[i] != '\0')
-       i++;
-    if (p[0]) {
-       strncpy (strKey, p, i);
-       strKey[i] = '\0';
-
-       i = ParseKey (strKey);
-       if (i == -1)
-           i = 0;
+    for (k = 0; k < 2; k++)
+    {
+        int keycode;
+        i = 0;
+        while (p[i] != ' ' && p[i] != '\0')
+           i++;
+        strKey = strndup (p, i);
+        strKey[i] = '\0';
+        keycode = ParseKey (strKey);
+        if (keycode != -1)
+        {
+           hotkey[j].iKeyCode = keycode;
+           hotkey[j].desc = trim(strKey);
+           j ++;
+        }
+        free(strKey);
+        if (p[i] == '\0')
+            break;
+        p = &p[i + 1];
     }
-    else
-       i = 0;
-
-    hotkey[j] = i;
+    for(; j < 2; j++)
+    {
+        hotkey[j].iKeyCode = 0;
+        hotkey[j].desc= NULL;
+    }
+    free(strKeys);
 }
 

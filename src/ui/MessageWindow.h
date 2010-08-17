@@ -30,8 +30,8 @@ typedef struct MessageWindow
 {
     Window window;
     cairo_surface_t* surface;
-    cairo_color_t color;
-    cairo_color_t fontColor;
+    ConfigColor color;
+    ConfigColor fontColor;
     int height, width;
     int fontSize;
     char *title;
