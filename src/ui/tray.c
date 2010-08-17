@@ -10,7 +10,7 @@
 
 #include "ui/tray.h"
 #include "ui/TrayWindow.h"
-#include "tools/util.h"
+#include "tools/tools.h"
 
 #define MAX_SUPPORTED_XEMBED_VERSION 1
 

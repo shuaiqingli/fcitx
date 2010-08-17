@@ -11,6 +11,7 @@
 #include "ui/tray.h"
 #include "ui/skin.h"
 #include "core/xim.h"
+#include "fcitx-config/configfile.h"
 
 TrayWindow tray;
 
@@ -21,8 +22,8 @@ extern CARD16 connect_id;
 Bool CreateTrayWindow() {
     XTextProperty tp;
     char   strWindowName[]="Fcitx Tray Window";
-    if ( !bUseTrayIcon )
-            return;
+    if ( !fc.bUseTrayIcon )
+            return False;
 
     InitTray(dpy, &tray);
 
@@ -78,12 +79,12 @@ Bool CreateTrayWindow() {
 }
 
 void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
-    if ( !bUseTrayIcon )
+    if ( !fc.bUseTrayIcon )
             return;
 
 	cairo_t *c;
 	cairo_surface_t *png_surface ;
-    skin_img_t* skinImg;
+    FcitxImage* skinImg;
     if (!tray.bTrayMapped) {
         tray.bTrayMapped = True;
         if (!TrayFindDock(dpy, &tray))
@@ -94,12 +95,12 @@ void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
     if (f_state)
     {
         png_surface = trayActive;
-        skinImg = &skin_config.skin_tray_icon.active_img;
+        skinImg = &sc.skinTrayIcon.active;
     }
     else
     {
         png_surface = trayInactive;
-        skinImg = &skin_config.skin_tray_icon.inactive_img;
+        skinImg = &sc.skinTrayIcon.inactive;
     }
 
 
@@ -131,7 +132,7 @@ void RedrawTrayWindow(void) {
 
 void TrayEventHandler(XEvent* event)
 {
-    if (!bUseTrayIcon)
+    if (!fc.bUseTrayIcon)
         return;
     switch (event->type) {
 		case ClientMessage:

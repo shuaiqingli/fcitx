@@ -756,7 +756,7 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
 {
     ConfigOptionDesc *codesc = option->optionDesc;
 
-    ConfigOptionFunc f;
+    ConfigOptionFunc f = NULL;
 
     if (codesc == NULL)
         return;
@@ -798,7 +798,9 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
             f = ConfigOptionChar;
             break;
     }
-    ConfigSyncResult r = f(option, sync);
+    ConfigSyncResult r = SyncNoBinding;
+    if (f)
+        r = f(option, sync);
     if (r == SyncInvalid)
     {
         if (codesc->rawDefaultValue)

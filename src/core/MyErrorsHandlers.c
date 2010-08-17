@@ -40,6 +40,7 @@
 #include "core/ime.h"
 #include "core/MyErrorsHandlers.h"
 #include "tools/tools.h"
+#include "tools/xdg.h"
 #include "fcitx-config/configfile.h"
 
 #ifndef SIGUNUSED
@@ -70,7 +71,7 @@ void OnException (int signo)
     time_t	now;
 
     if ( !logfile )
-	logfile = UserConfigFile("fcitx.log","wt", NULL);
+	logfile = GetXDGFileUser("fcitx.log","wt", NULL);
     if ( logfile ) {
 	now=time(NULL);
 	ts = localtime(&now);
@@ -141,7 +142,7 @@ int MyXErrorHandler (Display * dpy, XErrorEvent * event)
     time_t	now;
 
     if ( !logfile )
-        logfile = UserConfigFile("fcitx.log","wt" , NULL);
+        logfile = GetXDGFileUser("fcitx.log","wt" , NULL);
     if ( logfile ) {
         now = time(NULL);
 	ts = localtime(&now);
