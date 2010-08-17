@@ -219,8 +219,6 @@ int main (int argc, char *argv[])
 	    exit (0);
     }
 
-    DisplaySkin(fc.skinType);
-
 #ifdef _ENABLE_RECORDING
     OpenRecording(True);
 #endif
@@ -245,6 +243,8 @@ int main (int argc, char *argv[])
     	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);	//显示托盘图标
     }
 #endif
+
+    DisplaySkin(fc.skinType);
 
     //主循环，即XWindow的消息循环
     for (;;) {
