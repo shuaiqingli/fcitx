@@ -26,7 +26,7 @@
  * @brief 新配置文件读写
  */
 
-#define _ISOC99_SOURCE
+#include "core/fcitx.h"
 
 #include <stdio.h>
 #include <string.h>

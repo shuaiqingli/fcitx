@@ -26,6 +26,7 @@
  *
  *
  */
+#include "core/fcitx.h"
 
 #include <stdio.h>
 #include <stdlib.h>
