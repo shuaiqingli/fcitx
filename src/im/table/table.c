@@ -1416,8 +1416,6 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	}
     AddMessageAtLast(&messageDown, mType, "%s", pMsg);
 
-    FcitxLog(INFO, "%d", i);
-
 	if (tableCandWord[i].flag == CT_PYPHRASE) {
 	    if (utf8_strlen (tableCandWord[i].candWord.strPYPhrase) == 1) {
 		recTemp = tbl.tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.strPYPhrase)];
@@ -1765,7 +1763,6 @@ void TableAdjustOrderByIndex (int iIndex)
  */
 void TableDelPhraseByIndex (int iIndex)
 {
-    FcitxLog(INFO, "del:%d", iIndex);
     TABLECANDWORD *tableCandWord = tbl.tableCandWord;
     if (tableCandWord[iIndex - 1].flag != CT_NORMAL)
 	return;
@@ -2224,8 +2221,6 @@ Bool TablePhraseTips (void)
         AddMessageAtLast(&messageDown, MSG_TIPS, " ^DEL删除");
 	    tbl.bTablePhraseTips = True;
 	    inputWindow.bShowCursor = False;
-
-        FcitxLog(INFO, "aa");
 
 	    return True;
 	}
