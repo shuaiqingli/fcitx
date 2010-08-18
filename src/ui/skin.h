@@ -63,7 +63,7 @@ typedef struct
 	char *skinName;
 	char *skinVersion;
 	char *skinAuthor;
-	char *shinDesc;
+	char *skinDesc;
 } SkinInfo;
 
 typedef struct 
@@ -140,8 +140,6 @@ typedef struct
 	char *dirbase[64];
 } SkinDir;
 
-extern cairo_surface_t *cs_main_bar;
-extern cairo_surface_t *cs_input_bar;
 //extern cairo_surface_t *cs_main_menu;
 //extern cairo_surface_t *cs_vk_menu;
 //extern cairo_surface_t *cs_im_menu;
@@ -177,14 +175,9 @@ extern cairo_surface_t *  trayInactive;
 extern MouseE ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
 
 extern Display *dpy;
-extern Window  mainWindow;
-extern Window   inputWindow;
 
-extern Bool bShowCursor;
 extern INT8	iIMCount;
 extern IM	*im;
-extern Bool	bShowPrev;
-extern Bool	bShowNext;
 extern FcitxSkin sc;
 extern UT_array *skinBuf;
 /**
@@ -197,6 +190,7 @@ void load_tray_img();
 void load_input_img();
 void load_input_msg();
 void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse);
+void destroy_a_img(cairo_surface_t ** png);
 extern void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
 extern void set_mouse_status(MouseE m);
 /**

@@ -47,15 +47,11 @@ extern INT8 iIMCount;
 extern CARD16 connect_id;
 extern CARD16 icid;
 extern Bool bIsInLegend;
-extern Bool bShowPrev;
-extern Bool bShowNext;
 extern int iLegendCandWordCount;
 extern int iCurrentCandPage;
 extern int iCurrentLegendCandPage;
 extern int iCandPageCount;
 extern int iLegendCandPageCount;
-extern int iCursorPos;
-extern Bool bShowCursor;
 extern char *sVKHotkey;
 
 void fixProperty(Property *prop);
@@ -809,7 +805,7 @@ void KIMUpdateScreen(int id)
 
 void updateMessages()
 {
-    bShowPrev = bShowNext = False;
+    inputWindow.bShowPrev = inputWindow.bShowNext = False;
 
     int n = messageDown.msgCount;
     int nLabels = 0;
@@ -854,16 +850,16 @@ void updateMessages()
         else {
             if (bIsInLegend) {
             if (iCurrentLegendCandPage > 0)
-                bShowPrev = True;
+                inputWindow.bShowPrev = True;
             if (iCurrentLegendCandPage < iLegendCandPageCount)
-                bShowNext = True;
+                inputWindow.bShowNext = True;
             } else {
             if (iCurrentCandPage > 0)
-            bShowPrev = True;
+            inputWindow.bShowPrev = True;
             if (iCurrentCandPage < iCandPageCount)
-                bShowNext = True;
+                inputWindow.bShowNext = True;
             }
-            KIMUpdateLookupTable(label,nLabels,text,nTexts,bShowPrev,bShowNext);
+            KIMUpdateLookupTable(label,nLabels,text,nTexts,inputWindow.bShowPrev,inputWindow.bShowNext);
             KIMShowLookupTable(True);
         }
         for (i = 0; i < nTexts; i++)
@@ -871,7 +867,7 @@ void updateMessages()
         for (i = 0; i < nLabels; i++)
             free(label[i]);
     } else {
-        KIMUpdateLookupTable(NULL,0,NULL,0,bShowPrev,bShowNext);
+        KIMUpdateLookupTable(NULL,0,NULL,0,inputWindow.bShowPrev,inputWindow.bShowNext);
         KIMShowLookupTable(False);
     }
     
@@ -885,7 +881,7 @@ void updateMessages()
             strcat(aux,messageUp.msg[i].strMsg);
             debug_dbus(_("updateMesssages Up:%s"), aux);
         }
-        if (bShowCursor)
+        if (inputWindow.bShowCursor)
         {
             strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition(aux) : aux;
             KIMUpdatePreeditText(strGBKT);
@@ -1212,7 +1208,7 @@ int calKIMCursorPos()
     iChar = iCursorPos;
 
     for (i = 0; i < messageUp.msgCount ; i++) {
-        if (bShowCursor && iChar) {
+        if (inputWindow.bShowCursor && iChar) {
             p1 = pivot = messageUp.msg[i].strMsg;
             while (*p1 && p1 < pivot + iChar) {
                 p1 = p1 + utf8_char_len(p1);

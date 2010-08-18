@@ -28,15 +28,12 @@ static char StringGetEngine[MAX_CAND_LEN+1];
 extern INT8 iIMCount;
 extern INT8 iInCap;
 
-extern int      iCursorPos;
-
 extern int      iCandWordCount;
 extern int      iCandPageCount;
 extern int	iCurrentCandPage;
 extern char     strStringGet[];
 extern char     strCodeInput[];
 extern int      iCodeInputCount;
-extern Bool     bShowCursor;
 extern Bool	bCursorAuto;
 
 static void ResetAll(void)
@@ -75,7 +72,7 @@ static void ExtraReset(void)
 			break;
 		}
 	}
-	bShowCursor=False;
+	inputWindow.bShowCursor=False;
 	bCursorAuto=False;
 	if(!eim) return;
 	if(eim->CandWordMax) eim->CandWordMax=fc.iMaxCandWord;
@@ -118,7 +115,7 @@ static void DisplayEIM(EXTRA_IM *im)
 	{
         AddMessageAtLast(&messageUp, MSG_INPUT, "%s%s", im->StringGet, im->CodeInput);
 
-		bShowCursor=True;
+		inputWindow.bShowCursor=True;
 		iCodeInputCount=strlen(im->CodeInput);
 		if(im->CaretPos!=-1)
 			iCursorPos=strlen(im->StringGet)+im->CaretPos;

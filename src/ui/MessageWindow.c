@@ -97,6 +97,7 @@ void DrawMessageWindow (char *title, char **msg, int length)
     XTextProperty   tp;
     Xutf8TextListToTextProperty(dpy, &title, 1, XUTF8StringStyle, &tp);
     XSetWMName(dpy, messageWindow.window, &tp);
+    XFree(tp.value);
 
     if (msg)
     {

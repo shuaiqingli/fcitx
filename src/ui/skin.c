@@ -47,9 +47,6 @@ FcitxSkin sc;
 //指定皮肤所在的文件夹 一般在/usr/share/fcitx/skin目录下面
 StringHashSet skinDir;
 
-cairo_surface_t *cs_main_bar;
-cairo_surface_t *cs_input_bar;
-
 cairo_surface_t *  bar;
 cairo_surface_t *  logo;
 cairo_surface_t *  punc[2];
@@ -74,7 +71,6 @@ MouseE ms_logo,ms_punc,ms_corner,ms_lx,ms_chs,ms_lock,ms_vk,ms_py;
 //指定皮肤所在的文件夹 一般在/usr/share/fcitx/skin目录下面
 UT_array *skinBuf;
 extern Display  *dpy;
-extern int iCursorPos;
 extern CARD16 connect_id;
 ConfigFileDesc * fcitxSkinDesc = NULL;
 
@@ -101,7 +97,17 @@ int LoadSkinConfig()
 {	
 	FILE    *fp;
   	char  buf[PATH_MAX]={0};
-	memset(&sc,0,sizeof(FcitxSkin));
+    if (sc.config.configFile)
+    {
+        FreeConfigFile(sc.config.configFile);
+        free(sc.skinInfo.skinName);
+        free(sc.skinInfo.skinVersion);
+        free(sc.skinInfo.skinAuthor);
+        free(sc.skinInfo.skinDesc);
+        free(sc.skinFont.fontEn);
+        free(sc.skinFont.fontZh);
+    }
+    memset(&sc, 0, sizeof(FcitxSkin));
 
 reload:
     //获取配置文件的绝对路径
@@ -313,7 +319,6 @@ void destroy_img()
         destroy_a_img(&im[i].icon);
 }
 
-static cairo_t *c ,*c1,*c2,*c3,*c4,*c5;
 /**
 *输入条的绘制非常注重效率,画笔在绘图过程中不释放
 */
@@ -330,40 +335,31 @@ void load_input_msg()
 	cursorColor = sc.skinInputBar.cursorColor;
 //输入条背景图画笔
 //	c=cairo_create(cs_input_bar);
-	c1=	cairo_create(cs_input_bar);
+	inputWindow.c_back = cairo_create(inputWindow.cs_input_bar);
 	
 //拼音画笔
-	c2=cairo_create(cs_input_bar);
-	cairo_set_source_rgb(c2, in_char.r, in_char.g, in_char.b);
-	cairo_select_font_face(c2, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_BOLD);
-	cairo_set_font_size(c2, fontSize);
+	inputWindow.c_eng = cairo_create(inputWindow.cs_input_bar);
+	cairo_set_source_rgb(inputWindow.c_eng, in_char.r, in_char.g, in_char.b);
+	cairo_select_font_face(inputWindow.c_eng, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_BOLD);
+	cairo_set_font_size(inputWindow.c_eng, fontSize);
 
 
 //第一个字画笔
-	c3=cairo_create(cs_input_bar);
-	cairo_set_source_rgb(c3,first_char.r, first_char.g, first_char.b);
-	cairo_select_font_face(c3, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(c3, fontSize);
+	inputWindow.c_first=cairo_create(inputWindow.cs_input_bar);
+	cairo_set_source_rgb(inputWindow.c_first,first_char.r, first_char.g, first_char.b);
+	cairo_select_font_face(inputWindow.c_first, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(inputWindow.c_first, fontSize);
 
 //其他字画笔	
-	c4=cairo_create(cs_input_bar);
-	cairo_set_source_rgb(c4, out_char.r, out_char.g, out_char.b);
-	cairo_select_font_face(c4, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(c4, fontSize);
+	inputWindow.c_other = cairo_create(inputWindow.cs_input_bar);
+	cairo_set_source_rgb(inputWindow.c_other, out_char.r, out_char.g, out_char.b);
+	cairo_select_font_face(inputWindow.c_other, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(inputWindow.c_other, fontSize);
 
 //光标画笔
-	c5=cairo_create(cs_input_bar);
-	cairo_set_source_rgb(c5, cursorColor.r, cursorColor.g, cursorColor.b);
-	cairo_set_line_width (c5, 1);
-}
-
-void free_input_msg()
-{
-	cairo_destroy(c1);
-	cairo_destroy(c2);
-	cairo_destroy(c3);
-	cairo_destroy(c4);
-	cairo_destroy(c5);
+	inputWindow.c_cursor=cairo_create(inputWindow.cs_input_bar);
+	cairo_set_source_rgb(inputWindow.c_cursor, cursorColor.r, cursorColor.g, cursorColor.b);
+	cairo_set_line_width (inputWindow.c_cursor, 1);
 }
 
 void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse)
@@ -382,7 +378,7 @@ void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse)
 	}
 	else if(mouse == PRESS)
 	{
-		cr=cairo_create(cs_main_bar);
+		cr=cairo_create(mainWindow.cs_main_bar);
 		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 		cairo_translate(cr, img.position_x+(int)(img.width*0.2/2), img.position_y+(int)(img.height*0.2/2));
 		cairo_scale(cr, 0.8, 0.8);
@@ -410,25 +406,26 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	int up_len,down_len;
 	int down_str_pos;
     int iChar = iCursorPos;
+    cairo_t *c;
 
 	resizePos=sc.skinInputBar.resizePos;
 	resizeWidth=(sc.skinInputBar.resizeWidth==0)?20:sc.skinInputBar.resizeWidth;
 	flag=sc.skinInputBar.resize;
 	
-	up_len=StringWidthWithContext(c2 ,up_str);
+	up_len=StringWidthWithContext(inputWindow.c_eng ,up_str);
 
-    if (bShowCursor)
+    if (inputWindow.bShowCursor)
     {
         strncpy(p, up_str, iChar);
         p[iChar] = '\0';
         cursor_pos=sc.skinInputBar.layoutLeft
-            + StringWidthWithContext(c2, p) + 2;	
+            + StringWidthWithContext(inputWindow.c_eng, p) + 2;	
     }
 
-	down_len= StringWidthWithContext(c3 ,first_str);
+	down_len= StringWidthWithContext(inputWindow.c_first ,first_str);
 	down_str_pos=down_len+10;
 	
-	down_len+= StringWidthWithContext(c4, down_str);
+	down_len+= StringWidthWithContext(inputWindow.c_other, down_str);
 	
 	input_bar_len=(up_len<down_len)?down_len:up_len;
 	input_bar_len+=sc.skinInputBar.layoutLeft+sc.skinInputBar.layoutRight;
@@ -448,7 +445,7 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	
 	
 	//把背景清空
-	c=cairo_create(cs_input_bar);
+	c=cairo_create(inputWindow.cs_input_bar);
 	cairo_set_source_rgba(c, 0, 0, 0,0);
 	cairo_rectangle (c, 0, 0, INPUT_BAR_MAX_LEN, sc.skinInputBar.backImg.height);
 	//cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
@@ -476,26 +473,26 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	cairo_clip(c);
 	cairo_paint(c);
 
-	if(bShowCursor )
+	if(inputWindow.bShowCursor )
 	{	
 		//画向前向后箭头
 		
-		cairo_set_source_surface(c1, prev,
+		cairo_set_source_surface(inputWindow.c_back, prev,
 							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.backArrow.position_x) , 
 							sc.skinInputBar.backArrow.position_y);				
-		if(bShowNext)
-			cairo_paint(c1);
+		if(inputWindow.bShowNext)
+			cairo_paint(inputWindow.c_back);
 		else
-			cairo_paint_with_alpha(c1,0.5);
+			cairo_paint_with_alpha(inputWindow.c_back,0.5);
 		
 		//画向前箭头
-		cairo_set_source_surface(c1, next,
+		cairo_set_source_surface(inputWindow.c_back, next,
 							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.forwardArrow.position_x) , 
 							sc.skinInputBar.forwardArrow.position_y);
-		if(bShowPrev)
-			cairo_paint(c1);
+		if(inputWindow.bShowPrev)
+			cairo_paint(inputWindow.c_back);
 		else
-			cairo_paint_with_alpha(c1,0.5);
+			cairo_paint_with_alpha(inputWindow.c_back,0.5);
 	}
 		
 	//画第二部分,智能变化有两种方式
@@ -551,18 +548,18 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 		cairo_paint(c);
 	}
 	
-    OutputStringWithContext(c2, up_str, sc.skinInputBar.layoutLeft, sc.skinInputBar.inputPos );
+    OutputStringWithContext(inputWindow.c_eng, up_str, sc.skinInputBar.layoutLeft, sc.skinInputBar.inputPos );
 
-    OutputStringWithContext(c3 , first_str, sc.skinInputBar.layoutLeft,sc.skinInputBar.outputPos);
+    OutputStringWithContext(inputWindow.c_first , first_str, sc.skinInputBar.layoutLeft,sc.skinInputBar.outputPos);
 
-    OutputStringWithContext(c4, down_str, sc.skinInputBar.layoutLeft+down_str_pos,sc.skinInputBar.outputPos);
+    OutputStringWithContext(inputWindow.c_other, down_str, sc.skinInputBar.layoutLeft+down_str_pos,sc.skinInputBar.outputPos);
 	
 	//画光标
-	if(bShowCursor )
+	if(inputWindow.bShowCursor )
 	{
-		cairo_move_to(c5,cursor_pos,sc.skinInputBar.inputPos+2);
-		cairo_line_to(c5,cursor_pos,sc.skinInputBar.inputPos-sc.skinFont.fontSize);
-		cairo_stroke(c5);
+		cairo_move_to(inputWindow.c_cursor,cursor_pos,sc.skinInputBar.inputPos+2);
+		cairo_line_to(inputWindow.c_cursor,cursor_pos,sc.skinInputBar.inputPos-sc.skinFont.fontSize);
+		cairo_stroke(inputWindow.c_cursor);
 	}
 	
 	cairo_destroy(c);
@@ -586,19 +583,20 @@ void set_mouse_status(MouseE m)
 
 void DisplaySkin(char * skinname)
 {
+    if (fc.bUseDBus)
+        return;
     char *pivot = skinname;
     fc.skinType= strdup(skinname);
     if (pivot)
         free(pivot);
 
-	XUnmapWindow (dpy, mainWindow);
-	XUnmapWindow (dpy, inputWindow);
+	XUnmapWindow (dpy, mainWindow.window);
+    CloseInputWindow();
 	
-	free_input_msg();
 	destroy_img();
 
-	XDestroyWindow(dpy, mainWindow);
-	XDestroyWindow(dpy, inputWindow);
+    DestroyMainWindow();
+	DestroyInputWindow();
 	
 	LoadSkinConfig();
     CreateFont();
@@ -615,7 +613,7 @@ void DisplaySkin(char * skinname)
         DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
 #endif
 	
-	XMapRaised(dpy,mainWindow);
+	XMapRaised(dpy,mainWindow.window);
 }
 
 //图片文件加载函数完成

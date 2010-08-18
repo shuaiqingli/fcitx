@@ -58,7 +58,6 @@ extern int      iScreen;
 
 extern char     strStringGet[];
 extern Bool     bVK;
-extern Window   inputWindow;
 
 extern IC      *CurrentIC;
 extern CARD16   connect_id;

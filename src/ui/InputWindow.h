@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include "IMdkit.h"
 #include "tools/utf8.h"
+#include <cairo.h>
 
 #define INPUTWND_WIDTH	50
 #define INPUTWND_HEIGHT	40
@@ -74,6 +75,29 @@ typedef struct Messages {
 extern Messages        messageUp;
 extern Messages        messageDown;
 
+typedef struct InputWindow {
+    Window window;
+    
+    uint            iInputWindowHeight;
+    uint            iInputWindowWidth;
+    Bool            bShowPrev;
+    Bool            bShowNext;
+    Bool            bShowCursor;
+    
+    //这两个变量是GTK+ OverTheSpot光标跟随的临时解决方案
+    ///* Issue 11: piaoairy: 为适应generic_config_integer(), 改INT8 为int */
+    int		iOffsetX;
+    int		iOffsetY;
+    
+    Pixmap pm_input_bar;
+    
+    cairo_surface_t *cs_input_bar;
+    cairo_t *c_back, *c_eng, *c_first, *c_other, *c_cursor;
+} InputWindow;
+
+extern InputWindow inputWindow;
+extern int iCursorPos;
+
 #define MESSAGE_IS_NOT_EMPTY (messageUp.msgCount || messageDown.msgCount)
 #define MESSAGE_IS_EMPTY (!MESSAGE_IS_NOT_EMPTY)
 #define MESSAGE_TYPE_IS(msg, t) ((msg).type == (t))
@@ -93,7 +117,6 @@ Bool            CreateInputWindow (void);
 void            DisplayInputWindow (void);
 void		DrawInputWindow (void);
 void		CalInputWindow (void);
-void            InitInputWindowColor (void);
 void            CalculateInputWindowHeight (void);
 void            DrawCursor (int iPos);
 void            DisplayMessageUp (void);
@@ -108,4 +131,5 @@ void SetMessage(Messages* message, int position, MSG_TYPE type, char* fmt, ...);
 void MessageConcat(Messages* message, int position, char* text);
 void MessageConcatLast(Messages* message, char* text);
 void SetMessageV(Messages* message, int position, MSG_TYPE type, char* fmt, va_list ap);
+void DestroyInputWindow();
 #endif

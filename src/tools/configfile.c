@@ -25,16 +25,21 @@ static void SetTriggerKeys (char **str, int length);
 static Bool MyStrcmp (char *str1, char *str2);
 static void FilterGetWordFromPhrase(void *value, ConfigSync sync);
 
+#ifdef _ENABLE_TRAY
+FilterNextTimeEffectBool(UseTray, fc.bUseTrayIcon)
+#endif
+FilterNextTimeEffectBool(UseDBus, fc.bUseDBus)
+
 CONFIG_BINDING_BEGIN(FcitxConfig);
 CONFIG_BINDING_REGISTER("Program", "FontLocale", strUserLocale);
 #ifdef _ENABLE_RECORDING
 CONFIG_BINDING_REGISTER("Program", "RecordFile", strRecordingPath);
 #endif
 #ifdef _ENABLE_TRAY
-CONFIG_BINDING_REGISTER("Program", "UseTray", bUseTrayIcon);
+CONFIG_BINDING_REGISTER_WITH_FILTER("Program", "UseTray", bUseTrayIcon_, FilterCopyUseTray);
 #endif
 #ifdef _ENABLE_DBUS
-CONFIG_BINDING_REGISTER("Program", "UseDBus", bUseDBus);
+CONFIG_BINDING_REGISTER_WITH_FILTER("Program", "UseDBus", bUseDBus_, FilterCopyUseDBus);
 #endif
 CONFIG_BINDING_REGISTER("Output", "HalfPuncAfterNumber", bEngPuncAfterNumber);
 CONFIG_BINDING_REGISTER("Output", "EnterAction", enterToDo);
@@ -258,6 +263,9 @@ void SetTriggerKeys (char **strKey, int length)
     }
 
     iTriggerKeyCount = length - 1;
+
+    if (Trigger_Keys)
+        free(Trigger_Keys);
 
     Trigger_Keys = (XIMTriggerKey *) malloc (sizeof (XIMTriggerKey) * (iTriggerKeyCount + 2));
     for (i = 0; i <= (iTriggerKeyCount + 1); i++) {

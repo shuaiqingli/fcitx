@@ -36,7 +36,7 @@
 #include "fcitx-config/profile.h"
 #include "fcitx-config/configfile.h"
 
-Window          mainWindow = (Window) NULL;
+MainWindow          mainWindow;
 
 Bool		bMainWindow_Hiden = False;
 
@@ -50,8 +50,12 @@ extern CARD16   connect_id;
 extern unsigned char iCurrentVK;
 extern int iScreen;
 
-GC main_win_gc;
-Pixmap pm_main_bar;
+static void InitMainWindow();
+
+void InitMainWindow()
+{
+    memset(&mainWindow, 0, sizeof(MainWindow));
+}
 
 Bool CreateMainWindow (void)
 {
@@ -61,6 +65,8 @@ Bool CreateMainWindow (void)
 	XSetWindowAttributes attrib;
     unsigned long	attribmask;
 	GC gc;
+    
+    InitMainWindow();
 
 	XGCValues xgv;
 
@@ -69,7 +75,7 @@ Bool CreateMainWindow (void)
    	vs=find_argb_visual (dpy, iScreen);
 
     InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
-	mainWindow=XCreateWindow (dpy, 
+	mainWindow.window=XCreateWindow (dpy, 
 							  RootWindow(dpy, iScreen),
 							  fcitxProfile.iMainWindowOffsetX,
 							  fcitxProfile.iMainWindowOffsetY,
@@ -77,22 +83,30 @@ Bool CreateMainWindow (void)
 							  sc.skinMainBar.backImg.height,
 							  0, depth,InputOutput, vs,attribmask, &attrib);
 
-	if(mainWindow == (Window)NULL)
+	if(mainWindow.window == None)
 		return False;
 		
 	xgv.foreground = WhitePixel(dpy, iScreen);
 	//创建pixmap缓冲区,创建主cs
-	pm_main_bar = XCreatePixmap(dpy,mainWindow, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height, depth);
-	gc = XCreateGC(dpy,pm_main_bar, GCForeground, &xgv);
-	XFillRectangle(dpy, pm_main_bar, gc, 0, 0,sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);	
-	cs_main_bar=cairo_xlib_surface_create(dpy, pm_main_bar, vs, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);	
+	mainWindow.pm_main_bar = XCreatePixmap(
+            dpy,
+            mainWindow.window,
+            sc.skinMainBar.backImg.width,
+            sc.skinMainBar.backImg.height,
+            depth);
+	gc = XCreateGC(dpy,mainWindow.pm_main_bar, GCForeground, &xgv);
+	XFillRectangle(dpy, mainWindow.pm_main_bar, gc, 0, 0,sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);	
+	mainWindow.cs_main_bar=cairo_xlib_surface_create(
+            dpy,
+            mainWindow.pm_main_bar,
+            vs,
+            sc.skinMainBar.backImg.width,
+            sc.skinMainBar.backImg.height);	
     XFreeGC(dpy,gc);
 
-    if (main_win_gc != None)
-        XFreeGC(dpy, main_win_gc);
-	main_win_gc = XCreateGC( dpy, mainWindow, 0, NULL );
-	XChangeWindowAttributes (dpy, mainWindow, attribmask, &attrib);	
-	XSelectInput (dpy, mainWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask);
+	mainWindow.main_win_gc = XCreateGC( dpy, mainWindow.window, 0, NULL );
+	XChangeWindowAttributes (dpy, mainWindow.window, attribmask, &attrib);	
+	XSelectInput (dpy, mainWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask);
 
 	
     return True;
@@ -105,7 +119,7 @@ void DisplayMainWindow (void)
 #endif
 	
     if (!bMainWindow_Hiden)
-	XMapRaised (dpy, mainWindow);
+	XMapRaised (dpy, mainWindow.window);
 }
 
 void DrawMainWindow (void)
@@ -126,7 +140,7 @@ void DrawMainWindow (void)
 #endif
 	//XResizeWindow(dpy, mainWindow, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);
 
-	c=cairo_create(cs_main_bar);
+	c=cairo_create(mainWindow.cs_main_bar);
 	//把背景清空
 	cairo_set_source_rgba(c, 0, 0, 0,0);
 	cairo_rectangle (c, 0, 0, SIZEX, SIZEY);
@@ -167,16 +181,19 @@ void DrawMainWindow (void)
 			}
 																		
 		}
-		XCopyArea (dpy, pm_main_bar, mainWindow, main_win_gc, 0, 0, sc.skinMainBar.backImg.width,\
+		XCopyArea (dpy, mainWindow.pm_main_bar, mainWindow.window, mainWindow.main_win_gc, 0, 0, sc.skinMainBar.backImg.width,\
 		 															sc.skinMainBar.backImg.height, 0, 0);		
     }
     else
-		XUnmapWindow (dpy, mainWindow);
+		XUnmapWindow (dpy, mainWindow.window);
 	
 	cairo_destroy(c);
 }
 
-void InitMainWindowColor (void)
+void DestroyMainWindow()
 {
- 
+    cairo_surface_destroy(mainWindow.cs_main_bar);
+    XFreePixmap(dpy, mainWindow.pm_main_bar);
+    XFreeGC(dpy, mainWindow.main_win_gc);
+	XDestroyWindow(dpy, mainWindow.window);
 }

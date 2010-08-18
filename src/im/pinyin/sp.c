@@ -89,7 +89,8 @@ SP_C            SPMap_C[] = {
     ,
     {"ve", 't'}
     ,
-
+    {"v", 'v'}
+    ,
     {"\0", '\0'}
 };
 
@@ -132,6 +133,14 @@ void LoadSPData (void)
     char            str[100], strS[5], *pstr;
     int             i;
     Bool            bIsDefault = False;
+
+    /* reset work around */
+    i = 0;
+    while (SPMap_C[i].strQP[0]) {
+        if (strlen(SPMap_C[i].strQP) == 1)
+            SPMap_C[i].cJP = SPMap_C[i].strQP[0];
+        i ++ ;
+    }
 
     fp = GetXDGFileData("sp.dat", "rt", NULL);
 

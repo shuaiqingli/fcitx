@@ -58,8 +58,6 @@
 
 Display        *dpy;
 int             iScreen;
-extern Window   mainWindow;
-extern Window   inputWindow;
 extern int      iVKWindowX;
 extern int      iVKWindowY;
 extern Window   ximWindow;
@@ -126,11 +124,11 @@ MyXEventHandler(XEvent * event)
 #endif
         if (event->xexpose.count > 0)
             break;
-        if (event->xexpose.window == mainWindow)
+        if (event->xexpose.window == mainWindow.window)
             DrawMainWindow();
         else if (event->xexpose.window == vkWindow.window)
             DrawVKWindow();
-        else if (event->xexpose.window == inputWindow)
+        else if (event->xexpose.window == inputWindow.window)
             DrawInputWindow();
         else if (event->xexpose.window == mainMenu.menuWindow)
             DrawXlibMenu(dpy, &mainMenu);
@@ -178,14 +176,14 @@ MyXEventHandler(XEvent * event)
         switch (event->xbutton.button) {
         case Button1:
             set_mouse_status(RELEASE);
-            if (event->xbutton.window == inputWindow) {
+            if (event->xbutton.window == inputWindow.window) {
                 int             x,
                                 y;
                 x = event->xbutton.x;
                 y = event->xbutton.y;
-                MouseClick(&x, &y, inputWindow);
+                MouseClick(&x, &y, inputWindow.window);
                 DrawInputWindow();
-            } else if (event->xbutton.window == mainWindow) {
+            } else if (event->xbutton.window == mainWindow.window) {
 
                 if (IsInRspArea
                     (event->xbutton.x, event->xbutton.y,
@@ -194,7 +192,7 @@ MyXEventHandler(XEvent * event)
                     fcitxProfile.iMainWindowOffsetY = event->xbutton.y;
                     ms_logo = PRESS;
                     if (!MouseClick
-                        (&fcitxProfile.iMainWindowOffsetX, &fcitxProfile.iMainWindowOffsetY, mainWindow)) {
+                        (&fcitxProfile.iMainWindowOffsetX, &fcitxProfile.iMainWindowOffsetY, mainWindow.window)) {
                         if (ConnectIDGetState(connect_id) != IS_CHN) {
                             SetIMState((ConnectIDGetState(connect_id) ==
                                         IS_ENG) ? False : True);
@@ -307,7 +305,7 @@ MyXEventHandler(XEvent * event)
                 }
                 // fcitx配置工具接口
                 else if (i == 6) {
-                    XUnmapWindow(dpy, inputWindow);
+                    CloseInputWindow();
                     XUnmapWindow(dpy, mainMenu.menuWindow);
                     // 用一个标志位检测fcitx配置程序是否在运行，如果在运行，则跳过，否则可以同时运行多个fcitx_tools程序，会有共享内存方面的bug
                     // if( fcitx_tools_status == 0)
@@ -394,7 +392,7 @@ MyXEventHandler(XEvent * event)
                 DisplayXlibMenu(dpy, &mainMenu);
             }
 #endif
-            else if (event->xbutton.window == mainWindow) {
+            else if (event->xbutton.window == mainWindow.window) {
                 loadSkinDir();
 
                 GetMenuHeight(dpy, &mainMenu);
@@ -414,7 +412,7 @@ MyXEventHandler(XEvent * event)
         }
         break;
     case ButtonRelease:
-        if (event->xbutton.window == mainWindow) {
+        if (event->xbutton.window == mainWindow.window) {
             switch (event->xbutton.button) {
             case Button1:
                 set_mouse_status(RELEASE);
@@ -497,9 +495,9 @@ MyXEventHandler(XEvent * event)
 
                         break;
                     case Button2:
-                        if (IsWindowVisible(mainWindow)) {
+                        if (IsWindowVisible(mainWindow.window)) {
                             bMainWindow_Hiden = True;
-                            XUnmapWindow(dpy, mainWindow);
+                            XUnmapWindow(dpy, mainWindow.window);
                         } else {
                             bMainWindow_Hiden = False;
                             DisplayMainWindow();
@@ -517,13 +515,13 @@ MyXEventHandler(XEvent * event)
         if (ConnectIDGetState(connect_id) == IS_CHN)
             DisplayInputWindow();
         if (fc.hideMainWindow != HM_HIDE)
-            XMapRaised(dpy, mainWindow);
+            XMapRaised(dpy, mainWindow.window);
         break;
     default:
         break;
 
     case MotionNotify:
-        if (event->xany.window == mainWindow) {
+        if (event->xany.window == mainWindow.window) {
             if (IsInRspArea
                 (event->xbutton.x, event->xbutton.y,
                  sc.skinMainBar.logo)) {

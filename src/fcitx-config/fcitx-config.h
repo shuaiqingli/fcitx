@@ -189,6 +189,20 @@ typedef struct GenericConfig
 #define IsColorValid(c) ((c) >=0 && (c) <= 255)
 #define RoundColor(c) ((c)>=0?((c)<=255?c:255):0)
 
+#define FilterNextTimeEffectBool(name, var) \
+    static Bool firstRunOn##name = True; \
+    void FilterCopy##name(void *value, ConfigSync sync) { \
+        Bool *b = (Bool*)value; \
+        if (sync == Raw2Value && b) \
+        { \
+            if (firstRunOn##name) \
+                var = *b; \
+            firstRunOn##name = False; \
+        } \
+    }
+
+
+
 ConfigFile *ParseConfigFile(char *filename, ConfigFileDesc*);
 ConfigFile *ParseMultiConfigFile(char **filename, int len, ConfigFileDesc*);
 ConfigFile *ParseConfigFileFp(FILE* fp, ConfigFileDesc* fileDesc);

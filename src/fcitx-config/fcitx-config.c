@@ -505,6 +505,16 @@ ConfigSyncResult ConfigOptionHotkey(ConfigOption *option, ConfigSync sync)
     switch(sync)
     {
         case Raw2Value:
+            if (option->value.hotkey[0].desc)
+            {
+                free(option->value.hotkey[0].desc);
+                option->value.hotkey[0].desc = NULL;
+            }
+            if (option->value.hotkey[1].desc)
+            {
+                free(option->value.hotkey[1].desc);
+                option->value.hotkey[0].desc = NULL;
+            }
             SetHotKey(option->rawValue, option->value.hotkey);
             return SyncSuccess;
         case Value2Raw:
@@ -667,6 +677,7 @@ ConfigFile* ParseIniFp(FILE *fp, ConfigFile* reuse)
             if (curGroup)
             {
                 FcitxLog(DEBUG, _("Duplicate group name, merge with the previous: %s :line %d"),groupName, lineNo);
+                free(groupName);
                 continue;
             }
             curGroup = malloc0(sizeof(ConfigGroup));

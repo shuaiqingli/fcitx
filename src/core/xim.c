@@ -17,6 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#include "core/fcitx.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -69,8 +70,6 @@ Bool		bWrittenRecord = False;			//是否写入过记录
 extern IM      *im;
 
 extern Display *dpy;extern int      iScreen;
-extern Window   mainWindow;
-extern Window   inputWindow;
 extern VKWindow   vkWindow;
 
 extern uint     iInputWindowHeight;
@@ -214,7 +213,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 		DrawMainWindow ();
 	    }
 	    else
-		XUnmapWindow (dpy, mainWindow);
+		XUnmapWindow (dpy, mainWindow.window);
 	}
 #ifdef _ENABLE_DBUS
 	if (fc.bUseDBus)
@@ -234,7 +233,7 @@ Bool MySetFocusHandler (IMChangeFocusStruct * call_data)
 		iClientCursorX = pos->x;
 		iClientCursorY = pos->y;
 		if (!fc.bUseDBus)
-		    XMoveWindow (dpy, inputWindow, iClientCursorX, iClientCursorY);
+		    XMoveWindow (dpy, inputWindow.window, iClientCursorX, iClientCursorY);
 #ifdef _ENABLE_DBUS
 		else
 		    KIMUpdateSpotLocation(iClientCursorX, iClientCursorY);
@@ -714,8 +713,8 @@ void CreateConnectID (IMOpenStruct * call_data)
     connectIDNew->connect_id = call_data->connect_id;
     connectIDNew->imState = IS_CLOSED;
     connectIDNew->bTrackCursor = False;
-    connectIDNew->pos.x = (DisplayWidth (dpy, iScreen) - iInputWindowWidth) / 2;
-    connectIDNew->pos.y = DisplayHeight (dpy, iScreen) - iInputWindowHeight;
+    connectIDNew->pos.x = (DisplayWidth (dpy, iScreen) - inputWindow.iInputWindowWidth) / 2;
+    connectIDNew->pos.y = DisplayHeight (dpy, iScreen) - inputWindow.iInputWindowHeight;
 
     connectIDsHead = connectIDNew;
 }

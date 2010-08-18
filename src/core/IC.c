@@ -26,10 +26,11 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   Author: Hidetoshi Tajima(tajima@Eng.Sun.COM) Sun Microsystems, Inc.
  
 ******************************************************************/
+#include "core/fcitx.h"
 #include <X11/Xlib.h>
 #include "IMdkit.h"
 #include "Xi18n.h"
-#include "IC.h"
+#include "core/IC.h"
 #include <stdio.h>
 
 static IC      *ic_list = (IC *) NULL;

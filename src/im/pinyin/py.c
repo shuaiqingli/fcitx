@@ -93,11 +93,8 @@ extern int iCodeInputCount;
 extern int iCurrentCandPage;
 extern char strCodeInput[];
 
-extern int iCursorPos;
-
 extern char strStringGet[];
 extern Bool bIsDoInputOnly;
-extern Bool bShowCursor;
 
 extern int iLegendCandWordCount;
 extern int iLegendCandPageCount;
@@ -478,7 +475,7 @@ INPUT_RETURN_VALUE DoPYInput(int iKey)
     if (!bIsPYAddFreq && !bIsPYDelFreq && !bIsPYDelUserPhr) {
         if ((iKey >= 'a' && iKey <= 'z') || iKey == PY_SEPARATOR || (bSP && bSP_UseSemicolon && iKey == ';')) {
             bIsInLegend = False;
-            bShowCursor = True;
+            inputWindow.bShowCursor = True;
 
             if (iKey == PY_SEPARATOR) {
                 if (!iPYInsertPoint)
@@ -632,7 +629,7 @@ INPUT_RETURN_VALUE DoPYInput(int iKey)
 
                 SetMessageCount(&messageUp, 0);
                 AddMessageAtLast(&messageUp, MSG_TIPS, "选择标号的用户词组将被删除(ESC取消)");
-                bShowCursor = False;
+                inputWindow.bShowCursor = False;
 
                 return IRV_DISPLAY_MESSAGE;
             }
@@ -643,7 +640,7 @@ INPUT_RETURN_VALUE DoPYInput(int iKey)
 
                 SetMessageCount(&messageUp, 0);
                 AddMessageAtLast(&messageUp, MSG_TIPS, "选择标号的字将进入 %s 的常用字表(ESC取消)", strFindString);
-                bShowCursor = False;
+                inputWindow.bShowCursor = False;
 
                 return IRV_DISPLAY_MESSAGE;
             }
@@ -666,7 +663,7 @@ INPUT_RETURN_VALUE DoPYInput(int iKey)
                 bIsPYDelFreq = True;
                 bIsDoInputOnly = True;
 
-                bShowCursor = False;
+                inputWindow.bShowCursor = False;
 
                 return IRV_DISPLAY_MESSAGE;
             }
@@ -699,7 +696,7 @@ INPUT_RETURN_VALUE DoPYInput(int iKey)
                             bIsPYDelUserPhr = False;
                         }
                         bIsDoInputOnly = False;
-                        bShowCursor = True;
+                        inputWindow.bShowCursor = True;
 
                         val = IRV_DISPLAY_CANDWORDS;
                     } else {
@@ -2681,7 +2678,7 @@ INPUT_RETURN_VALUE PYGetLegendCandWords(SEARCH_MODE mode)
       _HIT:
         if (!pyBaseForLengend)
             return IRV_TO_PROCESS;
-        bShowCursor = False;
+        inputWindow.bShowCursor = False;
     } else {
         if (!iLegendCandPageCount)
             return IRV_TO_PROCESS;

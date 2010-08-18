@@ -45,7 +45,8 @@
 #include "tools/xdg.h"
 #include "fcitx-config/profile.h"
 
-UT_icd table_icd = {sizeof(TABLE), NULL ,NULL, NULL};
+static void FreeTableConfig(void *v);
+UT_icd table_icd = {sizeof(TABLE), NULL ,NULL, FreeTableConfig};
 TableState tbl;
 
 extern char     strPYAuto[];
@@ -53,7 +54,6 @@ extern char     strPYAuto[];
 extern INT8     iInternalVersion;
 
 extern Display *dpy;
-extern Window   inputWindow;
 
 extern char     strCodeInput[];
 extern Bool     bIsDoInputOnly;
@@ -67,12 +67,10 @@ extern int      iCodeInputCount;
 extern char     strStringGet[];
 extern Bool     bIsInLegend;
 extern INT8     lastIsSingleHZ;
-extern Bool     bShowCursor;
 
 extern ADJUSTORDER baseOrder;
 extern Bool     bSP;
 extern Bool     bPYBaseDictLoaded;
-extern uint     iFixedInputWindowWidth;
 
 extern PYFA    *PYFAList;
 extern PYCandWord PYCandWords[];
@@ -104,6 +102,12 @@ void LoadTableInfo (void)
     struct stat fileStat;
 
 	StringHashSet* sset = NULL;
+
+    if (tbl.table)
+    {
+        utarray_free(tbl.table);
+        tbl.table = NULL;
+    }
 
     tbl.table = malloc(sizeof(UT_array));
     tbl.iTableCount = 0;
@@ -181,7 +185,6 @@ void LoadTableInfo (void)
                 tbl.iTableCount ++;
             else
             {
-                FreeConfigFile(t->config.configFile);
                 utarray_pop_back(tbl.table);
             }
         }
@@ -204,7 +207,6 @@ void LoadTableInfo (void)
 		free(curStr->name);
         free(curStr);
 	}
-    FreeConfigFileDesc(GetTableConfigDesc());
 }
 
 ConfigFileDesc *GetTableConfigDesc()
@@ -963,7 +965,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 		tbl.iTableNewPhraseHZCount = 2;
 		tbl.bIsTableAddPhrase = True;
 		bIsDoInputOnly = True;
-		bShowCursor = False;
+		inputWindow.bShowCursor = False;
 
 		SetMessageCount(&messageUp , 0);
         AddMessageAtLast(&messageUp, MSG_TIPS, "左/右键增加/减少，ENTER确定，ESC取消");
@@ -999,7 +1001,7 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
         AddMessageAtLast(&messageDown, MSG_CODE, "读音：");
 	    PYGetPYByHZ (strStringGet, strPY);
         AddMessageAtLast(&messageDown, MSG_TIPS, (strPY[0]) ? strPY : "无法查到该字读音");
-	    bShowCursor = False;
+	    inputWindow.bShowCursor = False;
 
 	    return IRV_DISPLAY_MESSAGE;
 	}
@@ -1132,9 +1134,9 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
     }
 
     if (tbl.bIsTableDelPhrase || tbl.bIsTableAdjustOrder || bIsInLegend)
-	bShowCursor = False;
+	inputWindow.bShowCursor = False;
     else
-	bShowCursor = True;
+	inputWindow.bShowCursor = True;
 
     return retVal;
 }
@@ -1275,7 +1277,7 @@ INPUT_RETURN_VALUE TableGetPinyinCandWords (SEARCH_MODE mode)
 
 INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 {
-    int             i, iTemp;
+    int             i;
     char            strTemp[3], *pstr;
     RECORD         *recTemp;
     TABLECANDWORD* tableCandWord = tbl.tableCandWord;
@@ -1378,104 +1380,6 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
     }
     else
 	strTemp[1] = '\0';
-
-    /* 如果用户设置了固定输入条宽度，就在此进行处理 */
-    if (iFixedInputWindowWidth && !(strCodeInput[0] == table->cPinyin && table->bUsePY)) {
-	uint            iWidth = 2 * INPUTWND_START_POS_DOWN + 1;
-
-	if (mode == SM_PREV) {
-	    for (i = (iCandWordCount - 1); i >= 0; i--) {
-		strTemp[0] = i + 1 + '0';
-		if (i == 9)
-		    strTemp[0] = '0';
-
-		if (HasMatchingKey ())
-		    pstr = (tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode;
-		else
-		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
-
-		if (pstr)
-		    iWidth += StringWidth (pstr, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		iWidth += StringWidth (strTemp, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		switch (tableCandWord[i].flag) {
-		case CT_NORMAL:
-		    iWidth += StringWidth (tableCandWord[i].candWord.record->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		    break;
-		case CT_AUTOPHRASE:
-		    iWidth += StringWidth (tableCandWord[i].candWord.autoPhrase->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		default:
-		    ;
-		}
-		iWidth += StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
-
-		if (iWidth > iFixedInputWindowWidth) {
-		    if (i == 0) {
-			iWidth -= StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
-			if (iWidth > iFixedInputWindowWidth)
-			    i = 1;
-		    }
-		    else
-			i++;
-		    break;
-		}
-	    }
-
-	    if (i < 0)
-		i = 0;
-	    for (iWidth = 0; iWidth < i; iWidth++) {
-		if (tableCandWord[iWidth].flag == CT_NORMAL)
-		    tableCandWord[iWidth].candWord.record->flag = True;
-		else
-		    tableCandWord[iWidth].candWord.autoPhrase->flag = True;
-	    }
-	    for (iWidth = 0; iWidth < (iCandWordCount - i); iWidth++) {
-		tableCandWord[iWidth].flag = tableCandWord[iWidth + i].flag;
-		if (tableCandWord[iWidth].flag == CT_NORMAL)
-		    tableCandWord[iWidth].candWord.record = tableCandWord[iWidth + i].candWord.record;
-		else
-		    tableCandWord[iWidth].candWord.autoPhrase = tableCandWord[iWidth + i].candWord.autoPhrase;
-	    }
-
-	    iCandWordCount -= i;
-	}
-	else {
-	    //如果是向后翻，需要从前往后计算长度
-	    iTemp = iCandWordCount;
-	    for (i = 0; i < iCandWordCount; i++) {
-		strTemp[0] = i + 1 + '0';
-		if (i == 9)
-		    strTemp[0] = '0';
-
-		if (HasMatchingKey ())
-		    pstr = (tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode;
-		else
-		    pstr = ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strCode : tableCandWord[i].candWord.autoPhrase->strCode) + iCodeInputCount;
-
-		iWidth += StringWidth (pstr, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		iWidth += StringWidth (strTemp, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		iWidth += StringWidth ((tableCandWord[i].flag == CT_NORMAL) ? tableCandWord[i].candWord.record->strHZ : tableCandWord[i].candWord.autoPhrase->strHZ, sc.skinFont.fontZh, sc.skinFont.fontSize);
-		iWidth += StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
-		if (iWidth > iFixedInputWindowWidth) {
-		    if (i == (iCandWordCount - 1)) {
-			iWidth -= StringWidth (" ", sc.skinFont.fontZh, sc.skinFont.fontSize);
-			if (iWidth <= iFixedInputWindowWidth)
-			    i = iCandWordCount;
-		    }
-		    break;
-		}
-	    }
-
-	    for (iWidth = i; iWidth < iCandWordCount; iWidth++) {
-		if (tableCandWord[iWidth].flag == CT_NORMAL)
-		    tableCandWord[iWidth].candWord.record->flag = False;
-		else
-		    tableCandWord[iWidth].candWord.autoPhrase->flag = False;
-	    }
-
-	    iCandWordCount = i;
-	    tbl.iTableCandDisplayed -= iTemp - i;
-	}
-    }
 
     SetMessageCount(&messageDown, 0);
     for (i = 0; i < iCandWordCount; i++) {
@@ -2310,7 +2214,7 @@ Bool TablePhraseTips (void)
         AddMessageAtLast(&messageDown, MSG_CODE, recTemp->strCode);
         AddMessageAtLast(&messageDown, MSG_TIPS, " ^DEL删除");
 	    tbl.bTablePhraseTips = True;
-	    bShowCursor = False;
+	    inputWindow.bShowCursor = False;
 
 	    return True;
 	}
@@ -2403,4 +2307,21 @@ void UpdateHZLastInput (char *str)
 
     if (table->bRule && table->bAutoPhrase)
 	TableCreateAutoPhrase ((INT8) (utf8_strlen (str)));
+}
+
+void FreeTableConfig(void *v)
+{
+    TABLE *table = (TABLE*) v;
+    if (!table)
+        return;
+    FreeConfigFile(table->config.configFile);
+    free(table->strPath);
+    free(table->strSymbolFile);
+    free(table->strName);
+    free(table->strIconName);
+    free(table->strInputCode);
+    free(table->strEndCode);
+    free(table->strIgnoreChars);
+    free(table->strSymbol);
+    free(table->strChoose);
 }

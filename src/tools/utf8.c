@@ -1,4 +1,5 @@
-#include "utf8.h"
+#include "core/fcitx.h"
+#include "tools/utf8.h"
 
 #define CONT(i)   ISUTF8_CB(in[i])
 #define VAL(i, s) ((in[i]&0x3f) << s)

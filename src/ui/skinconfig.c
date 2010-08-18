@@ -6,7 +6,7 @@ CONFIG_BINDING_BEGIN(FcitxSkin);
 CONFIG_BINDING_REGISTER("SkinInfo","Name",skinInfo.skinName);
 CONFIG_BINDING_REGISTER("SkinInfo","Version",skinInfo.skinVersion);
 CONFIG_BINDING_REGISTER("SkinInfo","Author",skinInfo.skinAuthor);
-CONFIG_BINDING_REGISTER("SkinInfo","Desc",skinInfo.shinDesc);
+CONFIG_BINDING_REGISTER("SkinInfo","Desc",skinInfo.skinDesc);
 	
 CONFIG_BINDING_REGISTER("SkinFont","FontSize",skinFont.fontSize);
 CONFIG_BINDING_REGISTER("SkinFont","FontEn",skinFont.fontEn);

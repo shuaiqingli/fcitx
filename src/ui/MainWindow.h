@@ -30,12 +30,24 @@
 #ifndef _MAIN_WINDOW_H
 #define _MAIN_WINDOW_H
 
+#include "core/fcitx.h"
+
 #include <X11/Xlib.h>
+#include <cairo.h>
 
 Bool            CreateMainWindow (void);
 void            DisplayMainWindow (void);
 void            DrawMainWindow (void);
-void            InitMainWindowColor (void);
 void            ChangeLock (void);
+void            DestroyMainWindow();
+
+typedef struct MainWindow
+{
+    Window window;
+    Pixmap pm_main_bar;
+    cairo_surface_t* cs_main_bar;
+    GC main_win_gc;
+} MainWindow;
+extern MainWindow mainWindow;
 
 #endif

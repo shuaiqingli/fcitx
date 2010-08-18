@@ -53,10 +53,10 @@ typedef struct FcitxConfig
 #endif
 #ifdef _ENABLE_TRAY
     Bool bUseTrayIcon;
+    Bool bUseTrayIcon_;
 #endif
-#ifdef _ENABLE_DBUS
     Bool bUseDBus;
-#endif
+    Bool bUseDBus_;
     /* output config */
     Bool bEngPuncAfterNumber;
     ENTER_TO_DO enterToDo;

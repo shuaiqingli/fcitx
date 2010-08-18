@@ -76,7 +76,6 @@
 #include <pthread.h>
 
 extern Display *dpy;
-extern Window   inputWindow;
 extern Window   ximWindow;
 extern int iClientCursorX;
 extern int iClientCursorY;
@@ -110,7 +109,7 @@ int main (int argc, char *argv[])
     /*加载用户配置文件，如果该文件不存在就从安装目录中拷贝
      * “/data/config”到“~/.fcitx/config”
      */
-    LoadConfig (True);
+    LoadConfig ();
 
     while((c = getopt(argc, argv, "cdDn:vh")) != -1) {
         switch(c){

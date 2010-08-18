@@ -28,12 +28,6 @@
 #define BACK_COLOR	0x0000
 #define DIM_COLOR	0x6666
 
-typedef enum {
-    _3D_FLAT = 0,
-    _3D_UPPER = 1,
-    _3D_LOWER = 2
-} _3D_EFFECT;
-
 typedef struct {
     GC              foreGC;
     GC              backGC;

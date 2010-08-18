@@ -26,6 +26,7 @@
  *
  *
  */
+#include "core/fcitx.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -38,6 +39,7 @@
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
 #include "ui/font.h"
+#include "ui/skin.h"
 #include "ui/ui.h"
 #include "im/special/punc.h"
 #include "im/pinyin/py.h"
@@ -51,6 +53,7 @@
 #include "ui/skin.h"
 #include "tools/tools.h"
 #include "interface/DBus.h"
+#include "fcitx-config/configfile.h"
 #include "fcitx-config/profile.h"
 
 FcitxState gs; /* global state */
@@ -104,15 +107,9 @@ extern XIMS     ims;
 extern Display *dpy;
 extern ChnPunc *chnPunc;
 
-extern Bool     bShowPrev;
-extern Bool     bShowNext;
-extern Bool     bShowCursor;
 extern IC      *CurrentIC;
 
-extern Window   inputWindow;
 extern XIMTriggerKey *Trigger_Keys;
-extern Window   mainWindow;
-extern int      iCursorPos;
 
 extern VKWindow   vkWindow;
 extern VKS      vks[];
@@ -179,14 +176,14 @@ void ResetInput (void)
 
     bIsDoInputOnly = False;
 
-    bShowPrev = False;
-    bShowNext = False;
+    inputWindow.bShowPrev = False;
+    inputWindow.bShowNext = False;
 
     bIsInLegend = False;
     iInCap = 0;
 
     if (!IsIM (strNameOfPinyin))
-    bShowCursor = False;
+    inputWindow.bShowCursor = False;
 
     if (im[gs.iIMIndex].ResetIM)
     im[gs.iIMIndex].ResetIM ();
@@ -593,7 +590,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         					if (!(iInCap == 2 && !iCodeInputCount && iKey == ';')) {
         					    strCodeInput[iCodeInputCount++] = iKey;
         					    strCodeInput[iCodeInputCount] = '\0';
-        					    bShowCursor = True;
+        					    inputWindow.bShowCursor = True;
         					    iCursorPos = iCodeInputCount;
         					    if (fc.semicolonToDo == K_SEMICOLON_QUICKPHRASE && iInCap == 2)
                                 {
@@ -745,10 +742,13 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    retVal = IRV_DONOT_PROCESS;
         		    }
         		    else if (iKey == CTRL_5) {
-        			LoadConfig (False);
+                    FcitxLock();
+                    LoadConfig ();
+                    if (fc.inputMethods[IM_SP])
+                        LoadSPData();
 
         			if (!fc.bUseDBus) {
-        			    if (!mainWindow)
+        			    if (!mainWindow.window)
         			        CreateMainWindow();
         			    if (fc.hideMainWindow != HM_HIDE) {
         				DisplayMainWindow ();
@@ -761,12 +761,12 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    }
 #endif
         			    if (!aboutWindow.window)
-        				CreateAboutWindow();
-        			    InitMainWindowColor ();
-        			    InitInputWindowColor ();
+                            CreateAboutWindow();
+
+                        DisplaySkin(fc.skinType);
         			}
         			else {
-        			    XUnmapWindow(dpy, mainWindow);
+        			    XUnmapWindow(dpy, mainWindow.window);
 #ifdef _ENABLE_TRAY
         			    XDestroyWindow(dpy,tray.window);
         			    tray.window = (Window) NULL;
@@ -790,7 +790,11 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			LoadPuncDict ();
         			SwitchIM(-2);
         			if (!fc.bUseDBus)
+                    {
         			    DrawMainWindow();
+                        DisplaySkin(fc.skinType);
+                    }
+                    FcitxUnlock();
 
         			retVal = IRV_DO_NOTHING;
         		    }
@@ -856,7 +860,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         	else {
         	    bMainWindow_Hiden = True;
         	    if (!fc.bUseDBus) 
-        		XUnmapWindow(dpy,mainWindow);
+        		XUnmapWindow(dpy,mainWindow.window);
         	}
         	retVal = IRV_DO_NOTHING;
             }
@@ -898,18 +902,18 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
     return;
     case IRV_DISPLAY_CANDWORDS:
-    bShowNext = bShowPrev = False;
+    inputWindow.bShowNext = inputWindow.bShowPrev = False;
     if (bIsInLegend) {
         if (iCurrentLegendCandPage > 0)
-        bShowPrev = True;
+        inputWindow.bShowPrev = True;
         if (iCurrentLegendCandPage < iLegendCandPageCount)
-        bShowNext = True;
+        inputWindow.bShowNext = True;
     }
     else {
         if (iCurrentCandPage > 0)
-        bShowPrev = True;
+        inputWindow.bShowPrev = True;
         if (iCurrentCandPage < iCandPageCount)
-        bShowNext = True;
+        inputWindow.bShowNext = True;
     }
 
     DisplayInputWindow ();
@@ -919,7 +923,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
     break;
     case IRV_DISPLAY_LAST:
-    bShowNext = bShowPrev = False;
+    inputWindow.bShowNext = inputWindow.bShowPrev = False;
     SetMessageCount(&messageUp, 0);
     AddMessageAtLast(&messageUp, MSG_INPUT, "%c", strCodeInput[0]);
     SetMessageCount(&messageDown, 0);
@@ -928,8 +932,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
 
     break;
     case IRV_DISPLAY_MESSAGE:
-    bShowNext = False;
-    bShowPrev = False;
+    inputWindow.bShowNext = False;
+    inputWindow.bShowPrev = False;
 
     DisplayInputWindow ();
     if (!fc.bUseDBus) {
@@ -941,11 +945,11 @@ void ProcessKey (IMForwardEventStruct * call_data)
     SendHZtoClient (call_data, strStringGet);
     iHZInputed += (int) (utf8_strlen (strStringGet));	//粗略统计字数
     if (iLegendCandWordCount) {
-        bShowNext = bShowPrev = False;
+        inputWindow.bShowNext = inputWindow.bShowPrev = False;
         if (iCurrentLegendCandPage > 0)
-        bShowPrev = True;
+        inputWindow.bShowPrev = True;
         if (iCurrentLegendCandPage < iLegendCandPageCount)
-        bShowNext = True;
+        inputWindow.bShowNext = True;
         bLastIsNumber = False;
         iCodeInputCount = 0;
         DisplayInputWindow ();
@@ -1177,7 +1181,7 @@ void SwitchIM (INT8 index)
     str = im[gs.iIMIndex].strName;
 
     if (!fc.bUseDBus) {
-	XResizeWindow (dpy, mainWindow, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);
+	XResizeWindow (dpy, mainWindow.window, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);
     DrawMainWindow ();
     }
 
@@ -1303,7 +1307,11 @@ void SetIM (void)
     Bool	    bFlag[INPUT_METHODS];
 
     if (im)
-    free (im);
+    {
+        for (i = 0; i < iIMCount; i ++)
+            destroy_a_img(&im[i].icon);
+        free (im);
+    }
 
     if (fc.inputMethods[IM_TABLE])
     LoadTableInfo ();
