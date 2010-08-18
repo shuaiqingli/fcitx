@@ -102,12 +102,17 @@ void LoadTableInfo (void)
     struct stat fileStat;
 
 	StringHashSet* sset = NULL;
+    tbl.bTablePhraseTips = False;
 
     if (tbl.table)
     {
         utarray_free(tbl.table);
         tbl.table = NULL;
     }
+
+    tbl.hkTableDelPhrase[0].iKeyCode = CTRL_7;
+    tbl.hkTableAdjustOrder[0].iKeyCode = CTRL_6;
+    tbl.hkTableAddPhrase[0].iKeyCode = CTRL_8;
 
     tbl.table = malloc(sizeof(UT_array));
     tbl.iTableCount = 0;
@@ -690,7 +695,7 @@ void SaveTableDict (void)
 
     if (tbl.autoPhrase) {
 	//保存上次的自动词组信息
-	fpDict = GetXDGFileTable(TEMP_FILE, "wb", NULL, True);
+	fpDict = GetXDGFileTable(TEMP_FILE, "wb", &pstr, True);
 	strcpy (strPathTemp,pstr);
 	if (fpDict) {
 	    fwrite (&tbl.iAutoPhrase, sizeof (int), 1, fpDict);
@@ -702,6 +707,7 @@ void SaveTableDict (void)
 	    }
 	    fclose (fpDict);
 	}
+    free(pstr);
 
 	strcpy (strPath, table->strName);
 	strcat (strPath, "_LastAutoPhrase.tmp");
@@ -796,17 +802,17 @@ INPUT_RETURN_VALUE DoTableInput (int iKey)
 	LoadTableDict ();
 
     if (tbl.bTablePhraseTips) {
-	if (iKey == CTRL_DELETE) {
-	    tbl.bTablePhraseTips = False;
-	    TableDelPhraseByHZ (messageUp.msg[1].strMsg);
-	    return IRV_DONOT_PROCESS_CLEAN;
-	}
-	else if (iKey != LCTRL && iKey != RCTRL && iKey != LSHIFT && iKey != RSHIFT) {
-	    SetMessageCount(&messageUp, 0);
-	    SetMessageCount(&messageDown, 0);
-	    tbl.bTablePhraseTips = False;
-	    CloseInputWindow();
-	}
+        if (iKey == CTRL_DELETE) {
+            tbl.bTablePhraseTips = False;
+            TableDelPhraseByHZ (messageUp.msg[1].strMsg);
+            return IRV_DONOT_PROCESS_CLEAN;
+        }
+        else if (iKey != LCTRL && iKey != RCTRL && iKey != LSHIFT && iKey != RSHIFT) {
+            SetMessageCount(&messageUp, 0);
+            SetMessageCount(&messageDown, 0);
+            tbl.bTablePhraseTips = False;
+            CloseInputWindow();
+        }
     }
 
     retVal = IRV_DO_NOTHING;
@@ -1410,6 +1416,8 @@ INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode)
 	}
     AddMessageAtLast(&messageDown, mType, "%s", pMsg);
 
+    FcitxLog(INFO, "%d", i);
+
 	if (tableCandWord[i].flag == CT_PYPHRASE) {
 	    if (utf8_strlen (tableCandWord[i].candWord.strPYPhrase) == 1) {
 		recTemp = tbl.tableSingleHZ[CalHZIndex (tableCandWord[i].candWord.strPYPhrase)];
@@ -1719,7 +1727,7 @@ void TableAdjustOrderByIndex (int iIndex)
 {
     RECORD         *recTemp;
     int             iTemp;
-    TABLECANDWORD*  tableCandWord = tableCandWord;
+    TABLECANDWORD*  tableCandWord = tbl.tableCandWord;
     TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
 
     if (tableCandWord[iIndex - 1].flag != CT_NORMAL)
@@ -1757,7 +1765,8 @@ void TableAdjustOrderByIndex (int iIndex)
  */
 void TableDelPhraseByIndex (int iIndex)
 {
-    TABLECANDWORD *tableCandWord = tableCandWord;
+    FcitxLog(INFO, "del:%d", iIndex);
+    TABLECANDWORD *tableCandWord = tbl.tableCandWord;
     if (tableCandWord[iIndex - 1].flag != CT_NORMAL)
 	return;
 
@@ -2043,7 +2052,7 @@ INPUT_RETURN_VALUE TableGetLegendCandWords (SEARCH_MODE mode)
 void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 {
     int             i, j;
-    TABLECANDWORD *tableCandWord = tableCandWord;
+    TABLECANDWORD *tableCandWord = tbl.tableCandWord;
     
     if (mode == SM_PREV) {
 	for (i = iLegendCandWordCount - 1; i >= 0; i--) {
@@ -2095,7 +2104,7 @@ void TableAddLegendCandWord (RECORD * record, SEARCH_MODE mode)
 
 char           *TableGetLegendCandWord (int iIndex)
 {
-    TABLECANDWORD *tableCandWord = tableCandWord;
+    TABLECANDWORD *tableCandWord = tbl.tableCandWord;
     if (iLegendCandWordCount) {
 	if (iIndex > (iLegendCandWordCount - 1))
 	    iIndex = iLegendCandWordCount - 1;
@@ -2215,6 +2224,8 @@ Bool TablePhraseTips (void)
         AddMessageAtLast(&messageDown, MSG_TIPS, " ^DEL删除");
 	    tbl.bTablePhraseTips = True;
 	    inputWindow.bShowCursor = False;
+
+        FcitxLog(INFO, "aa");
 
 	    return True;
 	}

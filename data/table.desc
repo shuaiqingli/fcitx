@@ -41,7 +41,7 @@ DefaultValue=-1
 
 [CodeTable/NoneMatchAutoSend]
 Description=Auto Send Candidate Word if no match in Code Table
-Type=Boolean
+Type=Integer
 DefaultValue=-1
 
 [CodeTable/EndKey]

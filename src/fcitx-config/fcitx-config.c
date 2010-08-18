@@ -452,7 +452,10 @@ ConfigSyncResult ConfigOptionChar(ConfigOption *option, ConfigSync sync)
     switch(sync)
     {
         case Raw2Value:
-            *option->value.chr = option->rawValue[0];
+            if (strlen(option->rawValue) == 0)
+                *option->value.chr = '\0';
+            else
+                *option->value.chr = option->rawValue[0];
             return SyncSuccess;
         case Value2Raw:
             if (option->rawValue)
