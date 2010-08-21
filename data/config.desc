@@ -26,7 +26,7 @@ Enum1=Clean
 Enum2=Send
 DefaultValue=Send
 
-[Ouput/SemiColonAction]
+[Output/SemiColonAction]
 Type=Enum
 EnumCount=3
 Enum0=NoChange

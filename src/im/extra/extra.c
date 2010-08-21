@@ -14,8 +14,6 @@
 #define EIM_MAX		4
 extern Display *dpy;
 
-iconv_t convGB=(iconv_t)-1;
-
 static EXTRA_IM *EIMS[EIM_MAX];
 static void *EIM_handle[EIM_MAX];
 static char EIM_file[EIM_MAX][PATH_MAX];
@@ -375,29 +373,12 @@ char *GetClipboardString(Display *disp)
 	return result;
 }
 
-char *ExtraGetSelect(void)
-{
-	static char phrase[32];
-	char *f;
-	size_t l1,l2;
-	char *ps=phrase;
-	f=GetClipboardString(dpy);
-	if(!f) return NULL;
-	l1=strlen(f);
-	if(l1>=32) return NULL;
-	l2=32;
-	l1=iconv(convGB,&f,&l1,&ps,&l2);
-	*ps=0;
-	return phrase;
-}
-
 int InitExtraIM(EXTRA_IM *eim,char *arg)
 {
 	eim->CodeInput=strCodeInput;
 	eim->StringGet=StringGetEngine;
 	eim->CandTable=CandTableEngine;
 	eim->CodeTips=CodeTipsEngine;
-	eim->GetSelect=ExtraGetSelect;
 	eim->GetPath=ExtraGetPath;
 	eim->CandWordMax=fc.iMaxCandWord;
 	eim->CaretPos=-1;
@@ -420,13 +401,6 @@ void LoadExtraIM(char *fn)
 	char temp[256];
 	char *arg;
 	char fnr[256];
-
-	if(convGB==(iconv_t)-1)
-	{
-		convGB=iconv_open("GB18030","UTF-8");
-		if(convGB==(iconv_t)-1)
-			return;
-	}
 
 	for(i=0;i<EIM_MAX;i++)
 	{

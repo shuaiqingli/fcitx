@@ -115,10 +115,12 @@ static void StoreIC (IC * rec, IMChangeICStruct * call_data)
 	    rec->input_style = *(INT32 *) ic_attr->value;
 
 	else if (Is (XNClientWindow, ic_attr)) {
-	    rec->client_win = *(Window *) ic_attr->value;
+        CARD32 value = *(CARD32*) ic_attr->value;
+	    rec->client_win = (Window) value;
 	}
 	else if (Is (XNFocusWindow, ic_attr)) {
-	    rec->focus_win = *(Window *) ic_attr->value;
+        CARD32 value = *(CARD32*) ic_attr->value;
+	    rec->focus_win = (Window) value;
 	}
     }
 

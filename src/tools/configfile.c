@@ -43,7 +43,7 @@ CONFIG_BINDING_REGISTER_WITH_FILTER("Program", "UseDBus", bUseDBus_, FilterCopyU
 #endif
 CONFIG_BINDING_REGISTER("Output", "HalfPuncAfterNumber", bEngPuncAfterNumber);
 CONFIG_BINDING_REGISTER("Output", "EnterAction", enterToDo);
-CONFIG_BINDING_REGISTER("Ouput", "SemiColonAction", semicolonToDo);
+CONFIG_BINDING_REGISTER("Output", "SemiColonAction", semicolonToDo);
 CONFIG_BINDING_REGISTER("Output", "InputEngByCapitalChar", bEngAfterCap);
 CONFIG_BINDING_REGISTER("Output", "TransEngPunc", bConvertPunc);
 CONFIG_BINDING_REGISTER("Output", "LegendModeDisablePaging", bDisablePagingInLegend);

@@ -367,7 +367,7 @@ void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse)
 	cairo_t * cr;
 /*	printf("%s=%d %d %d %d %d %d %d %d\n",img.img_name,img.position_x, img.position_y,img.width,img.height,
 										                img.response_x,img.response_y,img.response_w,img.response_h);*/
-	if( strlen(img.img_name) == 0 || strcmp( img.img_name ,"NONE.img") ==0)
+	if( strlen(img.img_name) == 0 || strcmp( img.img_name ,"NONE.img") ==0 || !png)
 		return;	
 
     if(mouse == MOTION)
@@ -585,7 +585,7 @@ void DisplaySkin(char * skinname)
 {
     if (fc.bUseDBus)
         return;
-    char *pivot = skinname;
+    char *pivot = fc.skinType;
     fc.skinType= strdup(skinname);
     if (pivot)
         free(pivot);
