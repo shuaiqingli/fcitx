@@ -1,3 +1,8 @@
+2010-08-31: CSSlayer <wengxt@gmail.com>
+    * 修复输入框的箭头不显示的问题
+	* 将字体设置移回配置文件中，而不是和皮肤一起设置
+	* dark皮肤小更新
+
 2010-08-18: CSSlayer <wengxt@gmail.com>
     * 消除内存泄漏
 	* 修复CTRL_5重新加载配置时会崩溃的问题

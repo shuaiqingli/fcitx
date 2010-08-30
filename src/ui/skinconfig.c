@@ -9,8 +9,6 @@ CONFIG_BINDING_REGISTER("SkinInfo","Author",skinInfo.skinAuthor);
 CONFIG_BINDING_REGISTER("SkinInfo","Desc",skinInfo.skinDesc);
 	
 CONFIG_BINDING_REGISTER("SkinFont","FontSize",skinFont.fontSize);
-CONFIG_BINDING_REGISTER("SkinFont","FontEn",skinFont.fontEn);
-CONFIG_BINDING_REGISTER("SkinFont","FontZh",skinFont.fontZh);
 CONFIG_BINDING_REGISTER("SkinFont","InputCharColor",skinFont.inputCharColor);
 CONFIG_BINDING_REGISTER("SkinFont","OutputCharColor",skinFont.outputCharColor);
 CONFIG_BINDING_REGISTER("SkinFont","CharNoColor",skinFont.charNoColor);
@@ -41,8 +39,8 @@ CONFIG_BINDING_REGISTER("SkinInputBar","OutputPos",skinInputBar.outputPos);
 CONFIG_BINDING_REGISTER("SkinInputBar","LayoutLeft", skinInputBar.layoutLeft);
 CONFIG_BINDING_REGISTER("SkinInputBar","LayoutRight", skinInputBar.layoutRight);
 CONFIG_BINDING_REGISTER("SkinInputBar","CursorColor",skinInputBar.cursorColor);
-CONFIG_BINDING_REGISTER("SkinInputBar","BackArrowImg",skinInputBar.backArrow);
-CONFIG_BINDING_REGISTER("SkinInputBar","ForwardArrowImg",skinInputBar.forwardArrow);
+CONFIG_BINDING_REGISTER("SkinInputBar","BackArrow",skinInputBar.backArrow);
+CONFIG_BINDING_REGISTER("SkinInputBar","ForwardArrow",skinInputBar.forwardArrow);
 
 CONFIG_BINDING_REGISTER("SkinTrayIcon","Active",skinTrayIcon.active);
 CONFIG_BINDING_REGISTER("SkinTrayIcon","Inactive",skinTrayIcon.inactive);

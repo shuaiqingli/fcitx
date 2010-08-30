@@ -26,6 +26,7 @@
 #include <iconv.h>
 #include <X11/Xatom.h>
 #include "skin.h"
+#include "fcitx-config/configfile.h"
 
 
 extern int      iScreen;
@@ -42,7 +43,7 @@ void InitMenuDefault(xlibMenu * Menu)
 //	Menu->charcolor=0x111111;
 //	Menu->charselectcolor=(0xFFFFFF-0x111111);
 	Menu->font_size=14;
-	strcpy(Menu->font,sc.skinFont.fontZh);
+	strcpy(Menu->font,gs.fontZh);
 	Menu->mark=-1;
 }
 

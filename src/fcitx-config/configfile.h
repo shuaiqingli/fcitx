@@ -47,6 +47,8 @@ typedef struct FcitxConfig
 {
     GenericConfig gconfig;
     /* program config */
+    char *fontEn;
+    char *fontZh;
     char *strUserLocale;
 #ifdef _ENABLE_RECORDING
     char *strRecordingPath;

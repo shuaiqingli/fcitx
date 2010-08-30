@@ -1,3 +1,11 @@
+[Program/FontEn]
+Type=String
+DefaultValue=
+
+[Program/FontZh]
+Type=String
+DefaultValue=
+
 [Program/FontLocale]
 Type=String
 DefaultValue=zh_CN.UTF-8

@@ -21,6 +21,7 @@
 #include "ui/AboutWindow.h"
 #include "ui/ui.h"
 #include "core/xim.h"
+#include "fcitx-config/configfile.h"
 #include "version.h"
 
 #include <ctype.h>
@@ -52,7 +53,7 @@ Bool CreateAboutWindow (void)
     aboutWindow.fontColor.r = aboutWindow.fontColor.g = aboutWindow.fontColor.b = 0;
     aboutWindow.fontSize = 11;
 
-    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, sc.skinFont.fontZh, aboutWindow.fontSize ) + 50;
+    ABOUT_WINDOW_WIDTH = StringWidth (strTitle, gs.fontZh, aboutWindow.fontSize ) + 50;
     aboutWindow.window =
 	XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), (DisplayWidth (dpy, iScreen) - ABOUT_WINDOW_WIDTH) / 2, (DisplayHeight (dpy, iScreen) - ABOUT_WINDOW_HEIGHT) / 2, ABOUT_WINDOW_WIDTH, ABOUT_WINDOW_HEIGHT, 0, WhitePixel (dpy, DefaultScreen (dpy)), WhitePixel (dpy, DefaultScreen (dpy)));
 
@@ -105,11 +106,11 @@ void DrawAboutWindow (void)
     cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
     cairo_paint(c);
 
-    OutputString (c, strTitle, sc.skinFont.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, sc.skinFont.fontZh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 30, &aboutWindow.fontColor);
+    OutputString (c, strTitle, gs.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (strTitle, gs.fontZh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 30, &aboutWindow.fontColor);
 
-    OutputString (c, AboutEmail, sc.skinFont.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, sc.skinFont.fontZh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 60, &aboutWindow.fontColor);
+    OutputString (c, AboutEmail, gs.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutEmail, gs.fontZh, aboutWindow.fontSize)) / 2, aboutWindow.fontSize + 6 + 60, &aboutWindow.fontColor);
 
-    OutputString (c, AboutCopyRight, sc.skinFont.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, sc.skinFont.fontZh, aboutWindow.fontSize)) / 2,aboutWindow.fontSize + 6 + 80, &aboutWindow.fontColor);
+    OutputString (c, AboutCopyRight, gs.fontZh, aboutWindow.fontSize, (ABOUT_WINDOW_WIDTH - StringWidth (AboutCopyRight, gs.fontZh, aboutWindow.fontSize)) / 2,aboutWindow.fontSize + 6 + 80, &aboutWindow.fontColor);
 
     cairo_destroy(c);
 }

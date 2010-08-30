@@ -28,7 +28,7 @@ void CreateFont()
         strcpy(locale, "zh");
     locale[2]='\0';
 reloadfont:
-    if (strcmp(sc.skinFont.fontZh, "") == 0)
+    if (strcmp(gs.fontZh, "") == 0)
     {
         FcChar8 strpat[9];
         sprintf((char*)strpat, ":lang=%s", locale);
@@ -36,7 +36,7 @@ reloadfont:
     }
     else
     {
-        pat = FcNameParse ((FcChar8*)sc.skinFont.fontZh);
+        pat = FcNameParse ((FcChar8*)gs.fontZh);
     }
     
     os = FcObjectSetBuild(FC_FAMILY, FC_STYLE, (char*)0);
@@ -54,20 +54,20 @@ reloadfont:
     FcChar8* family;
     if (FcPatternGetString (fs->fonts[0], FC_FAMILY, 0, &family) != FcResultMatch)
         goto nofont;
-    if (sc.skinFont.fontZh)
-        free(sc.skinFont.fontZh);
+    if (gs.fontZh)
+        free(gs.fontZh);
 
-    sc.skinFont.fontZh = strdup((const char*) family);
+    gs.fontZh = strdup((const char*) family);
 
     FcFontSetDestroy(fs);
 
-    FcitxLog(INFO, _("your current font is: %s"), sc.skinFont.fontZh);
+    FcitxLog(INFO, _("your current font is: %s"), gs.fontZh);
     return;
 
 nofont:
-    if (strcmp(sc.skinFont.fontZh, "") != 0)
+    if (strcmp(gs.fontZh, "") != 0)
     {
-        strcpy(sc.skinFont.fontZh, "");
+        strcpy(gs.fontZh, "");
         if (pat)
             FcPatternDestroy(pat);
         if (os)

@@ -684,7 +684,7 @@ OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
     cairo_save(c);
 
     cairo_set_source_rgb(c, color->r, color->g, color->b);
-    cairo_select_font_face(c, sc.skinFont.fontZh,
+    cairo_select_font_face(c, gs.fontZh,
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(c, fontSize);

@@ -104,8 +104,6 @@ int LoadSkinConfig()
         free(sc.skinInfo.skinVersion);
         free(sc.skinInfo.skinAuthor);
         free(sc.skinInfo.skinDesc);
-        free(sc.skinFont.fontEn);
-        free(sc.skinFont.fontZh);
     }
     memset(&sc, 0, sizeof(FcitxSkin));
 
@@ -340,20 +338,20 @@ void load_input_msg()
 //拼音画笔
 	inputWindow.c_eng = cairo_create(inputWindow.cs_input_bar);
 	cairo_set_source_rgb(inputWindow.c_eng, in_char.r, in_char.g, in_char.b);
-	cairo_select_font_face(inputWindow.c_eng, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_BOLD);
+	cairo_select_font_face(inputWindow.c_eng, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_BOLD);
 	cairo_set_font_size(inputWindow.c_eng, fontSize);
 
 
 //第一个字画笔
 	inputWindow.c_first=cairo_create(inputWindow.cs_input_bar);
 	cairo_set_source_rgb(inputWindow.c_first,first_char.r, first_char.g, first_char.b);
-	cairo_select_font_face(inputWindow.c_first, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_select_font_face(inputWindow.c_first, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size(inputWindow.c_first, fontSize);
 
 //其他字画笔	
 	inputWindow.c_other = cairo_create(inputWindow.cs_input_bar);
 	cairo_set_source_rgb(inputWindow.c_other, out_char.r, out_char.g, out_char.b);
-	cairo_select_font_face(inputWindow.c_other, sc.skinFont.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_select_font_face(inputWindow.c_other, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size(inputWindow.c_other, fontSize);
 
 //光标画笔
@@ -473,29 +471,7 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	cairo_clip(c);
 	cairo_paint(c);
 
-	if(inputWindow.bShowCursor )
-	{	
-		//画向前向后箭头
-		
-		cairo_set_source_surface(inputWindow.c_back, prev,
-							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.backArrow.position_x) , 
-							sc.skinInputBar.backArrow.position_y);				
-		if(inputWindow.bShowNext)
-			cairo_paint(inputWindow.c_back);
-		else
-			cairo_paint_with_alpha(inputWindow.c_back,0.5);
-		
-		//画向前箭头
-		cairo_set_source_surface(inputWindow.c_back, next,
-							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.forwardArrow.position_x) , 
-							sc.skinInputBar.forwardArrow.position_y);
-		if(inputWindow.bShowPrev)
-			cairo_paint(inputWindow.c_back);
-		else
-			cairo_paint_with_alpha(inputWindow.c_back,0.5);
-	}
-		
-	//画第二部分,智能变化有两种方式
+    //画第二部分,智能变化有两种方式
 	if( flag == R_COPY) //
 	{
 		int i=0;
@@ -530,7 +506,6 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 		cairo_restore(c);
 		cairo_translate(c,resizePos, 0);
 		cairo_scale(c, (double)(input_bar_len-png_width+resizeWidth)/(double)resizeWidth,1);
-		//printf("%f\n",(double)(input_bar_len-png_width+resizeWidth)/(double)resizeWidth);
 		cairo_set_source_surface(c, input,-resizePos, 0);
 		cairo_set_operator(c, CAIRO_OPERATOR_OVER);
 		cairo_rectangle	(c,0,0,resizeWidth,png_height);
@@ -548,6 +523,28 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 		cairo_paint(c);
 	}
 	
+	if(inputWindow.bShowCursor )
+	{	
+		//画向前向后箭头
+		
+		cairo_set_source_surface(inputWindow.c_back, prev,
+							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.backArrow.position_x) , 
+							sc.skinInputBar.backArrow.position_y);				
+		if(inputWindow.bShowNext)
+			cairo_paint(inputWindow.c_back);
+		else
+			cairo_paint_with_alpha(inputWindow.c_back,0.5);
+		
+		//画向前箭头
+		cairo_set_source_surface(inputWindow.c_back, next,
+							input_bar_len-(sc.skinInputBar.backImg.width-sc.skinInputBar.forwardArrow.position_x) , 
+							sc.skinInputBar.forwardArrow.position_y);
+		if(inputWindow.bShowPrev)
+			cairo_paint(inputWindow.c_back);
+		else
+			cairo_paint_with_alpha(inputWindow.c_back,0.5);
+	}
+
     OutputStringWithContext(inputWindow.c_eng, up_str, sc.skinInputBar.layoutLeft, sc.skinInputBar.inputPos );
 
     OutputStringWithContext(inputWindow.c_first , first_str, sc.skinInputBar.layoutLeft,sc.skinInputBar.outputPos);

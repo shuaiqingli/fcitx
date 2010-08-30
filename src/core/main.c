@@ -84,6 +84,12 @@ extern void* remoteThread(void*);
 
 static void Usage();
 static void Version();
+static void InitGlobal();
+
+void InitGlobal()
+{
+    memset(&gs, 0, sizeof(FcitxState));
+}
 
 int main (int argc, char *argv[])
 {
@@ -96,7 +102,8 @@ int main (int argc, char *argv[])
     Bool            bBackground = True;
     char	    *imname=(char *)NULL;
     pthread_t	    pid;
-    gs.bMutexInited = False;
+
+    InitGlobal();
 
     SetMyExceptionHandler();		//处理事件
 

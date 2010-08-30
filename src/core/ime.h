@@ -104,6 +104,8 @@ typedef struct IM{
 } IM;
 
 typedef struct FcitxState {
+    char *fontZh;
+    char *fontEn;
     INT8 iIMIndex;
     Bool bMutexInited;
 } FcitxState;

@@ -22,6 +22,7 @@
 #include "ui/ui.h"
 #include "core/xim.h"
 #include "tools/xdg.h"
+#include "fcitx-config/configfile.h"
 #include "version.h"
 
 #include <ctype.h>
@@ -123,13 +124,13 @@ void DrawMessageWindow (char *title, char **msg, int length)
     if (!msg || length == 0)
         return;
 
-    int height = FontHeight(sc.skinFont.fontZh);
+    int height = FontHeight(gs.fontZh);
     messageWindow.height = MESSAGE_WINDOW_MARGIN * 2 + length *(height + MESSAGE_WINDOW_LINESPACE);
     messageWindow.width = 0;
 
     for (i = 0; i< length ;i ++)
     {
-        int width = StringWidth(msg[i], sc.skinFont.fontZh, messageWindow.fontSize);
+        int width = StringWidth(msg[i], gs.fontZh, messageWindow.fontSize);
         if (width > messageWindow.width)
             messageWindow.width = width;
     }
@@ -141,7 +142,7 @@ void DrawMessageWindow (char *title, char **msg, int length)
     cairo_t *c = cairo_create(messageWindow.surface);
     cairo_set_source_rgb(c, messageWindow.color.r, messageWindow.color.g, messageWindow.color.b);
     cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
-    cairo_select_font_face(c, sc.skinFont.fontZh,
+    cairo_select_font_face(c, gs.fontZh,
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(c, messageWindow.fontSize);

@@ -13,14 +13,6 @@ Type=String
 [SkinFont/FontSize]
 Type=Integer
 
-[SkinFont/FontEn]
-Type=String
-DefaultValue=
-
-[SkinFont/FontZh]
-Type=String
-DefaultValue=
-
 [SkinFont/InputCharColor]
 Type=Color
 

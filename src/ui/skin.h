@@ -69,8 +69,6 @@ typedef struct
 typedef struct 
 {
 	int fontSize;
-	char *fontEn;
-	char *fontZh;
 	ConfigColor inputCharColor;
 	ConfigColor outputCharColor;
 	ConfigColor charNoColor;
