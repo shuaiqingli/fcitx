@@ -27,11 +27,10 @@
 #include <stdlib.h>
 #endif
 
+#include "tools/utf8.h"
 #include "../src/core/internalVersion.c"
 
 typedef int     Bool;
-
-#define MAX_CODE_LENGTH 30
 
 #define True	1
 #define False	0
@@ -45,6 +44,13 @@ typedef int     Bool;
 #define STR_RULE 6
 
 #define CONST_STR_SIZE 7
+
+#define MAX_CODE_LENGTH  30
+#define PHRASE_MAX_LENGTH 10
+#define FH_MAX_LENGTH  10
+#define TABLE_AUTO_SAVE_AFTER 1024
+#define AUTO_PHRASE_COUNT 10000
+#define SINGLE_HZ_COUNT 66000
 
 char* strConst[CONST_STR_SIZE] = { "键码=", "码长=", "规避字符=", "拼音=", "拼音长度=" , "[数据]", "[组词规则]"};
 int strLength[CONST_STR_SIZE];
@@ -168,6 +174,11 @@ int main (int argc, char *argv[])
 	else if (strstr (pstr, strConst[STR_CODELEN])) {
 	    pstr += strLength[STR_CODELEN];
 	    iCodeLength = atoi (pstr);
+        if (iCodeLength > MAX_CODE_LENGTH)
+        {
+            iCodeLength = MAX_CODE_LENGTH;
+            printf("Max Code Length is %d\n", MAX_CODE_LENGTH);
+        }
 	}
 	else if (strstr (pstr, strConst[STR_IGNORECHAR])) {
 	    pstr += strLength[STR_IGNORECHAR];
@@ -336,8 +347,11 @@ int main (int argc, char *argv[])
 
 	if (((strCode[0] != cPinyinKey) && (strlen (strCode) > iCodeLength)) || ((strCode[0] == cPinyinKey) && (strlen (strCode) > (iPYCodeLength + 1))))
 	    continue;
-	if (strlen (strHZ) > 20)	//最长词组长度为10个汉字
+	if (utf8_strlen (strHZ) > PHRASE_MAX_LENGTH || strlen(strCode) > iCodeLength)	//最长词组长度为10个汉字
+    {
+        printf("Delete:  %s %s, Too long\n", strCode, strHZ);
 	    continue;
+    }
 
 	bPY = False;
 	if (strCode[0] == cPinyinKey) {
