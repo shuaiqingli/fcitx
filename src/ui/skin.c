@@ -413,22 +413,24 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
         if (inputWindow.bShowCursor)
         {
             int length = strlen(msgup->msg[i].strMsg);
-            if (iChar > length)
-                iChar -= length;
-            else
+            if (iChar >= 0)
             {
-                char strTemp[MESSAGE_MAX_LENGTH];
-                char *strGBKT = NULL;
-                strncpy(strTemp, msgup->msg[i].strMsg, iChar);
-                strTemp[iChar] = '\0';
-                if (bUseGBKT)
-                    strGBKT = ConvertGBKSimple2Tradition(strTemp);
-                else
-                    strGBKT = strTemp;
-                cursor_pos= posUp[i]
-                    + StringWidthWithContext(inputWindow.c_font[msgup->msg[i].type], strGBKT) + 2;	
-                if (bUseGBKT)
-                    free(strGBKT);
+                if (iChar < length)
+                {
+                    char strTemp[MESSAGE_MAX_LENGTH];
+                    char *strGBKT = NULL;
+                    strncpy(strTemp, msgup->msg[i].strMsg, iChar);
+                    strTemp[iChar] = '\0';
+                    if (bUseGBKT)
+                        strGBKT = ConvertGBKSimple2Tradition(strTemp);
+                    else
+                        strGBKT = strTemp;
+                    cursor_pos= posUp[i]
+                        + StringWidthWithContext(inputWindow.c_font[msgup->msg[i].type], strGBKT) + 2;	
+                    if (bUseGBKT)
+                        free(strGBKT);
+                }
+                iChar -= length;
             }
         }
 

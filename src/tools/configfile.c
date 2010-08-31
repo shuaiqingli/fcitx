@@ -81,7 +81,7 @@ CONFIG_BINDING_REGISTER("Hotkey", "NextPageKey", hkNextPage);
 CONFIG_BINDING_REGISTER_WITH_FILTER("Hotkey", "SecondThirdCandWordKey", str2nd3rdCand, Filter2nd3rdKey);
 CONFIG_BINDING_REGISTER("Hotkey", "SaveAllKey", hkSaveAll);
 #ifdef _ENABLE_RECORDING
-CONFIG_BINDING_REGISTER("Hotkey", "RecordingKey", hkRecording);
+CONFIG_BINDING_REGISTER("Hotkey", "SetRecordingKey", hkRecording);
 CONFIG_BINDING_REGISTER("Hotkey", "ResetRecordingKey", hkResetRecording);
 #endif
 CONFIG_BINDING_REGISTER("InputMethod", "PinyinOrder", inputMethods[IM_PY]);
