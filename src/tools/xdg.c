@@ -42,6 +42,35 @@
 #include "tools/xdg.h"
 #include "fcitx-config/sprintf.h"
 
+static void make_path (const char *path);
+
+void
+make_path (const char *path)
+{
+    char opath[PATH_MAX];
+    char *p;
+    size_t len;
+    
+    strncpy(opath, path, sizeof(opath));
+    opath[PATH_MAX - 1] = '\0';
+    len = strlen(opath);
+    while(opath[len - 1] == '/')
+    {
+        opath[len - 1] = '\0';
+        len --;
+    }
+    for(p = opath; *p; p++)
+        if(*p == '/') {
+            *p = '\0';
+            if(access(opath, F_OK))
+                mkdir(opath, S_IRWXU);
+            *p = '/';
+        }
+    if(access(opath, F_OK))         /* if path is not terminated with / */
+        mkdir(opath, S_IRWXU);
+}
+
+
 /** 
  * @brief 获得xdg路径的数据文件
  * 
@@ -139,8 +168,7 @@ FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len
 
             char *dirc = strdup(buf);
             char *dir = dirname(dirc);
-            if (access(dir, 0))
-                mkdir(dir, S_IRWXU);
+            make_path(dir);
             fp = fopen (buf, mode);
             free(dirc);
         }

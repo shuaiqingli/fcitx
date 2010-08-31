@@ -1,7 +1,7 @@
 tabledir = $(pkgdatadir)/data/table
 
 mb_data = cj.mb erbi.mb wanfeng.mb wbpy.mb qxm.mb db.mb wbx.mb zrm.mb
-mb_conf = bingcan.conf db.conf erbi.conf wanfeng.conf  wbpy.conf wbx.conf zrm.conf cangjie.conf disable-table.conf.template
+mb_conf = qxm.conf db.conf erbi.conf wanfeng.conf  wbpy.conf wbx.conf zrm.conf cangjie.conf disable-table.conf.template
 
 table_DATA = $(mb_data) $(mb_conf)
 EXTRA_DIST = $(table_DATA)

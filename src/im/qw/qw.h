@@ -22,7 +22,7 @@
 
 #include "core/ime.h"
 
-#define strNameOfQuwei "Quwei"
+#define strNameOfQuwei __("Quwei")
 #define strIconNameOfQuwei "quwei"
 
 INPUT_RETURN_VALUE DoQWInput(int iKey);

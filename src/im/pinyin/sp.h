@@ -20,7 +20,7 @@
 #ifndef _SP_H
 #define _SP_H
 
-#define strNameOfShuangpin "Shuangpin"
+#define strNameOfShuangpin __("Shuangpin")
 #define strIconNameOfShuangpin "shuangpin"
 
 typedef enum {

@@ -37,7 +37,7 @@
 #define AUTOSAVE_ORDER_COUNT  	1024
 #define AUTOSAVE_FREQ_COUNT  	32
 
-#define strNameOfPinyin "Pinyin"
+#define strNameOfPinyin __("Pinyin")
 #define strIconNameOfPinyin "pinyin"
 
 typedef enum FIND_MODE {

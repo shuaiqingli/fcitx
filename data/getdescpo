@@ -2,8 +2,16 @@
 filename=desc.po
 dir=`pwd`
 filename=`basename $filename`
+
+rm desc.po; touch desc.po
+
 cd ..
 find data -iname "*.desc" | while read f
 do
     awk '/^[\t ]*Description=/ { print "\n#: '$f':" NR"\n" "msgid \"" substr($0, 13)"\"\n" "msgstr \"\""}' $f >> $dir/$filename
+done
+
+find data/table -name "*.conf" | while read f
+do
+    awk '/^[\t ]*Name=/ { print "\n#: '$f':" NR"\n" "msgid \"" substr($0, 6)"\"\n" "msgstr \"\""}' $f >> $dir/$filename
 done

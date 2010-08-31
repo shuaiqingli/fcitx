@@ -42,6 +42,7 @@
 
 #include "fcitx-config/uthash.h"
 #define _(msgid) gettext(msgid)
+#define __(msgid) (msgid)
 
 typedef enum ErrorLevel
 {

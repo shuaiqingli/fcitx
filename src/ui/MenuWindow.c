@@ -387,7 +387,7 @@ void MainMenuEvent(int x,int y)
 			for(i=0;i<iIMCount;i++)
 			{
 				memset(tmpstr,0,sizeof(tmpstr));
-				sprintf(tmpstr,"%d.%s",i+1,im[i].strName);
+				sprintf(tmpstr,"%d.%s",i+1,_(im[i].strName));
 				//printf("%s\n",tmpstr);
 				SetMeueShell(&imMenu.shell[i],tmpstr,0,menushell);
 			}
