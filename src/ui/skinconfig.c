@@ -9,10 +9,13 @@ CONFIG_BINDING_REGISTER("SkinInfo","Author",skinInfo.skinAuthor);
 CONFIG_BINDING_REGISTER("SkinInfo","Desc",skinInfo.skinDesc);
 	
 CONFIG_BINDING_REGISTER("SkinFont","FontSize",skinFont.fontSize);
-CONFIG_BINDING_REGISTER("SkinFont","InputCharColor",skinFont.inputCharColor);
-CONFIG_BINDING_REGISTER("SkinFont","OutputCharColor",skinFont.outputCharColor);
-CONFIG_BINDING_REGISTER("SkinFont","CharNoColor",skinFont.charNoColor);
-CONFIG_BINDING_REGISTER("SkinFont","FirstCharColor",skinFont.firstCharColor);
+CONFIG_BINDING_REGISTER("SkinFont","TipColor",skinFont.fontColor[MSG_TIPS]);
+CONFIG_BINDING_REGISTER("SkinFont","InputColor",skinFont.fontColor[MSG_INPUT]);
+CONFIG_BINDING_REGISTER("SkinFont","IndexColor",skinFont.fontColor[MSG_INDEX]);
+CONFIG_BINDING_REGISTER("SkinFont","UserPhraseColor",skinFont.fontColor[MSG_USERPHR]);
+CONFIG_BINDING_REGISTER("SkinFont","FirstCandColor",skinFont.fontColor[MSG_FIRSTCAND]);
+CONFIG_BINDING_REGISTER("SkinFont","CodeColor",skinFont.fontColor[MSG_CODE]);
+CONFIG_BINDING_REGISTER("SkinFont","OtherColor",skinFont.fontColor[MSG_OTHER]);
 	
 CONFIG_BINDING_REGISTER("SkinMainBar","BackImg",skinMainBar.backImg);
 CONFIG_BINDING_REGISTER("SkinMainBar","Logo",skinMainBar.logo);

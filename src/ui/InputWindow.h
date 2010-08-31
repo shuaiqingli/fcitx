@@ -49,15 +49,15 @@
 #define MESSAGE_TYPE_COUNT	7
 
 typedef enum {
-    MSG_TIPS,			//提示文本
-    MSG_INPUT,			//用户的输入
-    MSG_INDEX,			//候选字前面的序号
-    MSG_FIRSTCAND,		//第一个候选字
-    MSG_USERPHR,		//用户词组
-    MSG_CODE,			//显示的编码
-    MSG_OTHER,			//其它文本
+    MSG_TIPS = 0,			//提示文本
+    MSG_INPUT = 1,			//用户的输入
+    MSG_INDEX = 2,			//候选字前面的序号
+    MSG_FIRSTCAND = 3,		//第一个候选字
+    MSG_USERPHR = 4,		//用户词组
+    MSG_CODE = 5,			//显示的编码
+    MSG_OTHER = 6,			//其它文本
 #ifdef _ENABLE_RECORDING
-    MSG_RECORDING		//记录提示
+    MSG_RECORDING = 7              //记录提示
 #endif
 } MSG_TYPE;
 
@@ -92,7 +92,8 @@ typedef struct InputWindow {
     Pixmap pm_input_bar;
     
     cairo_surface_t *cs_input_bar;
-    cairo_t *c_back, *c_eng, *c_first, *c_other, *c_cursor;
+    cairo_t *c_back, *c_cursor;
+    cairo_t *c_font[8];
 } InputWindow;
 
 extern InputWindow inputWindow;

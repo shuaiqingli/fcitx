@@ -33,6 +33,7 @@
 #include "tools/tools.h"
 #include "tools/xdg.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/profile.h"
 #include "fcitx-config/fcitx-config.h"
 #include <pthread.h>
 #ifdef _ENABLE_TRAY
@@ -322,39 +323,25 @@ void destroy_img()
 */
 void load_input_msg()
 {
-	ConfigColor in_char,first_char,out_char,cursorColor;
+    int i = 0;
 	int fontSize;
 	
 	fontSize=sc.skinFont.fontSize;
 	
-	in_char = sc.skinFont.inputCharColor;
-	out_char = sc.skinFont.outputCharColor;
-	first_char = sc.skinFont.firstCharColor;
-	cursorColor = sc.skinInputBar.cursorColor;
-//输入条背景图画笔
-//	c=cairo_create(cs_input_bar);
+	ConfigColor cursorColor = sc.skinInputBar.cursorColor;
+    //输入条背景图画笔
 	inputWindow.c_back = cairo_create(inputWindow.cs_input_bar);
-	
-//拼音画笔
-	inputWindow.c_eng = cairo_create(inputWindow.cs_input_bar);
-	cairo_set_source_rgb(inputWindow.c_eng, in_char.r, in_char.g, in_char.b);
-	cairo_select_font_face(inputWindow.c_eng, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_BOLD);
-	cairo_set_font_size(inputWindow.c_eng, fontSize);
 
+    for (i = 0; i < 7 ; i ++)
+    {
+        inputWindow.c_font[i] = cairo_create(inputWindow.cs_input_bar);
+        cairo_set_source_rgb(inputWindow.c_font[i], sc.skinFont.fontColor[i].r, sc.skinFont.fontColor[i].g, sc.skinFont.fontColor[i].b);
+        cairo_select_font_face(inputWindow.c_font[i], gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
+        cairo_set_font_size(inputWindow.c_font[i], fontSize);
+    }
+    inputWindow.c_font[7] = inputWindow.c_font[0];
 
-//第一个字画笔
-	inputWindow.c_first=cairo_create(inputWindow.cs_input_bar);
-	cairo_set_source_rgb(inputWindow.c_first,first_char.r, first_char.g, first_char.b);
-	cairo_select_font_face(inputWindow.c_first, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(inputWindow.c_first, fontSize);
-
-//其他字画笔	
-	inputWindow.c_other = cairo_create(inputWindow.cs_input_bar);
-	cairo_set_source_rgb(inputWindow.c_other, out_char.r, out_char.g, out_char.b);
-	cairo_select_font_face(inputWindow.c_other, gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(inputWindow.c_other, fontSize);
-
-//光标画笔
+    //光标画笔
 	inputWindow.c_cursor=cairo_create(inputWindow.cs_input_bar);
 	cairo_set_source_rgb(inputWindow.c_cursor, cursorColor.r, cursorColor.g, cursorColor.b);
 	cairo_set_line_width (inputWindow.c_cursor, 1);
@@ -391,9 +378,14 @@ void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse)
 	}
 }
 
-void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth)
+void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 {
-    char p[MESSAGE_MAX_LENGTH];
+    int i;
+    Bool bUseGBKT = fcitxProfile.bUseGBKT;
+    char *strUp[MAX_MESSAGE_COUNT];
+    char *strDown[MAX_MESSAGE_COUNT];
+    int posUp[MAX_MESSAGE_COUNT];
+    int posDown[MAX_MESSAGE_COUNT];
 	int png_width,png_height;
 	int repaint_times=0,remain_width=0;
 	int input_bar_len=0;
@@ -402,36 +394,63 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	RESIZERULE flag=0;
 	int cursor_pos=0;
 	int up_len,down_len;
-	int down_str_pos;
     int iChar = iCursorPos;
     cairo_t *c;
 
 	resizePos=sc.skinInputBar.resizePos;
 	resizeWidth=(sc.skinInputBar.resizeWidth==0)?20:sc.skinInputBar.resizeWidth;
 	flag=sc.skinInputBar.resize;
-	
-	up_len=StringWidthWithContext(inputWindow.c_eng ,up_str);
 
-    if (inputWindow.bShowCursor)
+    up_len = 0;
+    for (i = 0; i < msgup->msgCount ; i++)
     {
-        strncpy(p, up_str, iChar);
-        p[iChar] = '\0';
-        cursor_pos=sc.skinInputBar.layoutLeft
-            + StringWidthWithContext(inputWindow.c_eng, p) + 2;	
+        if (bUseGBKT)
+            strUp[i] = ConvertGBKSimple2Tradition(msgup->msg[i].strMsg);
+        else
+            strUp[i] = msgup->msg[i].strMsg;
+        posUp[i] = sc.skinInputBar.layoutLeft + up_len;
+        up_len += StringWidthWithContext(inputWindow.c_font[msgup->msg[i].type] ,strUp[i]);
+        if (inputWindow.bShowCursor)
+        {
+            int length = strlen(msgup->msg[i].strMsg);
+            if (iChar > length)
+                iChar -= length;
+            else
+            {
+                char strTemp[MESSAGE_MAX_LENGTH];
+                char *strGBKT = NULL;
+                strncpy(strTemp, msgup->msg[i].strMsg, iChar);
+                strTemp[iChar] = '\0';
+                if (bUseGBKT)
+                    strGBKT = ConvertGBKSimple2Tradition(strTemp);
+                else
+                    strGBKT = strTemp;
+                cursor_pos= posUp[i]
+                    + StringWidthWithContext(inputWindow.c_font[msgup->msg[i].type], strGBKT) + 2;	
+                if (bUseGBKT)
+                    free(strGBKT);
+            }
+        }
+
     }
 
-	down_len= StringWidthWithContext(inputWindow.c_first ,first_str);
-	down_str_pos=down_len+10;
-	
-	down_len+= StringWidthWithContext(inputWindow.c_other, down_str);
-	
+    down_len = 0;
+    for (i = 0; i < msgdown->msgCount ; i++)
+    {
+        if (bUseGBKT)
+            strDown[i] = ConvertGBKSimple2Tradition(msgdown->msg[i].strMsg);
+        else
+            strDown[i] = msgdown->msg[i].strMsg;
+        posDown[i] = sc.skinInputBar.layoutLeft + down_len;
+        down_len += StringWidthWithContext(inputWindow.c_font[msgdown->msg[i].type] ,strDown[i]);
+    }
+
 	input_bar_len=(up_len<down_len)?down_len:up_len;
 	input_bar_len+=sc.skinInputBar.layoutLeft+sc.skinInputBar.layoutRight;
 	//输入条长度应该比背景图长度要长,比最大长度要短
 	input_bar_len=(input_bar_len>sc.skinInputBar.backImg.width)?input_bar_len:sc.skinInputBar.backImg.width;
 	input_bar_len=(input_bar_len>=INPUT_BAR_MAX_LEN)?INPUT_BAR_MAX_LEN:input_bar_len;
 	*iwidth=input_bar_len;
-
 
 	png_width=sc.skinInputBar.backImg.width;
 	png_height=sc.skinInputBar.backImg.height;
@@ -545,11 +564,17 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 			cairo_paint_with_alpha(inputWindow.c_back,0.5);
 	}
 
-    OutputStringWithContext(inputWindow.c_eng, up_str, sc.skinInputBar.layoutLeft, sc.skinInputBar.inputPos );
+    for (i = 0; i < msgup->msgCount ; i++)
+    {
+        OutputStringWithContext(inputWindow.c_font[msgup->msg[i].type], strUp[i], posUp[i], sc.skinInputBar.inputPos );
+        if (bUseGBKT) free(strUp[i]);
+    }
 
-    OutputStringWithContext(inputWindow.c_first , first_str, sc.skinInputBar.layoutLeft,sc.skinInputBar.outputPos);
-
-    OutputStringWithContext(inputWindow.c_other, down_str, sc.skinInputBar.layoutLeft+down_str_pos,sc.skinInputBar.outputPos);
+    for (i = 0; i < msgdown->msgCount ; i++)
+    {
+        OutputStringWithContext(inputWindow.c_font[msgdown->msg[i].type], strDown[i], posDown[i], sc.skinInputBar.outputPos );
+        if (bUseGBKT) free(strDown[i]);
+    }
 	
 	//画光标
 	if(inputWindow.bShowCursor )
@@ -560,6 +585,7 @@ void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int *
 	}
 	
 	cairo_destroy(c);
+
 }
 
 /*

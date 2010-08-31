@@ -346,8 +346,12 @@ int main (int argc, char *argv[])
 	}
 
 	if (((strCode[0] != cPinyinKey) && (strlen (strCode) > iCodeLength)) || ((strCode[0] == cPinyinKey) && (strlen (strCode) > (iPYCodeLength + 1))))
+    {
+        printf("Delete:  %s %s, Too long\n", strCode, strHZ);
 	    continue;
-	if (utf8_strlen (strHZ) > PHRASE_MAX_LENGTH || strlen(strCode) > iCodeLength)	//最长词组长度为10个汉字
+    }
+
+	if (utf8_strlen (strHZ) > PHRASE_MAX_LENGTH)	//最长词组长度为10个汉字
     {
         printf("Delete:  %s %s, Too long\n", strCode, strHZ);
 	    continue;

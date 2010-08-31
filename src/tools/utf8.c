@@ -213,7 +213,7 @@ int utf8_get_char_validated (const char *p,
     else
         return result;
 }
-int utf8_check_string(char *s)
+int utf8_check_string(const char *s)
 {
     while(*s)
     {

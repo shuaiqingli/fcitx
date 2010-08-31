@@ -2403,7 +2403,7 @@ void SavePYFreq(void)
         return;
 
     isSavingPYFreq = True;
-    fp = GetXDGFileData(TEMP_FILE, "wb", NULL);
+    fp = GetXDGFileData(TEMP_FILE, "wb", &pstr);
     if (!fp) {
         isSavingPYFreq = False;
         FcitxLog(ERROR, _("Cannot Save Frequent word: %s"), pstr);

@@ -13,16 +13,25 @@ Type=String
 [SkinFont/FontSize]
 Type=Integer
 
-[SkinFont/InputCharColor]
+[SkinFont/TipColor]
 Type=Color
 
-[SkinFont/OutputCharColor]
+[SkinFont/InputColor]
 Type=Color
 
-[SkinFont/CharNoColor]
+[SkinFont/IndexColor]
 Type=Color
 
-[SkinFont/FirstCharColor]
+[SkinFont/FirstCandColor]
+Type=Color
+
+[SkinFont/UserPhraseColor]
+Type=Color
+
+[SkinFont/CodeColor]
+Type=Color
+
+[SkinFont/OtherColor]
 Type=Color
 
 [SkinMainBar/BackImg]

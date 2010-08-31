@@ -24,6 +24,7 @@ static void FilterSwitchKey(void *value, ConfigSync sync);
 static void FilterTriggerKey(void *value, ConfigSync sync);
 static void FilterCopyFontEn(void *value, ConfigSync sync);
 static void FilterCopyFontZh(void *value, ConfigSync sync);
+static void Filter2nd3rdKey(void *value, ConfigSync sync);
 static void SetTriggerKeys (char **str, int length);
 static Bool MyStrcmp (char *str1, char *str2);
 static void FilterGetWordFromPhrase(void *value, ConfigSync sync);
@@ -77,7 +78,7 @@ CONFIG_BINDING_REGISTER("Hotkey", "FullWidthSwitchKey", hkCorner);
 CONFIG_BINDING_REGISTER("Hotkey", "ChnPunSwitchKey", hkPunc);
 CONFIG_BINDING_REGISTER("Hotkey", "PrevPageKey", hkPrevPage);
 CONFIG_BINDING_REGISTER("Hotkey", "NextPageKey", hkNextPage);
-CONFIG_BINDING_REGISTER("Hotkey", "SecondThirdCandWordKey", str2nd3rdCand);
+CONFIG_BINDING_REGISTER_WITH_FILTER("Hotkey", "SecondThirdCandWordKey", str2nd3rdCand, Filter2nd3rdKey);
 CONFIG_BINDING_REGISTER("Hotkey", "SaveAllKey", hkSaveAll);
 #ifdef _ENABLE_RECORDING
 CONFIG_BINDING_REGISTER("Hotkey", "RecordingKey", hkRecording);
@@ -120,7 +121,7 @@ Bool MyStrcmp (char *str1, char *str2)
 
 void FilterCopyFontEn(void *value, ConfigSync sync)
 {
-    char *pstr = (char *)value;
+    char *pstr = *(char **)value;
     if (sync == Raw2Value)
     {
         if (gs.fontEn)
@@ -131,7 +132,7 @@ void FilterCopyFontEn(void *value, ConfigSync sync)
 
 void FilterCopyFontZh(void *value, ConfigSync sync)
 {
-    char *pstr = (char *)value;
+    char *pstr = *(char **)value;
     if (sync == Raw2Value)
     {
         if (gs.fontZh)
@@ -142,15 +143,22 @@ void FilterCopyFontZh(void *value, ConfigSync sync)
 
 void FilterGetWordFromPhrase(void *value, ConfigSync sync)
 {
-    char *pstr = (char*) value;
+    char *pstr = *(char**) value;
     if(sync == Raw2Value){
-        fc.cPYYCDZ[0] = pstr[0];
-        fc.cPYYCDZ[1] = pstr[1];
+        char a = '\0';
+        char b = '\0';
+        if (strlen(pstr) >= 1)
+            a = pstr[0];
+        if (strlen(pstr) >= 2)
+            b = pstr[1];
+        fc.cPYYCDZ[0] = a;
+        fc.cPYYCDZ[1] = b;
     }
 }
+
 void Filter2nd3rdKey(void *value, ConfigSync sync)
 {
-    char *pstr = (char*) value;
+    char *pstr = *(char**) value;
 
     if(sync == Raw2Value){
         if (!strcasecmp (pstr, "SHIFT")) {

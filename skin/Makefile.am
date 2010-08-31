@@ -1,1 +1,1 @@
-SUBDIRS = default snow dark
+SUBDIRS = default classic snow dark

@@ -611,7 +611,7 @@ IsInRspArea(int x0, int y0, FcitxImage img)
 }
 
 int
-StringWidth(char *str, char *font, int fontSize)
+StringWidth(const char *str, const char *font, int fontSize)
 {
     if (!str || str[0] == 0)
         return 0;
@@ -631,7 +631,7 @@ StringWidth(char *str, char *font, int fontSize)
 }
 
 int
-StringWidthWithContext(cairo_t * c, char *str)
+StringWidthWithContext(cairo_t * c, const char *str)
 {
     if (!str || str[0] == 0)
         return 0;
@@ -639,12 +639,12 @@ StringWidthWithContext(cairo_t * c, char *str)
         return 0;
     cairo_text_extents_t extents;
     cairo_text_extents(c, str, &extents);
-    int             width = extents.width;
+    int             width = extents.x_advance;
     return width;
 }
 
 int
-FontHeight(char *font)
+FontHeight(const char *font)
 {
     cairo_surface_t *surface =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, 10, 10);
@@ -675,7 +675,7 @@ FontHeightWithContext(cairo_t * c)
  * 以指定的颜色在窗口的指定位置输出字串
  */
 void
-OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
+OutputString(cairo_t * c, const char *str, const char *font, int fontSize, int x,
              int y, ConfigColor * color)
 {
     if (!str || str[0] == 0)
@@ -694,7 +694,7 @@ OutputString(cairo_t * c, char *str, char *font, int fontSize, int x,
 }
 
 void
-OutputStringWithContext(cairo_t * c, char *str, int x, int y)
+OutputStringWithContext(cairo_t * c, const char *str, int x, int y)
 {
     if (!str || str[0] == 0)
         return;

@@ -200,6 +200,7 @@ AC_CONFIG_FILES([
            skin/default/Makefile
            skin/dark/Makefile
            skin/snow/Makefile
+           skin/classic/Makefile
            png/Makefile
            lib/Makefile
            src/version.h

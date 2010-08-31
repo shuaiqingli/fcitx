@@ -69,10 +69,7 @@ typedef struct
 typedef struct 
 {
 	int fontSize;
-	ConfigColor inputCharColor;
-	ConfigColor outputCharColor;
-	ConfigColor charNoColor;
-	ConfigColor firstCharColor;
+    ConfigColor fontColor[7];
 } SkinFont;
 
 typedef struct 
@@ -189,7 +186,7 @@ void load_input_img();
 void load_input_msg();
 void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse);
 void destroy_a_img(cairo_surface_t ** png);
-extern void draw_input_bar(char * up_str,char *first_str,char * down_str,unsigned int * iwidth);
+extern void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth);
 extern void set_mouse_status(MouseE m);
 /**
 * 加载皮肤配置文件

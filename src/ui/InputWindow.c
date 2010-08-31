@@ -232,55 +232,9 @@ void CalInputWindow (void)
 
 void DrawInputWindow(void)
 {
-	int i;
-	char up_str[MESSAGE_MAX_LENGTH]={0};
-	char first_str[MESSAGE_MAX_LENGTH]={0};
-	char down_str[MESSAGE_MAX_LENGTH]={0};
-	char * strGBKT=NULL;
 	GC gc = XCreateGC( dpy, inputWindow.window, 0, NULL );
 	
-	for (i = 0; i < messageUp.msgCount; i++)
-	{
-//		printf("messageUp:%s\n",messageUp[i].strMsg);
-		strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageUp.msg[i].strMsg) : messageUp.msg[i].strMsg;
-		strcat(up_str,strGBKT);
-		
-		if (fcitxProfile.bUseGBKT)
-	   		free (strGBKT);
-	}
-	
-	strGBKT=NULL;
-
-    if ( messageDown.msgCount <= 0)
-        strcpy(first_str, "");
-    else
-    {
-        strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[0].strMsg) : messageDown.msg[0].strMsg;
-        strcpy(first_str,strGBKT);
-        if (fcitxProfile.bUseGBKT)
-            free(strGBKT);
-        if (messageDown.msgCount >= 2)
-        {
-            strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[1].strMsg) : messageDown.msg[1].strMsg;
-            strcat(first_str,strGBKT);
-            if (fcitxProfile.bUseGBKT)
-                free(strGBKT);
-        }
-        strGBKT=NULL;
-    }
-	
-	for (i = 2; i < messageDown.msgCount; i++) 
-	{
-//		printf("%d:%s\n",i, messageDown[i].strMsg);
-	   	strGBKT = fcitxProfile.bUseGBKT ? ConvertGBKSimple2Tradition (messageDown.msg[i].strMsg) : messageDown.msg[i].strMsg;
-	   	strcat(down_str,strGBKT);
-	   	
-	   	if (fcitxProfile.bUseGBKT)
-	   		free (strGBKT);
-	}
-  
-	draw_input_bar(up_str,first_str,down_str,&inputWindow.iInputWindowWidth);
-//  printf("%s: %s: %s\n",up_str,first_str,down_str);
+	draw_input_bar(&messageUp, &messageDown ,&inputWindow.iInputWindowWidth);
 	XResizeWindow(
             dpy,
             inputWindow.window,
@@ -427,10 +381,11 @@ void MessageConcat(Messages* message, int position, char* text)
 
 void DestroyInputWindow()
 {
+    int i = 0;
     cairo_destroy(inputWindow.c_back);
-	cairo_destroy(inputWindow.c_eng);
-	cairo_destroy(inputWindow.c_first);
-	cairo_destroy(inputWindow.c_other);
+
+    for ( i = 0 ; i < 7; i ++)
+        cairo_destroy(inputWindow.c_font[i]);
 	cairo_destroy(inputWindow.c_cursor);
 
     cairo_surface_destroy(inputWindow.cs_input_bar);
