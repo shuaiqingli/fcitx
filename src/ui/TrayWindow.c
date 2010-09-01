@@ -103,16 +103,24 @@ void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
         skinImg = &sc.skinTrayIcon.inactive;
     }
 
-
-    /* 清空窗口 */
     c=cairo_create(tray.cs);
-    cairo_scale(c, ((double) tray.size) / skinImg->height, ((double) tray.size) / skinImg->width);
-	cairo_set_source_rgba(c, 0, 0, 0, 0);
-    cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(c);
+
+    XVisualInfo* vi = TrayGetVisual(dpy, &tray);
+    if (vi && vi->visual)
+    {
+        /* 清空窗口 */
+        cairo_set_source_rgba(c, 0, 0, 0, 0);
+        cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(c);
+    }
+    else
+    {
+        XClearArea (dpy, tray.window, x, y, w, h, False);
+    }
 
     if( strlen(skinImg->img_name) != 0 && strcmp( skinImg->img_name ,"NONE.img") != 0)
     {
+        cairo_scale(c, ((double) tray.size) / skinImg->height, ((double) tray.size) / skinImg->width);
         cairo_set_source_surface(c, png_surface, x , y );
         cairo_set_operator(c, CAIRO_OPERATOR_OVER);
         cairo_paint_with_alpha(c,1);
