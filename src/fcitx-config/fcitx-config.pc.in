@@ -9,4 +9,4 @@ Version: @PACKAGE_VERSION@
 Requires: x11
 Requires.private: x11
 Cflags: -I${includedir}
-Libs: -L${libdir} -lfcitx_config
+Libs: -L${libdir} -lfcitx-config

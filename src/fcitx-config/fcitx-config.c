@@ -32,6 +32,7 @@
 #include <string.h>
 #include <search.h>
 #include "fcitx-config/sprintf.h"
+#include "fcitx-config/cutils.h"
 #include "fcitx-config/fcitx-config.h"
 #include "tools/tools.h"
 

@@ -55,6 +55,7 @@
 #include "fcitx-config/configfile.h"
 #include "tools/xdg.h"
 #include "ui/AboutWindow.h"
+#include "fcitx-config/cutils.h"
 
 Display        *dpy;
 int             iScreen;

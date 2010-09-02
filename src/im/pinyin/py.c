@@ -41,6 +41,7 @@
 #include "im/pinyin/sp.h"
 #include "tools/utf8.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/cutils.h"
 #include "fcitx-config/configfile.h"
 #include "tools/xdg.h"
 

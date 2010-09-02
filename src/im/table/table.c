@@ -44,6 +44,7 @@
 #include <dirent.h>
 #include "tools/xdg.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/cutils.h"
 
 static void FreeTableConfig(void *v);
 UT_icd table_icd = {sizeof(TABLE), NULL ,NULL, FreeTableConfig};
@@ -151,7 +152,8 @@ void LoadTableInfo (void)
 				if (!string)
 				{
 					char *bStr = strdup(drt->d_name);
-					string = malloc0(sizeof(StringHashSet));
+					string = malloc(sizeof(StringHashSet));
+                    memset(string, 0, sizeof(StringHashSet));
 					string->name = bStr;
 					HASH_ADD_KEYPTR(hh, sset, string->name, strlen(string->name), string);
 				}
@@ -161,7 +163,7 @@ void LoadTableInfo (void)
         closedir(dir);
     }
 
-    char **paths = malloc0(sizeof(char*) *len);
+    char **paths = malloc(sizeof(char*) *len);
     for (i = 0;i < len ;i ++)
         paths[i] = malloc(sizeof(char) *PATH_MAX);
     StringHashSet* string;
@@ -338,6 +340,7 @@ Bool LoadTableDict (void)
 	fread (strHZ, sizeof (char), iTemp, fpDict);
 	recTemp = (RECORD *) malloc (sizeof (RECORD));
 	recTemp->strCode = (char *) malloc0 (sizeof (char) * (table->iPYCodeLength + 1));
+    memset(recTemp->strCode, 0, sizeof (char) * (table->iPYCodeLength + 1));
 	strcpy (recTemp->strCode, strCode);
 	recTemp->strHZ = (char *) malloc (sizeof (char) * iTemp);
 	strcpy (recTemp->strHZ, strHZ);

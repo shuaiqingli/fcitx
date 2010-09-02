@@ -1,6 +1,7 @@
 #include "core/fcitx.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/fcitx-config.h"
+#include "fcitx-config/cutils.h"
 #include "tools/xdg.h"
 #include "tools/tools.h"
 #include "im/pinyin/PYFA.h"

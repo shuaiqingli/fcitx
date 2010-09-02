@@ -44,22 +44,10 @@
 #define _(msgid) gettext(msgid)
 #define __(msgid) (msgid)
 
-typedef enum ErrorLevel
-{
-    DEBUG,
-    ERROR,
-    INFO,
-    FATAL,
-    WARNING
-} ErrorLevel;
-
 typedef struct StringHashSet {
     char *name;
     UT_hash_handle hh;
 } StringHashSet;
-
-char *trim(char *s);
-void *malloc0(size_t bytes);
 
 void *custom_bsearch(const void *key, const void *base,
         size_t nmemb, size_t size, int accurate,
@@ -68,8 +56,6 @@ void *custom_bsearch(const void *key, const void *base,
 void FcitxInitThread();
 int FcitxLock();
 int FcitxUnlock();
-#define FcitxLog(e, fmt, arg...) FcitxLogFunc(e, __FILE__, __LINE__, fmt, ##arg)
-void FcitxLogFunc(ErrorLevel, const char* filename, const int line, const char* fmt, ...);
 
 int             CalculateRecordNumber (FILE * fpDict);
 void            SetSwitchKey (char *str);

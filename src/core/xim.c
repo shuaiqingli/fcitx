@@ -42,6 +42,7 @@
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/cutils.h"
 #include "tools/xdg.h"
 
 #define CHECK_ENV(env, value) (!getenv(env) || (0 != strcmp(getenv(env), (value))))

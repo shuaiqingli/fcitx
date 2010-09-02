@@ -23,6 +23,7 @@
 #include "core/xim.h"
 #include "tools/xdg.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/cutils.h"
 #include "version.h"
 
 #include <ctype.h>

@@ -20,6 +20,7 @@
 
 #include "core/fcitx.h"
 
+#include "fcitx-config/cutils.h"
 #include "tools/tools.h"
 #include "fcitx-config/hotkey.h"
 #include <string.h>

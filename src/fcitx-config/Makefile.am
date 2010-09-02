@@ -3,6 +3,7 @@ DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\"
 
 lib_LTLIBRARIES=libfcitx-config.la
 libfcitx_config_la_SOURCES= \
+						   cutils.c cutils.h \
 						   sprintf.c sprintf.h \
 						   fcitx-config.c fcitx-config.h \
 						   profile.h \

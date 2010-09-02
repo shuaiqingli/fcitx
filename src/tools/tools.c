@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <string.h>
-#include <ctype.h>
 #include <pthread.h>
 
 #include "core/ime.h"
@@ -49,6 +48,7 @@
 #include "im/table/table.h"
 #include "im/qw/qw.h"
 #include "fcitx-config/uthash.h"
+#include "fcitx-config/cutils.h"
 
 #include "utf8_in_gb18030.h"
 
@@ -223,48 +223,6 @@ int CalHZIndex (char *strHZ)
 }
 
 /** 
- * @brief 去除字符串首末尾空白字符
- * 
- * @param s
- * 
- * @return malloc的字符串，需要free
- */
-char *trim(char *s)
-{
-    register char *end;
-    register char csave;
-    
-    while (isspace(*s))                 /* skip leading space */
-        ++s;
-    end = strchr(s,'\0') - 1;
-    while (end >= s && isspace(*end))               /* skip trailing space */
-        --end;
-    
-    csave = end[1];
-    end[1] = '\0';
-    s = strdup(s);
-    end[1] = csave;
-    return (s);
-}
-
-/** 
- * @brief 返回申请后的内存，并清零
- * 
- * @param 申请的内存长度
- * 
- * @return 申请的内存指针
- */
-void *malloc0(size_t bytes)
-{
-    void *p = malloc(bytes);
-    if (!p)
-        return NULL;
-
-    memset(p, 0, bytes);
-    return p;
-}
-
-/** 
  * @brief 自定义的二分查找，和bsearch库函数相比支持不精确位置的查询
  * 
  * @param key
@@ -339,41 +297,3 @@ int FcitxUnlock()
     return 0;
 }
 
-/** 
- * @brief Fcitx记录Log的函数
- * 
- * @param ErrorLevel
- * @param fmt
- * @param ...
- */
-void FcitxLogFunc(ErrorLevel e, const char* filename, const int line, const char* fmt, ...)
-{
-#ifndef _DEBUG
-    if (e == DEBUG)
-        return;
-#endif
-    switch (e)
-    {
-        case INFO:
-            fprintf(stderr, _("Info:"));
-            break;
-        case ERROR:
-            fprintf(stderr, _("Error:"));
-            break;
-        case DEBUG:
-            fprintf(stderr, _("Debug:"));
-            break;
-        case WARNING:
-            fprintf(stderr, _("Warning:"));
-            break;
-        case FATAL:
-            fprintf(stderr, _("Fatal:"));
-            break;
-    }
-    va_list ap;
-    fprintf(stderr, "%s:%u-", filename, line);
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
-}

@@ -35,6 +35,7 @@
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/profile.h"
 #include "fcitx-config/fcitx-config.h"
+#include "fcitx-config/cutils.h"
 #include <pthread.h>
 #ifdef _ENABLE_TRAY
 #include "ui/TrayWindow.h"

@@ -43,6 +43,7 @@
 #include "tools/tools.h"
 #include "tools/xdg.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/cutils.h"
 
 #ifndef SIGUNUSED
 #define SIGUNUSED 32

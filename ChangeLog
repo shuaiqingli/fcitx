@@ -1,3 +1,6 @@
+2010-09-02: CSSlayer <wengxt@gmail.com>
+	* 调整libfcitx-config的函数
+
 2010-09-01: CSSlayer <wengxt@gmail.com>
     * 修复一些托盘程序背景颜色问题。（如trayer，但并未解决用im-switch启动的托盘背景为黑色的问题）
 

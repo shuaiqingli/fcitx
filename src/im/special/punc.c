@@ -27,6 +27,7 @@
 #include "core/ime.h"
 #include "tools/tools.h"
 #include "tools/xdg.h"
+#include "fcitx-config/cutils.h"
 
 ChnPunc        *chnPunc = (ChnPunc *) NULL;
 
