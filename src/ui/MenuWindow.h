@@ -30,7 +30,6 @@
 #include "im/pinyin/PYFA.h"
 #include "MainWindow.h"
 #include "TrayWindow.h"
-#include "tools/tools.h"
 #include <cairo.h>
 #include <cairo-xlib.h>
 #include <X11/Xlib.h>

@@ -21,7 +21,7 @@
 #include <config.h>
 #endif
 
-#include "ui/ui.h"
+#include "core/fcitx.h"
 
 #include <X11/Xlocale.h>
 #include <X11/Xutil.h>
@@ -36,6 +36,7 @@
 #endif
 #include <iconv.h>
 
+#include "ui/ui.h"
 #include "core/xim.h"
 #include "core/MyErrorsHandlers.h"
 #include "ui/MainWindow.h"
@@ -44,7 +45,6 @@
 #include "ui/MenuWindow.h"
 #include "im/special/vk.h"
 #include "core/IC.h"
-#include "tools/tools.h"
 #include "tools/utf8.h"
 #include "im/pinyin/sp.h"
 #include "ui/AboutWindow.h"

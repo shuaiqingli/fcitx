@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "tools/tools.h"
 #include "core/xim.h"
 #include "core/ime.h"
 #include "core/IC.h"
@@ -51,7 +52,6 @@
 #include "im/special/AutoEng.h"
 #include "im/extra/extra.h"
 #include "ui/skin.h"
-#include "tools/tools.h"
 #include "interface/DBus.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/profile.h"

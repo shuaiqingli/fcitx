@@ -32,8 +32,8 @@
 #include <machine/endian.h>
 #endif
 
-#include "core/ime.h"
 #include "tools/tools.h"
+#include "core/ime.h"
 #include "ui/InputWindow.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/PYFA.h"

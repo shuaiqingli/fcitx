@@ -14,7 +14,8 @@ libfcitx_configincludedir= $(includedir)/fcitx-config
 libfcitx_configinclude_HEADERS= \
 								fcitx-config.h \
 								configfile.h \
-								profile.h
+								profile.h \
+								hotkey.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = fcitx-config.pc

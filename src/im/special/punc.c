@@ -23,9 +23,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "core/fcitx.h"
+#include "tools/tools.h"
 #include "im/special/punc.h"
 #include "core/ime.h"
-#include "tools/tools.h"
 #include "tools/xdg.h"
 #include "fcitx-config/cutils.h"
 

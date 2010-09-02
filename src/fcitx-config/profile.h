@@ -1,7 +1,7 @@
 #ifndef FCITX_PROFILE_H
 #define FCITX_PROFILE_H
 
-#include "config.h"
+#include <fcitx-config/fcitx-config.h>
 
 typedef struct FcitxProfile
 {

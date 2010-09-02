@@ -26,7 +26,6 @@
 #include "im/pinyin/pyMapTable.h"
 #include "im/pinyin/pyParser.h"
 #include "ui/MainWindow.h"
-#include "tools/tools.h"
 #include "fcitx-config/configfile.h"
 #include "tools/xdg.h"
 

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <search.h>
+#include "fcitx-config/uthash.h"
 #include "fcitx-config/sprintf.h"
 #include "fcitx-config/cutils.h"
 #include "fcitx-config/fcitx-config.h"

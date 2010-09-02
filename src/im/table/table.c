@@ -21,6 +21,9 @@
 #include <config.h>
 #endif
 
+#include "core/fcitx.h"
+#include "tools/tools.h"
+
 #include "im/table/table.h"
 #include "im/special/punc.h"
 
@@ -33,7 +36,6 @@
 
 #include <X11/Xlib.h>
 
-#include "tools/tools.h"
 #include "ui/InputWindow.h"
 #include "im/pinyin/py.h"
 #include "im/pinyin/pyParser.h"

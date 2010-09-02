@@ -1,9 +1,9 @@
 #include <errno.h>
 
 #include "core/fcitx.h"
+#include "tools/tools.h"
 #include "fcitx-config/fcitx-config.h"
 #include "fcitx-config/profile.h"
-#include "tools/tools.h"
 #include "tools/xdg.h"
 #include "core/ime.h"
 

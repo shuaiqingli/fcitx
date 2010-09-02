@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <limits.h>
 
+#include "tools/tools.h"
 #include "im/special/QuickPhrase.h"
 #include "ui/InputWindow.h"
-#include "tools/tools.h"
 #include "tools/utarray.h"
 #include "tools/xdg.h"
 #include "fcitx-config/configfile.h"

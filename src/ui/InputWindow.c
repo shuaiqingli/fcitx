@@ -32,8 +32,6 @@
 #include "ui/ui.h"
 #include "core/ime.h"
 
-#include "tools/tools.h"
-
 #include "interface/DBus.h"
 #include "skin.h"
 #include "fcitx-config/profile.h"

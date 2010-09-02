@@ -32,7 +32,6 @@
 #include "ui/InputWindow.h"
 #include "core/IC.h"
 #include "core/xim.h"
-#include "tools/tools.h"
 #include "tools/xdg.h"
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"

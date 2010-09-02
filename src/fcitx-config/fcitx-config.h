@@ -31,8 +31,22 @@
 
 #include <X11/Xlib.h>
 #include <stdio.h>
-#include <fcitx-config/uthash.h>
 #include <fcitx-config/hotkey.h>
+
+#ifndef UTHASH_H
+
+typedef struct UT_hash_handle {
+   struct UT_hash_table *tbl;
+   void *prev;                       /* prev element in app order      */
+   void *next;                       /* next element in app order      */
+   struct UT_hash_handle *hh_prev;   /* previous hh in bucket order    */
+   struct UT_hash_handle *hh_next;   /* next hh in bucket order        */
+   void *key;                        /* ptr to enclosing struct's key  */
+   unsigned keylen;                  /* enclosing struct's key len     */
+   unsigned hashv;                   /* result of hash-fcn(key)        */
+} UT_hash_handle;
+
+#endif
 
 typedef struct ConfigColor
 {

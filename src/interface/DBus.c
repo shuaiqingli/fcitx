@@ -7,10 +7,10 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "tools/tools.h"
 #include "ui/InputWindow.h"
 #include "im/special/vk.h"
 #include "core/ime.h"
-#include "tools/tools.h"
 #include "core/xim.h"
 #include "interface/DBus.h"
 #include "fcitx-config/profile.h"

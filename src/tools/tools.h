@@ -32,17 +32,12 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "fcitx-config/uthash.h"
 #include "core/ime.h"
 
 #define TABLE_GBKS2T "gbks2t.tab"
 
 #include <stdlib.h>
-
-#include <libintl.h>
-
-#include "fcitx-config/uthash.h"
-#define _(msgid) gettext(msgid)
-#define __(msgid) (msgid)
 
 typedef struct StringHashSet {
     char *name;

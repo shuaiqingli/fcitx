@@ -35,15 +35,13 @@
 #include <langinfo.h>
 #include <libintl.h>
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include <config.h>
 
 #include "version.h"
+#include "tools/tools.h"
 
 #include "core/MyErrorsHandlers.h"
 #include "core/ime.h"
-#include "tools/tools.h"
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
 #include "ui/InputWindow.h"

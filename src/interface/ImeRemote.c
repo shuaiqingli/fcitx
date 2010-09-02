@@ -35,7 +35,6 @@
 #include "ui/TrayWindow.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/cutils.h"
-#include "tools/tools.h"
 #ifdef _ENABLE_DBUS
 #include "interface/DBus.h"
 extern Property state_prop;

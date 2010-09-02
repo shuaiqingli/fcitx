@@ -1,5 +1,5 @@
-#include "fcitx-config/cutils.h"
 #include "tools/tools.h"
+#include "fcitx-config/cutils.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

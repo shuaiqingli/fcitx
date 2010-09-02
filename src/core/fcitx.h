@@ -3,6 +3,11 @@
 
 #define _GNU_SOURCE
 
+#include <libintl.h>
+
+#define _(msgid) gettext(msgid)
+#define __(msgid) (msgid)
+
 #include "tools/utf8.h"
 
 #define EIM_MAX		4

@@ -43,7 +43,6 @@
 #include "InputWindow.h"
 #include "core/IC.h"
 #include "core/ime.h"
-#include "tools/tools.h"
 #include "tools/utarray.h"
 
 #define SIZEX 800

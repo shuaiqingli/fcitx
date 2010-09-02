@@ -35,8 +35,8 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "core/ime.h"
 #include "tools/tools.h"
+#include "core/ime.h"
 #include "ui/ui.h"
 #include "version.h"
 #include "ui/MainWindow.h"

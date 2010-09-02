@@ -40,7 +40,6 @@
 
 #include "core/ime.h"
 #include "core/MyErrorsHandlers.h"
-#include "tools/tools.h"
 #include "tools/xdg.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/cutils.h"
