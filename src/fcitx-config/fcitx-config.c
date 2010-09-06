@@ -314,7 +314,7 @@ config_enum_final:
 ConfigSyncResult ConfigOptionInteger(ConfigOption *option, ConfigSync sync)
 {
     if (!option->value.integer)
-        return SyncInvalid;
+        return SyncNoBinding;
     switch(sync)
     {
         case Raw2Value:
