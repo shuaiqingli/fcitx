@@ -1,9 +1,9 @@
 [Program/FontEn]
-Type=String
+Type=Font
 DefaultValue=
 
 [Program/FontZh]
-Type=String
+Type=Font
 DefaultValue=
 
 [Program/FontLocale]

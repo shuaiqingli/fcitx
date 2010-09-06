@@ -44,7 +44,7 @@ Type=Integer
 DefaultValue=0
 
 [Profile/Locked]
-Description=Disable the keyboard switch hotkey
+Description=Locked
 Type=Boolean
 DefaultValue=False
 

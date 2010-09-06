@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-08-31 16:03+0800\n"
+"POT-Creation-Date: 2010-09-06 13:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,6 +21,7 @@ msgstr ""
 msgid "Code Table Name"
 msgstr ""
 
+# data/table.desc:5
 #: data/table.desc:6
 msgid "IconName"
 msgstr ""
@@ -89,6 +90,7 @@ msgstr ""
 msgid "Prompt Table Code"
 msgstr ""
 
+# data/table.desc:90
 #: data/table.desc:91
 msgid "Symbol"
 msgstr ""
@@ -97,6 +99,7 @@ msgstr ""
 msgid "Symbol File"
 msgstr ""
 
+# data/table.desc:100
 #: data/table.desc:101
 msgid "Choose"
 msgstr ""
@@ -141,8 +144,9 @@ msgstr ""
 msgid "Current Input Method Index"
 msgstr ""
 
+# data/profile.desc:46
 #: data/profile.desc:47
-msgid "Disable the keyboard switch hotkey"
+msgid "Locked"
 msgstr ""
 
 #: data/profile.desc:52
@@ -187,6 +191,614 @@ msgstr ""
 
 #: data/table/qxm.conf:2
 msgid "Bingchan"
+msgstr ""
+
+# data/config.desc:1
+msgid "FontEn"
+msgstr ""
+
+# data/config.desc:5
+msgid "FontZh"
+msgstr ""
+
+# data/config.desc:9
+msgid "FontLocale"
+msgstr ""
+
+# data/config.desc:13
+msgid "RecordFile"
+msgstr ""
+
+# data/config.desc:17
+msgid "UseTray"
+msgstr ""
+
+# data/config.desc:21
+msgid "UseDBus"
+msgstr ""
+
+# data/config.desc:25
+msgid "HalfPuncAfterNumber"
+msgstr ""
+
+# data/config.desc:29
+msgid "EnterAction"
+msgstr ""
+
+# data/config.desc:37
+msgid "SemiColonAction"
+msgstr ""
+
+# data/config.desc:45
+msgid "InputEngByCapitalChar"
+msgstr ""
+
+# data/config.desc:49
+msgid "TransEngPunc"
+msgstr ""
+
+# data/config.desc:53
+msgid "LegendModeDisablePaging"
+msgstr ""
+
+# data/config.desc:57
+msgid "SendTextWhenSwitchEng"
+msgstr ""
+
+# data/config.desc:61
+msgid "CandidateWordNumber"
+msgstr ""
+
+# data/config.desc:65
+msgid "MainWindowHideMode"
+msgstr ""
+
+# data/config.desc:73
+msgid "ShowVK"
+msgstr ""
+
+# data/config.desc:77
+msgid "CenterInputWindow"
+msgstr ""
+
+# data/config.desc:81
+msgid "ShowInputWindowAfterTriggering"
+msgstr ""
+
+# data/config.desc:85
+msgid "ShowPointAfterIndex"
+msgstr ""
+
+# data/config.desc:89
+msgid "ShowInputSpeed"
+msgstr ""
+
+# data/config.desc:93
+msgid "ShowVersion"
+msgstr ""
+
+# data/config.desc:97
+msgid "ShowHintWindow"
+msgstr ""
+
+# data/config.desc:101
+msgid "SkinType"
+msgstr ""
+
+# data/config.desc:105
+msgid "TriggerKey"
+msgstr ""
+
+# data/config.desc:109
+msgid "ChnEngSwitchKey"
+msgstr ""
+
+# data/config.desc:120
+msgid "DoubleSwitchKey"
+msgstr ""
+
+# data/config.desc:124
+msgid "TimeInterval"
+msgstr ""
+
+# data/config.desc:128
+msgid "FollowCursorKey"
+msgstr ""
+
+# data/config.desc:132
+msgid "HideMainWindowKey"
+msgstr ""
+
+# data/config.desc:136
+msgid "VKSwitchKey"
+msgstr ""
+
+# data/config.desc:140
+msgid "TraditionalChnSwitchKey"
+msgstr ""
+
+# data/config.desc:144
+msgid "LegendSwitchKey"
+msgstr ""
+
+# data/config.desc:148
+msgid "LookupPinyinKey"
+msgstr ""
+
+# data/config.desc:152
+msgid "FullWidthSwitchKey"
+msgstr ""
+
+# data/config.desc:156
+msgid "ChnPunSwitchKey"
+msgstr ""
+
+# data/config.desc:160
+msgid "PrevPageKey"
+msgstr ""
+
+# data/config.desc:164
+msgid "NextPageKey"
+msgstr ""
+
+# data/config.desc:168
+msgid "SecondThirdCandWordKey"
+msgstr ""
+
+# data/config.desc:172
+msgid "SaveAllKey"
+msgstr ""
+
+# data/config.desc:176
+msgid "SetRecordingKey"
+msgstr ""
+
+# data/config.desc:180
+msgid "ResetRecordingKey"
+msgstr ""
+
+# data/config.desc:184
+msgid "PinyinOrder"
+msgstr ""
+
+# data/config.desc:188
+msgid "ShuangpinOrder"
+msgstr ""
+
+# data/config.desc:192
+msgid "DefaultShuangpinSchema"
+msgstr ""
+
+# data/config.desc:196
+msgid "QuweiOrder"
+msgstr ""
+
+# data/config.desc:200
+msgid "TableOrder"
+msgstr ""
+
+# data/config.desc:204
+msgid "PhraseTips"
+msgstr ""
+
+# data/config.desc:208
+msgid "ExtraIM"
+msgstr ""
+
+# data/config.desc:212
+msgid "UseCompletePinyin"
+msgstr ""
+
+# data/config.desc:216
+msgid "AutoCreatePhrase"
+msgstr ""
+
+# data/config.desc:220
+# data/table.desc:81
+msgid "SaveAutoPhrase"
+msgstr ""
+
+# data/config.desc:224
+msgid "AddFreqWordKey"
+msgstr ""
+
+# data/config.desc:228
+msgid "DeleteFreqWordKey"
+msgstr ""
+
+# data/config.desc:232
+msgid "DeleteUserPhraseKey"
+msgstr ""
+
+# data/config.desc:236
+msgid "InputWordFromPhraseKey"
+msgstr ""
+
+# data/config.desc:240
+msgid "BaseOrder"
+msgstr ""
+
+# data/config.desc:248
+msgid "PhraseOrder"
+msgstr ""
+
+# data/config.desc:256
+msgid "FreqOrder"
+msgstr ""
+
+# data/config.desc:264
+msgid "MixAnAng"
+msgstr ""
+
+# data/config.desc:268
+msgid "MixEnEng"
+msgstr ""
+
+# data/config.desc:272
+msgid "MixIanIang"
+msgstr ""
+
+# data/config.desc:276
+msgid "MixInIng"
+msgstr ""
+
+# data/config.desc:280
+msgid "MixOuU"
+msgstr ""
+
+# data/config.desc:284
+msgid "MixUanUang"
+msgstr ""
+
+# data/config.desc:288
+msgid "MixCCh"
+msgstr ""
+
+# data/config.desc:292
+msgid "MixFH"
+msgstr ""
+
+# data/config.desc:296
+msgid "MixLN"
+msgstr ""
+
+# data/config.desc:300
+msgid "MixSSH"
+msgstr ""
+
+# data/config.desc:304
+msgid "MixZZH"
+msgstr ""
+
+# data/profile.desc:1
+msgid "MainWindowOffsetX"
+msgstr ""
+
+# data/profile.desc:6
+msgid "MainWindowOffsetY"
+msgstr ""
+
+# data/profile.desc:11
+msgid "InputWindowOffsetX"
+msgstr ""
+
+# data/profile.desc:16
+msgid "InputWindowOffsetY"
+msgstr ""
+
+# data/profile.desc:21
+msgid "Corner"
+msgstr ""
+
+# data/profile.desc:26
+msgid "ChnPunc"
+msgstr ""
+
+# data/profile.desc:31
+msgid "TrackCursor"
+msgstr ""
+
+# data/profile.desc:36
+msgid "UseLegend"
+msgstr ""
+
+# data/profile.desc:41
+msgid "IMIndex"
+msgstr ""
+
+# data/profile.desc:51
+msgid "CompactMainWindow"
+msgstr ""
+
+# data/profile.desc:56
+msgid "UseGBKT"
+msgstr ""
+
+# data/profile.desc:61
+msgid "Recording"
+msgstr ""
+
+# data/skin.desc:1
+# data/table.desc:1
+msgid "Name"
+msgstr ""
+
+# data/skin.desc:4
+msgid "Version"
+msgstr ""
+
+# data/skin.desc:7
+msgid "Author"
+msgstr ""
+
+# data/skin.desc:10
+msgid "Desc"
+msgstr ""
+
+# data/skin.desc:13
+msgid "FontSize"
+msgstr ""
+
+# data/skin.desc:16
+msgid "TipColor"
+msgstr ""
+
+# data/skin.desc:19
+msgid "InputColor"
+msgstr ""
+
+# data/skin.desc:22
+msgid "IndexColor"
+msgstr ""
+
+# data/skin.desc:25
+msgid "FirstCandColor"
+msgstr ""
+
+# data/skin.desc:28
+msgid "UserPhraseColor"
+msgstr ""
+
+# data/skin.desc:31
+msgid "CodeColor"
+msgstr ""
+
+# data/skin.desc:34
+msgid "OtherColor"
+msgstr ""
+
+# data/skin.desc:37
+# data/skin.desc:85
+msgid "BackImg"
+msgstr ""
+
+# data/skin.desc:40
+msgid "Logo"
+msgstr ""
+
+# data/skin.desc:43
+msgid "ZhPunc"
+msgstr ""
+
+# data/skin.desc:46
+msgid "EnPunc"
+msgstr ""
+
+# data/skin.desc:49
+msgid "Chs"
+msgstr ""
+
+# data/skin.desc:52
+msgid "Cht"
+msgstr ""
+
+# data/skin.desc:55
+msgid "HalfCorner"
+msgstr ""
+
+# data/skin.desc:58
+msgid "FullCorner"
+msgstr ""
+
+# data/skin.desc:61
+msgid "Unlock"
+msgstr ""
+
+# data/skin.desc:64
+msgid "Lock"
+msgstr ""
+
+# data/skin.desc:67
+msgid "Legend"
+msgstr ""
+
+# data/skin.desc:70
+msgid "NoLegend"
+msgstr ""
+
+# data/skin.desc:73
+msgid "VK"
+msgstr ""
+
+# data/skin.desc:76
+msgid "NoVK"
+msgstr ""
+
+# data/skin.desc:79
+msgid "Eng"
+msgstr ""
+
+# data/skin.desc:82
+msgid "Chn"
+msgstr ""
+
+# data/skin.desc:88
+msgid "Resize"
+msgstr ""
+
+# data/skin.desc:95
+msgid "ResizePos"
+msgstr ""
+
+# data/skin.desc:98
+msgid "ResizeWidth"
+msgstr ""
+
+# data/skin.desc:101
+msgid "InputPos"
+msgstr ""
+
+# data/skin.desc:104
+msgid "OutputPos"
+msgstr ""
+
+# data/skin.desc:107
+msgid "LayoutLeft"
+msgstr ""
+
+# data/skin.desc:110
+msgid "LayoutRight"
+msgstr ""
+
+# data/skin.desc:113
+msgid "CursorColor"
+msgstr ""
+
+# data/skin.desc:116
+msgid "BackArrow"
+msgstr ""
+
+# data/skin.desc:119
+msgid "ForwardArrow"
+msgstr ""
+
+# data/skin.desc:122
+msgid "Active"
+msgstr ""
+
+# data/skin.desc:125
+msgid "Inactive"
+msgstr ""
+
+# data/table.desc:9
+msgid "File"
+msgstr ""
+
+# data/table.desc:13
+msgid "AdjustOrder"
+msgstr ""
+
+# data/table.desc:22
+msgid "Priority"
+msgstr ""
+
+# data/table.desc:27
+msgid "UsePY"
+msgstr ""
+
+# data/table.desc:32
+msgid "PYKey"
+msgstr ""
+
+# data/table.desc:37
+msgid "AutoSend"
+msgstr ""
+
+# data/table.desc:42
+msgid "NoneMatchAutoSend"
+msgstr ""
+
+# data/table.desc:47
+msgid "EndKey"
+msgstr ""
+
+# data/table.desc:52
+msgid "UseMatchingKey"
+msgstr ""
+
+# data/table.desc:57
+msgid "MatchingKey"
+msgstr ""
+
+# data/table.desc:62
+msgid "ExactMatch"
+msgstr ""
+
+# data/table.desc:66
+msgid "AutoPhrase"
+msgstr ""
+
+# data/table.desc:71
+msgid "AutoPhraseLength"
+msgstr ""
+
+# data/table.desc:76
+msgid "AutoPhrasePhrase"
+msgstr ""
+
+# data/table.desc:86
+msgid "PromptTableCode"
+msgstr ""
+
+# data/table.desc:95
+msgid "SymbolFile"
+msgstr ""
+
+# data/table.desc:105
+msgid "Enabled"
+msgstr ""
+
+# unknown
+msgid "Appearance"
+msgstr ""
+
+# unknown
+msgid "CodeTable"
+msgstr ""
+
+# unknown
+msgid "Hotkey"
+msgstr ""
+
+# unknown
+msgid "InputMethod"
+msgstr ""
+
+# unknown
+msgid "Output"
+msgstr ""
+
+# unknown
+#: ../src/im/pinyin/py.h:40
+msgid "Pinyin"
+msgstr ""
+
+# unknown
+msgid "Profile"
+msgstr ""
+
+# unknown
+msgid "Program"
+msgstr ""
+
+# unknown
+msgid "SkinFont"
+msgstr ""
+
+# unknown
+msgid "SkinInfo"
+msgstr ""
+
+# unknown
+msgid "SkinInputBar"
+msgstr ""
+
+# unknown
+msgid "SkinMainBar"
+msgstr ""
+
+# unknown
+msgid "SkinTrayIcon"
 msgstr ""
 
 #: ../src/interface/ImeRemote.c:148
@@ -316,24 +928,24 @@ msgstr ""
 msgid "updateMesssages Up:%s"
 msgstr ""
 
-#: ../src/ui/tray.c:129
+#: ../src/ui/tray.c:130
 #, c-format
 msgid "X error %i on opcode send"
 msgstr ""
 
-#: ../src/ui/ui.c:81
+#: ../src/ui/ui.c:82
 msgid "FCITX can only run under X"
 msgstr ""
 
-#: ../src/ui/ui.c:123
+#: ../src/ui/ui.c:124
 msgid "XEvent--Expose"
 msgstr ""
 
-#: ../src/ui/InputWindow.c:166
+#: ../src/ui/InputWindow.c:164
 msgid "DISPLAY InputWindow"
 msgstr ""
 
-#: ../src/ui/InputWindow.c:191
+#: ../src/ui/InputWindow.c:189
 msgid "CAL InputWindow"
 msgstr ""
 
@@ -345,85 +957,85 @@ msgstr ""
 msgid "DRAW MainWindow"
 msgstr ""
 
-#: ../src/ui/skin.c:152
+#: ../src/ui/skin.c:155
 msgid "Can not load default skin, is installion correct?"
 msgstr ""
 
-#: ../src/ui/skin.c:157
+#: ../src/ui/skin.c:160
 #, c-format
 msgid "Can not load skin %s, return to default"
 msgstr ""
 
-#: ../src/ui/font.c:12
+#: ../src/ui/font.c:13
 msgid "Error: Load fontconfig failed"
 msgstr ""
 
-#: ../src/ui/font.c:64
+#: ../src/ui/font.c:65
 #, c-format
 msgid "your current font is: %s"
 msgstr ""
 
-#: ../src/ui/font.c:81
+#: ../src/ui/font.c:82
 msgid "no valid font."
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:263
+#: ../src/fcitx-config/fcitx-config.c:265
 msgid "Enum option duplicated."
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:276
+#: ../src/fcitx-config/fcitx-config.c:278
 msgid "Enum option number must larger than 0"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:286
+#: ../src/fcitx-config/fcitx-config.c:288
 msgid "Enum Option is invalid, take it as string"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:293
+#: ../src/fcitx-config/fcitx-config.c:295
 #, c-format
 msgid "Unknown type, take it as string: %s"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:299
+#: ../src/fcitx-config/fcitx-config.c:301
 msgid "Missing type, take it as string"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:672
+#: ../src/fcitx-config/fcitx-config.c:674
 #, c-format
 msgid "Configure group name error: line %d"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:682
+#: ../src/fcitx-config/fcitx-config.c:684
 #, c-format
 msgid "Duplicate group name, merge with the previous: %s :line %d"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:700
+#: ../src/fcitx-config/fcitx-config.c:702
 #, c-format
 msgid "Invalid Entry: line %d missing '='"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:710
+#: ../src/fcitx-config/fcitx-config.c:712
 #, c-format
 msgid "Duplicate option, overwrite: line %d"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:822
+#: ../src/fcitx-config/fcitx-config.c:824
 #, c-format
 msgid "Option %s is Invalid, Use Default Value %s"
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:831
+#: ../src/fcitx-config/fcitx-config.c:833
 #, c-format
 msgid "Option %s is Invalid."
 msgstr ""
 
-#: ../src/fcitx-config/fcitx-config.c:866
+#: ../src/fcitx-config/fcitx-config.c:868
 #, c-format
 msgid "no default option for %s/%s"
 msgstr ""
 
-#: ../src/im/special/punc.c:68
+#: ../src/im/special/punc.c:70
 #, c-format
 msgid "Can't open Chinese punc file: %s"
 msgstr ""
@@ -432,21 +1044,21 @@ msgstr ""
 msgid "Quwei"
 msgstr ""
 
-#: ../src/im/pinyin/py.c:192
+#: ../src/im/pinyin/py.c:193
 msgid "Can not find System Database of Pinyin!"
 msgstr ""
 
-#: ../src/im/pinyin/py.c:2347
+#: ../src/im/pinyin/py.c:2348
 #, c-format
 msgid "Cannot Save User Pinyin Database: %s"
 msgstr ""
 
-#: ../src/im/pinyin/py.c:2409
+#: ../src/im/pinyin/py.c:2410
 #, c-format
 msgid "Cannot Save Frequent word: %s"
 msgstr ""
 
-#: ../src/im/pinyin/py.c:2479
+#: ../src/im/pinyin/py.c:2480
 #, c-format
 msgid "Cannot Save Pinyin Index: %s"
 msgstr ""
@@ -455,141 +1067,112 @@ msgstr ""
 msgid "Shuangpin"
 msgstr ""
 
-#: ../src/im/pinyin/py.h:40
-msgid "Pinyin"
-msgstr ""
-
-#: ../src/im/table/table.c:178
+#: ../src/im/table/table.c:182
 #, c-format
 msgid "Load Table Config File:%s"
 msgstr ""
 
-#: ../src/im/table/table.c:188
+#: ../src/im/table/table.c:192
 #, c-format
 msgid "Table Config %s is %s"
 msgstr ""
 
-#: ../src/im/table/table.c:254
+#: ../src/im/table/table.c:258
 msgid "Loading Table Dict"
 msgstr ""
 
-#: ../src/im/table/table.c:264
+#: ../src/im/table/table.c:268
 #, c-format
 msgid "Load Table Dict from %s"
 msgstr ""
 
-#: ../src/im/table/table.c:270
+#: ../src/im/table/table.c:274
 #, c-format
 msgid "Cannot load table file: %s"
 msgstr ""
 
-#: ../src/im/table/table.c:391
+#: ../src/im/table/table.c:396
 msgid "Load Table Dict OK"
 msgstr ""
 
-#: ../src/im/table/table.c:421
+#: ../src/im/table/table.c:426
 msgid "Loading Autophrase."
 msgstr ""
 
-#: ../src/im/table/table.c:462
+#: ../src/im/table/table.c:467
 msgid "Load Autophrase OK"
 msgstr ""
 
-#: ../src/im/table/table.c:602
+#: ../src/im/table/table.c:607
 #, c-format
 msgid "Cannot create table file: %s"
 msgstr ""
 
-#: ../src/im/table/table.c:609
+#: ../src/im/table/table.c:614
 msgid "Saving TABLE Dict."
 msgstr ""
 
-#: ../src/im/table/table.c:691
+#: ../src/im/table/table.c:696
 msgid "Rename OK"
 msgstr ""
 
-#: ../src/tools/configfile.c:244
+#: ../src/tools/configfile.c:253
 #, c-format
 msgid "Load Config File %s"
 msgstr ""
 
-#: ../src/tools/tools.c:318
+#: ../src/tools/tools.c:276
 msgid "pthread mutexattr init failed"
 msgstr ""
 
-#: ../src/tools/tools.c:325
+#: ../src/tools/tools.c:283
 msgid "pthread mutex init failed"
 msgstr ""
 
-#: ../src/tools/tools.c:358
-#, c-format
-msgid "Info:"
-msgstr ""
-
-#: ../src/tools/tools.c:361
-#, c-format
-msgid "Error:"
-msgstr ""
-
-#: ../src/tools/tools.c:364
-#, c-format
-msgid "Debug:"
-msgstr ""
-
-#: ../src/tools/tools.c:367
-#, c-format
-msgid "Warning:"
-msgstr ""
-
-#: ../src/tools/tools.c:370
-#, c-format
-msgid "Fatal:"
-msgstr ""
-
-#: ../src/core/xim.c:489
+#: ../src/core/xim.c:490
 msgid "Recording file must be an absolute path."
 msgstr ""
 
-#: ../src/core/xim.c:522
+#: ../src/core/xim.c:523
 #, c-format
 msgid "Sending %s  icid=%d connectid=%d\n"
 msgstr ""
 
-#: ../src/core/xim.c:584
+#: ../src/core/xim.c:585
 msgid "Can't Create imWindow"
 msgstr ""
 
-#: ../src/core/xim.c:594
+#: ../src/core/xim.c:595
 msgid "XMODIFIERS Error."
 msgstr ""
 
-#: ../src/core/xim.c:599
+#: ../src/core/xim.c:600
 msgid "Please set XMODIFIERS."
 msgstr ""
 
-#: ../src/core/xim.c:614
+#: ../src/core/xim.c:615
 msgid "Please check your environment varibles."
 msgstr ""
 
-#: ../src/core/xim.c:615
+#: ../src/core/xim.c:616
 msgid ""
 "You need to set environment varibles below to make fcitx work correctly."
 msgstr ""
 
-#: ../src/core/xim.c:619
+#: ../src/core/xim.c:620
 msgid "You can set those variables in ~/.bashrc ."
 msgstr ""
 
-#: ../src/core/xim.c:620
+#: ../src/core/xim.c:621
 msgid "Setting Hint"
 msgstr ""
 
-#: ../src/core/xim.c:675
+#: ../src/core/xim.c:676
 #, c-format
 msgid "Start FCITX error. Another XIM daemon named %s is running?"
 msgstr ""
 
-#: ../src/core/xim.c:955
+#: ../src/core/xim.c:956
 #, c-format
 msgid "Set icid=%d(connect_id=%d) to %d"
 msgstr ""

@@ -1,6 +1,8 @@
 2010-09-06: CSSlayer <wengxt@gmail.com>
     * 调整libfcitx-config，方便GUI开发
 	* 调整dark的一些字体颜色，感谢jason52lh
+	* 大量更新翻译信息
+	* 4.0beta1
 
 2010-09-02: CSSlayer <wengxt@gmail.com>
 	* 调整libfcitx-config的函数
