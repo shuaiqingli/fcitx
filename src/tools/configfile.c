@@ -20,15 +20,15 @@ static Bool IsReloadConfig = False;
 FcitxConfig fc;
 ConfigFileDesc* fcitxConfigDesc = NULL;
 static ConfigFileDesc* GetConfigDesc();
-static void FilterAnAng(void *value, ConfigSync sync);
-static void FilterSwitchKey(void *value, ConfigSync sync);
-static void FilterTriggerKey(void *value, ConfigSync sync);
-static void FilterCopyFontEn(void *value, ConfigSync sync);
-static void FilterCopyFontZh(void *value, ConfigSync sync);
-static void Filter2nd3rdKey(void *value, ConfigSync sync);
+static void FilterAnAng(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
+static void FilterSwitchKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
+static void FilterTriggerKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
+static void FilterCopyFontEn(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
+static void FilterCopyFontZh(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
+static void Filter2nd3rdKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
 static void SetTriggerKeys (char **str, int length);
 static Bool MyStrcmp (char *str1, char *str2);
-static void FilterGetWordFromPhrase(void *value, ConfigSync sync);
+static void FilterGetWordFromPhrase(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg);
 
 #ifdef _ENABLE_TRAY
 FilterNextTimeEffectBool(UseTray, fc.bUseTrayIcon)
@@ -120,7 +120,7 @@ Bool MyStrcmp (char *str1, char *str2)
         return !strncmp (str1, str2, strlen (str2));
 }
 
-void FilterCopyFontEn(void *value, ConfigSync sync)
+void FilterCopyFontEn(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     char *pstr = *(char **)value;
     if (sync == Raw2Value)
@@ -131,7 +131,7 @@ void FilterCopyFontEn(void *value, ConfigSync sync)
     }
 }
 
-void FilterCopyFontZh(void *value, ConfigSync sync)
+void FilterCopyFontZh(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     char *pstr = *(char **)value;
     if (sync == Raw2Value)
@@ -142,7 +142,7 @@ void FilterCopyFontZh(void *value, ConfigSync sync)
     }
 }
 
-void FilterGetWordFromPhrase(void *value, ConfigSync sync)
+void FilterGetWordFromPhrase(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     char *pstr = *(char**) value;
     if(sync == Raw2Value){
@@ -157,7 +157,7 @@ void FilterGetWordFromPhrase(void *value, ConfigSync sync)
     }
 }
 
-void Filter2nd3rdKey(void *value, ConfigSync sync)
+void Filter2nd3rdKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     char *pstr = *(char**) value;
 
@@ -184,7 +184,7 @@ void Filter2nd3rdKey(void *value, ConfigSync sync)
     }
 }
 
-void FilterTriggerKey(void *value, ConfigSync sync)
+void FilterTriggerKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     HOTKEYS *hotkey = (HOTKEYS*)value;
     if (sync == Raw2Value)
@@ -206,7 +206,7 @@ void FilterTriggerKey(void *value, ConfigSync sync)
     }
 }
 
-void FilterSwitchKey(void *value, ConfigSync sync)
+void FilterSwitchKey(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     if (sync == Raw2Value)
     {
@@ -234,7 +234,7 @@ void FilterSwitchKey(void *value, ConfigSync sync)
         }
     }
 }
-void FilterAnAng(void *value, ConfigSync sync)
+void FilterAnAng(ConfigGroup *group, ConfigOption *option, void* value, ConfigSync sync, void* arg)
 {
     if (sync == Raw2Value)
     {

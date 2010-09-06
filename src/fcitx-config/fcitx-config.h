@@ -106,7 +106,10 @@ typedef enum ConfigSyncResult
     SyncInvalid
 } ConfigSyncResult;
 
-typedef void (*SyncFilter)(void* , ConfigSync);
+typedef struct ConfigGroup ConfigGroup;
+typedef struct ConfigOption ConfigOption;
+
+typedef void (*SyncFilter)(ConfigGroup *, ConfigOption *, void* , ConfigSync, void* );
 
 typedef struct ConfigEnum
 {
@@ -137,7 +140,7 @@ typedef struct ConfigFileDesc
     ConfigGroupDesc *groupsDesc;
 } ConfigFileDesc;
 
-typedef struct ConfigOption
+struct ConfigOption
 {
     char *optionName;
     char *rawValue;
@@ -153,17 +156,18 @@ typedef struct ConfigOption
         FcitxImage* image;
     } value;
     SyncFilter filter;
+    void *filterArg;
     ConfigOptionDesc *optionDesc;
     UT_hash_handle hh;
-} ConfigOption;
+} ;
 
-typedef struct ConfigGroup
+struct ConfigGroup
 {
     char *groupName;
     ConfigGroupDesc *groupDesc;
     ConfigOption* options;
     UT_hash_handle hh;
-} ConfigGroup;
+} ;
 
 typedef struct ConfigFile
 {
@@ -191,12 +195,16 @@ typedef struct GenericConfig
         gconfig->configFile = cfile
 #define CONFIG_BINDING_REGISTER(g, o, var) \
         do { \
-            ConfigBindValue(cfile, g, o, &config->var, NULL); \
+            ConfigBindValue(cfile, g, o, &config->var, NULL, NULL); \
         } while(0)      
 
 #define CONFIG_BINDING_REGISTER_WITH_FILTER(g, o, var, filter_func) \
         do { \
-            ConfigBindValue(cfile, g, o, &config->var, filter_func); \
+            ConfigBindValue(cfile, g, o, &config->var, filter_func, NULL); \
+        } while(0)
+#define CONFIG_BINDING_REGISTER_WITH_FILTER_ARG(g, o, var, filter_func, arg) \
+        do { \
+            ConfigBindValue(cfile, g, o, &config->var, filter_func, arg); \
         } while(0)
 #define CONFIG_BINDING_END() }
 
@@ -205,7 +213,7 @@ typedef struct GenericConfig
 
 #define FilterNextTimeEffectBool(name, var) \
     static Bool firstRunOn##name = True; \
-    void FilterCopy##name(void *value, ConfigSync sync) { \
+    void FilterCopy##name(ConfigGroup *group, ConfigOption *option, void *value, ConfigSync sync, void *filterArg) { \
         Bool *b = (Bool*)value; \
         if (sync == Raw2Value && b) \
         { \
@@ -234,7 +242,7 @@ void FreeConfigOption(ConfigOption *option);
 void FreeConfigOptionDesc(ConfigOptionDesc *codesc);
 Bool SaveConfigFile(char *filename, ConfigFile *cfile, ConfigFileDesc* cdesc);
 Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc);
-void ConfigSyncValue(ConfigOption *option, ConfigSync sync);
+void ConfigSyncValue(ConfigGroup* group, ConfigOption *option, ConfigSync sync);
 void ConfigBindSync(GenericConfig* config);
 
 typedef ConfigSyncResult (*ConfigOptionFunc)(ConfigOption *, ConfigSync);
@@ -248,6 +256,6 @@ ConfigSyncResult ConfigOptionHotkey(ConfigOption *option, ConfigSync sync);
 #define ConfigOptionFile ConfigOptionString
 #define ConfigOptionFont ConfigOptionString
 
-void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void* var, SyncFilter filter);
+void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void* var, SyncFilter filter, void *arg);
 
 #endif

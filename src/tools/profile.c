@@ -14,9 +14,9 @@ FcitxProfile fcitxProfile;
 ConfigFileDesc* fcitxProfileDesc = NULL;
 static ConfigFileDesc* GetProfileDesc();
 
-static void FilterCopyIMIndex(void * data, ConfigSync sync);
-static void FilterScreenSizeX(void * data, ConfigSync sync);
-static void FilterScreenSizeY(void * data, ConfigSync sync);
+static void FilterCopyIMIndex(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg);
+static void FilterScreenSizeX(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg);
+static void FilterScreenSizeY(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg);
 
 CONFIG_BINDING_BEGIN(FcitxProfile);
 CONFIG_BINDING_REGISTER_WITH_FILTER("Profile", "MainWindowOffsetX",  iMainWindowOffsetX, FilterScreenSizeX);
@@ -88,7 +88,7 @@ void SaveProfile(void)
     FcitxUnlock();
 }
 
-void FilterCopyIMIndex(void * data, ConfigSync sync)
+void FilterCopyIMIndex(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg)
 {
     int* iIMIndex = (int*)data;
     switch(sync)
@@ -101,7 +101,7 @@ void FilterCopyIMIndex(void * data, ConfigSync sync)
             break;
     }
 }
-static void FilterScreenSizeX(void * data, ConfigSync sync)
+static void FilterScreenSizeX(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg)
 {
     int* X = (int*)data;
 
@@ -119,7 +119,7 @@ static void FilterScreenSizeX(void * data, ConfigSync sync)
 
 }
 
-static void FilterScreenSizeY(void * data, ConfigSync sync)
+static void FilterScreenSizeY(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg)
 {
     int* Y = (int*)data;
 

@@ -763,12 +763,12 @@ void ConfigBindSync(GenericConfig* config)
             if (group)
                 HASH_FIND_STR(group->options, optiondesc->optionName, option);
 
-            ConfigSyncValue(option, Raw2Value);
+            ConfigSyncValue(group, option, Raw2Value);
         }
     }
 }
 
-void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
+void ConfigSyncValue(ConfigGroup* group, ConfigOption *option, ConfigSync sync)
 {
     ConfigOptionDesc *codesc = option->optionDesc;
 
@@ -779,7 +779,7 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
 
     if (sync == Value2Raw)
         if (option->filter)
-            option->filter(option->value.untype, sync);
+            option->filter(group, option, option->value.untype, sync, option->filterArg);
 
     switch (codesc->type)
     {
@@ -836,7 +836,7 @@ void ConfigSyncValue(ConfigOption *option, ConfigSync sync)
 
     if (sync == Raw2Value)
         if (option->filter)
-            option->filter(option->value.untype, sync);
+            option->filter(group, option, option->value.untype, sync, option->filterArg);
 }
 
 Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc)
@@ -869,7 +869,7 @@ Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc)
             }
             else 
             {
-                ConfigSyncValue(option, Value2Raw);
+                ConfigSyncValue(group, option, Value2Raw);
                 fprintf(fp, "%s=%s\n", option->optionName, option->rawValue);
             }
         }
@@ -877,7 +877,7 @@ Bool SaveConfigFileFp(FILE* fp, ConfigFile *cfile, ConfigFileDesc* cdesc)
     return True;
 }
 
-void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void* var, SyncFilter filter)
+void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void* var, SyncFilter filter, void *arg)
 {
     ConfigGroup *group = NULL;
     HASH_FIND_STR(cfile->groups, groupName, group);
@@ -889,6 +889,7 @@ void ConfigBindValue(ConfigFile* cfile, char *groupName, char *optionName, void*
         {
             ConfigOptionDesc* codesc = option->optionDesc;
             option->filter = filter;
+            option->filterArg = arg;
             if (!codesc)
             {
                 FcitxLog(WARNING, "Unknown Option: %s/%s", groupName, optionName);
