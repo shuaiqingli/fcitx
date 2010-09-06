@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx 20100424\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-09-06 13:06+0800\n"
-"PO-Revision-Date: 2010-09-06 13:08+0800\n"
+"POT-Creation-Date: 2010-09-06 13:24+0800\n"
+"PO-Revision-Date: 2010-09-06 13:29+0800\n"
 "Last-Translator: Weng Xuetian <wengxt@gmail.com>\n"
 "Language-Team: Chinese Simplified <fcitx-dev@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -608,11 +608,11 @@ msgstr "软键盘未激活图标"
 
 # data/skin.desc:79
 msgid "Eng"
-msgstr "英文图标"
+msgstr "英文"
 
 # data/skin.desc:82
 msgid "Chn"
-msgstr "中文图标"
+msgstr "中文"
 
 # data/skin.desc:88
 msgid "Resize"
@@ -779,6 +779,81 @@ msgstr "皮肤主窗口设置"
 # unknown
 msgid "SkinTrayIcon"
 msgstr "皮肤托盘图标设置"
+
+# unknown
+msgid "AdjustFast"
+msgstr "快速"
+
+# data/table.desc:13
+msgid "AdjustFreq"
+msgstr "按频率"
+
+# data/table.desc:13
+msgid "AdjustNo"
+msgstr "不调整"
+
+# data/table.desc:37
+msgid "Auto"
+msgstr "自动"
+
+# unknown
+msgid "Clean"
+msgstr "清除"
+
+# unknown
+msgid "Copy"
+msgstr "复制"
+
+# unknown
+msgid "Fix"
+msgstr "固定长度"
+
+# unknown
+msgid "Hide"
+msgstr "隐藏"
+
+# unknown
+msgid "L_CTRL"
+msgstr "左Ctrl"
+
+# unknown
+msgid "L_SHIFT"
+msgstr "左Shift"
+
+# unknown
+msgid "L_SUPER"
+msgstr "左Super"
+
+# unknown
+msgid "NoChange"
+msgstr "原始操作"
+
+# unknown
+msgid "Nothing"
+msgstr "无操作"
+
+msgid "QuickPhrase"
+msgstr "快速输入"
+
+# unknown
+msgid "R_CTRL"
+msgstr "右Ctrl"
+
+# unknown
+msgid "R_SHIFT"
+msgstr "右Shift"
+
+# unknown
+msgid "R_SUPER"
+msgstr "右Super"
+
+# data/table.desc:37
+msgid "Send"
+msgstr "上屏"
+
+# data/config.desc:73
+msgid "Show"
+msgstr "显示"
 
 #: ../src/interface/ImeRemote.c:148
 #, c-format
@@ -1160,4 +1235,3 @@ msgstr "Set icid=%d(connect_id=%d) to %d"
 #, c-format
 msgid "FCITX -- Get Signal No.: %d"
 msgstr "Fcitx接收到信号: %d"
-
