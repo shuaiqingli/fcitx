@@ -34,7 +34,7 @@
 #include <cairo-xlib.h>
 #include <X11/Xlib.h>
 
-#define MENU_WINDOW_WIDTH	120
+#define MENU_WINDOW_WIDTH	200
 #define MENU_WINDOW_HEIGHT	400
 
 #define IM_MENU_WINDOW_WIDTH	110
@@ -53,6 +53,12 @@
 #define BG_COLOR 0xDCDCDC
 //选中后的背景色 深蓝色
 #define BG_SELECT_COLOR 0x0A2465
+
+typedef enum MenuState
+{
+    MENU_ACTIVE = 0,
+    MENU_INACTIVE = 1
+} MenuState;
 
 typedef enum
 {
@@ -97,15 +103,12 @@ void            DrawMenuWindow (void);
 void GetMenuHeight(Display * dpy,xlibMenu * Menu);
 
 Bool CreateMenuWindow (void);
-Bool CreateImMenuWindow (void);
-Bool CreateSkinMenuWindow (void);
-Bool CreateVKMenuWindow();
 
 int CreateXlibMenu(Display * dpy,xlibMenu * Menu);
 void DrawXlibMenu(Display * dpy,xlibMenu * Menu);
 void DrawDivLine(Display * dpy,xlibMenu * Menu,int line_y);
 void DisplayText(Display * dpy,xlibMenu * Menu,int shellindex,int line_y);
-int selectShellIndex(xlibMenu * Menu,int y);
+int selectShellIndex(xlibMenu * Menu, int x, int y, int* offseth);
 void DisplayXlibMenu(Display * dpy,xlibMenu * Menu);
 void menuMark(Display * dpy,xlibMenu * Menu,int y,int i);
 void clearSelectFlag(xlibMenu * Menu);
@@ -113,5 +116,6 @@ void MainMenuEvent(int x,int y);
 void IMMenuEvent(int x,int y);
 void VKMenuEvent(int x,int y);
 void SkinMenuEvent(int x,int y);
+void DestroyMenuWindow();
 
 #endif

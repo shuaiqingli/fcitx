@@ -135,6 +135,12 @@ void TraySendOpcode(Display* dpy, Window dock, TrayWindow* tray,
 XVisualInfo* TrayGetVisual(Display* dpy, TrayWindow* tray)
 {
     Window Dock;
+
+    if (tray->visual.visual)
+    {
+        return &tray->visual;
+    }
+
     Dock = XGetSelectionOwner(dpy, tray->atoms[ATOM_SELECTION]);
 
     if (Dock != None) {

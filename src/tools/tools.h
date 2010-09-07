@@ -50,6 +50,7 @@ void *custom_bsearch(const void *key, const void *base,
 
 void FcitxInitThread();
 int FcitxLock();
+void InitAsDaemon();
 int FcitxUnlock();
 
 int             CalculateRecordNumber (FILE * fpDict);

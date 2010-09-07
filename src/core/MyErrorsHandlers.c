@@ -80,6 +80,9 @@ void OnException (int signo)
 	fprintf (logfile, "%d: FCITX -- Get Signal No.: %d (%s)\n", getpid(), signo,buf);
     }
 #endif
+
+    if (signo == SIGCHLD)
+        return;
     
     FcitxLog(INFO, _("FCITX -- Get Signal No.: %d"), signo);
     

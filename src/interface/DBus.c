@@ -141,6 +141,7 @@ void MyDBusEventHandler()
             usleep(300);
             continue;
         }
+        FcitxLock();
         if (dbus_message_is_signal(msg, "org.kde.impanel", "MovePreeditCaret")) {
             debug_dbus(_("MovePreeditCaret"));
             // read the parameters
@@ -223,6 +224,7 @@ void MyDBusEventHandler()
         }
         // free the message
         dbus_message_unref(msg);
+        FcitxUnlock();
     }
 }
 

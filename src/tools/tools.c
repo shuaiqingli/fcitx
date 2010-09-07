@@ -34,6 +34,7 @@
 #include <limits.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "tools/tools.h"
 #include "core/ime.h"
@@ -84,8 +85,6 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
     if (strHZ == NULL)
 	return NULL;
 
-	if (FcitxLock() != 0)
-		return NULL;
     if (!s2t_table) {
 	len = 0;
 
@@ -124,7 +123,6 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
     if(strBuf)
         free(strBuf);
     }
-	FcitxUnlock();
 
     i = 0;
     len = utf8_strlen (strHZ);
@@ -281,6 +279,25 @@ void FcitxInitThread()
     gs.bMutexInited = True;
     if (rc != 0)
         FcitxLog(ERROR, _("pthread mutex init failed"));
+}
+
+void InitAsDaemon()
+{
+    if (fork() > 0)
+        exit(0);
+    setsid();
+    signal(SIGINT, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGQUIT, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+    if (fork() > 0)
+        exit(0);
+    chdir("/");
+    
+    umask(0);
 }
 
 int FcitxLock()

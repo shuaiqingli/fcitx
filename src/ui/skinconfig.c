@@ -1,5 +1,6 @@
 
 #include "ui/skin.h"
+#include "ui/MenuWindow.h"
 #include "fcitx-config/fcitx-config.h"
 
 CONFIG_BINDING_BEGIN(FcitxSkin);
@@ -16,6 +17,8 @@ CONFIG_BINDING_REGISTER("SkinFont","UserPhraseColor",skinFont.fontColor[MSG_USER
 CONFIG_BINDING_REGISTER("SkinFont","FirstCandColor",skinFont.fontColor[MSG_FIRSTCAND]);
 CONFIG_BINDING_REGISTER("SkinFont","CodeColor",skinFont.fontColor[MSG_CODE]);
 CONFIG_BINDING_REGISTER("SkinFont","OtherColor",skinFont.fontColor[MSG_OTHER]);
+CONFIG_BINDING_REGISTER("SkinFont","ActiveMenuColor",skinFont.menuFontColor[MENU_ACTIVE]);
+CONFIG_BINDING_REGISTER("SkinFont","InactiveMenuColor",skinFont.menuFontColor[MENU_INACTIVE]);
 	
 CONFIG_BINDING_REGISTER("SkinMainBar","BackImg",skinMainBar.backImg);
 CONFIG_BINDING_REGISTER("SkinMainBar","Logo",skinMainBar.logo);
@@ -47,5 +50,15 @@ CONFIG_BINDING_REGISTER("SkinInputBar","ForwardArrow",skinInputBar.forwardArrow)
 
 CONFIG_BINDING_REGISTER("SkinTrayIcon","Active",skinTrayIcon.active);
 CONFIG_BINDING_REGISTER("SkinTrayIcon","Inactive",skinTrayIcon.inactive);
+
+CONFIG_BINDING_REGISTER("SkinMenu", "BackImg", skinMenu.backImg);
+CONFIG_BINDING_REGISTER("SkinMenu", "Resize", skinMenu.resize);
+CONFIG_BINDING_REGISTER("SkinMenu", "MarginTop", skinMenu.marginTop);
+CONFIG_BINDING_REGISTER("SkinMenu", "MarginBottom", skinMenu.marginBottom);
+CONFIG_BINDING_REGISTER("SkinMenu", "MarginLeft", skinMenu.marginLeft);
+CONFIG_BINDING_REGISTER("SkinMenu", "MarginRight", skinMenu.marginRight);
+CONFIG_BINDING_REGISTER("SkinMenu", "ActiveColor", skinMenu.activeColor);
+CONFIG_BINDING_REGISTER("SkinMenu", "LineColor", skinMenu.lineColor);
+
 CONFIG_BINDING_END()
 

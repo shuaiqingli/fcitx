@@ -63,14 +63,14 @@ extern int      iVKWindowX;
 extern int      iVKWindowY;
 extern Window   ximWindow;
 extern VKWindow vkWindow;
-extern WINDOW_COLOR mainWindowColor;
-extern WINDOW_COLOR inputWindowColor;
-extern WINDOW_COLOR VKWindowColor;
 extern Bool     bMainWindow_Hiden;
 unsigned char   iCurrentVK;
 extern CARD16   connect_id;
 extern Bool     bVK;
 extern Bool     bIsDisplaying;
+
+Atom protocolAtom;
+Atom killAtom;
 
 // added by yunfan
 // **********************************
@@ -85,7 +85,9 @@ InitX(void)
 
     SetMyXErrorHandler();
     iScreen = DefaultScreen(dpy);
-
+    
+    protocolAtom = XInternAtom (dpy, "WM_PROTOCOLS", False);
+    killAtom = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
     return True;
 }
 
@@ -96,8 +98,6 @@ InitX(void)
 void
 MyXEventHandler(XEvent * event)
 {
-    // unsigned char iPos;
-
     switch (event->type) {
     case ConfigureNotify:
 #ifdef _ENABLE_TRAY
@@ -110,9 +110,9 @@ MyXEventHandler(XEvent * event)
 #endif
         break;
     case ClientMessage:
-        if ((event->xclient.message_type == aboutWindow.about_protocol_atom)
-            && ((Atom) event->xclient.data.l[0] == aboutWindow.about_kill_atom)) {
-            XUnmapWindow(dpy, aboutWindow.window);
+        if ((event->xclient.message_type == protocolAtom)
+            && ((Atom) event->xclient.data.l[0] == killAtom)) {
+            XUnmapWindow(dpy, event->xclient.window);
             DrawMainWindow();
         }
 #ifdef _ENABLE_TRAY
@@ -298,7 +298,7 @@ MyXEventHandler(XEvent * event)
                 DrawMainWindow();
             } else if (event->xbutton.window == mainMenu.menuWindow) {
                 int             i;
-                i = selectShellIndex(&mainMenu, event->xbutton.y);
+                i = selectShellIndex(&mainMenu, event->xbutton.x, event->xbutton.y, NULL);
                 if (i == 0) {
                     DisplayAboutWindow();
                     XUnmapWindow(dpy, mainMenu.menuWindow);
@@ -306,43 +306,67 @@ MyXEventHandler(XEvent * event)
                 }
                 // fcitx配置工具接口
                 else if (i == 6) {
-                    CloseInputWindow();
                     XUnmapWindow(dpy, mainMenu.menuWindow);
-                    // 用一个标志位检测fcitx配置程序是否在运行，如果在运行，则跳过，否则可以同时运行多个fcitx_tools程序，会有共享内存方面的bug
-                    // if( fcitx_tools_status == 0)
-                    // fcitx_tools_interface(); 
-                } else if (i == 7) {
-                    clearSelectFlag(&mainMenu);
-                    XUnmapWindow(dpy, mainMenu.menuWindow);
-                    XUnmapWindow(dpy, vkMenu.menuWindow);
-                    XUnmapWindow(dpy, imMenu.menuWindow);
-                    XUnmapWindow(dpy, skinMenu.menuWindow);
+                    pid_t id;
 
+                    id = fork();
+
+                    if (id < 0)
+                        FcitxLog(ERROR, _("Unable to create process"));
+                    else if (id == 0)
+                    {
+                        id = fork();
+
+                        if (id < 0)
+                        {
+                            FcitxLog(ERROR, _("Unable to create process"));
+                            exit(1);
+                        }
+                        else if (id > 0)
+                            exit(0);
+
+                        execl(BINDIR "/fcitx-config", "fcitx-config", NULL);
+
+                        exit(0);
+                    }
+                } else if (i == 7) {
+                    exit(0);
                 }
             } else if (event->xbutton.window == imMenu.menuWindow) {
-                SelectIM(selectShellIndex(&imMenu, event->xbutton.y));
-                clearSelectFlag(&mainMenu);
-                XUnmapWindow(dpy, imMenu.menuWindow);
-                XUnmapWindow(dpy, mainMenu.menuWindow);
+                int idx = selectShellIndex(&imMenu, event->xbutton.x, event->xbutton.y, NULL);
+                if (idx >= 0)
+                {
+                    SelectIM(idx);
+                    clearSelectFlag(&mainMenu);
+                    XUnmapWindow(dpy, imMenu.menuWindow);
+                    XUnmapWindow(dpy, mainMenu.menuWindow);
+                }
             } else if (event->xbutton.window == skinMenu.menuWindow) {
                 // 皮肤切换在此进行
                 int             i;
-                i = selectShellIndex(&skinMenu, event->xbutton.y);
-                char **sskin = (char**) utarray_eltptr(skinBuf, i);
-                if (strcmp(fc.skinType, *sskin) != 0) {
+                i = selectShellIndex(&skinMenu, event->xbutton.x, event->xbutton.y, NULL);
+                if (i >= 0)
+                {
+                    char **sskin = (char**) utarray_eltptr(skinBuf, i);
+                    if (strcmp(fc.skinType, *sskin) != 0) {
+                        clearSelectFlag(&mainMenu);
+                        XUnmapWindow(dpy, mainMenu.menuWindow);
+                        XUnmapWindow(dpy, vkMenu.menuWindow);
+                        XUnmapWindow(dpy, imMenu.menuWindow);
+                        XUnmapWindow(dpy, skinMenu.menuWindow);
+                        DisplaySkin(*sskin);
+                        SaveConfig();
+                    }
+                }
+            } else if (event->xbutton.window == vkMenu.menuWindow) {
+                int idx = selectShellIndex(&vkMenu, event->xbutton.x, event->xbutton.y, NULL);
+                if (idx >= 0)
+                {
+                    SelectVK(idx);
                     clearSelectFlag(&mainMenu);
                     XUnmapWindow(dpy, mainMenu.menuWindow);
                     XUnmapWindow(dpy, vkMenu.menuWindow);
-                    XUnmapWindow(dpy, imMenu.menuWindow);
-                    XUnmapWindow(dpy, skinMenu.menuWindow);
-                    DisplaySkin(*sskin);
-                    SaveConfig();
                 }
-            } else if (event->xbutton.window == vkMenu.menuWindow) {
-                SelectVK(selectShellIndex(&vkMenu, event->xbutton.y));
-                clearSelectFlag(&mainMenu);
-                XUnmapWindow(dpy, mainMenu.menuWindow);
-                XUnmapWindow(dpy, vkMenu.menuWindow);
             }
             // ****************************
             SaveProfile();
@@ -588,6 +612,34 @@ MyXEventHandler(XEvent * event)
             SkinMenuEvent(event->xmotion.x, event->xmotion.y);
         }
         break;
+    case LeaveNotify:
+        if  (event->xcrossing.window == mainMenu.menuWindow) {
+            int x = event->xcrossing.x_root;
+            int y = event->xcrossing.y_root;
+            XWindowAttributes attr;
+            int i;
+            Bool flag = False;
+            Window wins[3] = { vkMenu.menuWindow, skinMenu.menuWindow, imMenu.menuWindow };
+            for (i = 0;i< 3; i++)
+            {
+                XGetWindowAttributes(dpy, wins[i], &attr);
+                if (attr.map_state != IsUnmapped &&
+                        IsInBox(x, y, attr.x, attr.y, attr.x + attr.width, attr.y + attr.height))
+                {
+                    flag = True;
+                    break;
+                }
+            }
+            if (!flag)
+            {
+                clearSelectFlag(&mainMenu);
+                XUnmapWindow(dpy, mainMenu.menuWindow);
+                XUnmapWindow(dpy, vkMenu.menuWindow);
+                XUnmapWindow(dpy, imMenu.menuWindow);
+                XUnmapWindow(dpy, skinMenu.menuWindow);
+            }
+        }
+        break;
     }
 }
 
@@ -781,4 +833,24 @@ InitWindowAttribute(Visual ** vs, Colormap * cmap,
         *attribmask = (CWBackPixel | CWBorderPixel | CWOverrideRedirect);
         *depth = DefaultDepth(dpy, iScreen);
     }
+}
+
+void ActiveWindow(Display *dpy, Window window)
+{
+    XEvent ev;
+
+    memset(&ev, 0, sizeof(ev));
+
+    Atom _NET_ACTIVE_WINDOW = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
+
+    ev.xclient.type = ClientMessage;
+    ev.xclient.window = window;
+    ev.xclient.message_type = _NET_ACTIVE_WINDOW;
+    ev.xclient.format = 32;
+    ev.xclient.data.l[0] = 1;
+    ev.xclient.data.l[1] = CurrentTime;
+    ev.xclient.data.l[2] = 0;
+
+    XSendEvent(dpy, RootWindow(dpy, iScreen), False, SubstructureNotifyMask, &ev);
+    XSync(dpy, False);
 }

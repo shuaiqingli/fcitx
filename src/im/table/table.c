@@ -220,7 +220,6 @@ void LoadTableInfo (void)
 
 ConfigFileDesc *GetTableConfigDesc()
 {
-	FcitxLock();
 	if (!tableConfigDesc)
 	{
 		FILE *tmpfp;
@@ -228,7 +227,6 @@ ConfigFileDesc *GetTableConfigDesc()
 		tableConfigDesc = ParseConfigFileDescFp(tmpfp);
 		fclose(tmpfp);
 	}
-	FcitxUnlock();
 
 	return tableConfigDesc;
 }
@@ -580,8 +578,6 @@ void SaveTableDict (void)
     FILE	*logfile = (FILE *)NULL;;
 #endif
 
-    FcitxLock();
-
     if ( tbl.isSavingTableDic )
 	return;
 
@@ -724,7 +720,6 @@ void SaveTableDict (void)
     }
 
     tbl.isSavingTableDic = False;
-    FcitxUnlock();
 }
 
 Bool IsInputKey (int iKey)

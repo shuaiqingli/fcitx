@@ -742,61 +742,8 @@ void ProcessKey (IMForwardEventStruct * call_data)
         			    retVal = IRV_DONOT_PROCESS;
         		    }
         		    else if (iKey == CTRL_5) {
-                    FcitxLock();
-                    LoadConfig ();
-                    if (fc.inputMethods[IM_SP])
-                        LoadSPData();
-
-        			if (!fc.bUseDBus) {
-        			    if (!mainWindow.window)
-        			        CreateMainWindow();
-        			    if (fc.hideMainWindow != HM_HIDE) {
-        				DisplayMainWindow ();
-        				DrawMainWindow ();
-        			    }
-#ifdef _ENABLE_TRAY
-        			    if (!tray.window) {
-        			        CreateTrayWindow();
-        			        DrawTrayWindow (INACTIVE_ICON,0,0,tray.size, tray.size);
-        			    }
-#endif
-        			    if (!aboutWindow.window)
-                            CreateAboutWindow();
-
-                        DisplaySkin(fc.skinType);
-        			}
-        			else {
-        			    XUnmapWindow(dpy, mainWindow.window);
-#ifdef _ENABLE_TRAY
-        			    XDestroyWindow(dpy,tray.window);
-        			    tray.window = (Window) NULL;
-        			    tray.bTrayMapped = False;
-#endif
-        			}
-
-        			SetIM ();
-        			if (!fc.bUseDBus) {
-                        CreateFont();
-        			    CalculateInputWindowHeight ();
-        			}
-
-        			FreeQuickPhrase ();
-        			LoadQuickPhrase ();
-
-        			FreeAutoEng ();
-        			LoadAutoEng ();
-
-        			FreePunc ();
-        			LoadPuncDict ();
-        			SwitchIM(-2);
-        			if (!fc.bUseDBus)
-                    {
-        			    DrawMainWindow();
-                        DisplaySkin(fc.skinType);
-                    }
-                    FcitxUnlock();
-
-        			retVal = IRV_DO_NOTHING;
+                        ReloadConfig();
+                        retVal = IRV_DO_NOTHING;
         		    }
         		    else if (iKey == ENTER_K) {
         			if (iInCap) {
@@ -1386,4 +1333,61 @@ void SetIM (void)
     LoadExtraIM(fc.strExternIM);
 
     SwitchIM (gs.iIMIndex);
+}
+
+void ReloadConfig()
+{
+    LoadConfig ();
+    if (fc.inputMethods[IM_SP])
+        LoadSPData();
+
+    if (!fc.bUseDBus) {
+        if (!mainWindow.window)
+            CreateMainWindow();
+        if (fc.hideMainWindow != HM_HIDE) {
+        DisplayMainWindow ();
+        DrawMainWindow ();
+        }
+#ifdef _ENABLE_TRAY
+        if (!tray.window) {
+            CreateTrayWindow();
+            DrawTrayWindow (INACTIVE_ICON,0,0,tray.size, tray.size);
+        }
+#endif
+        if (!aboutWindow.window)
+            CreateAboutWindow();
+
+        DisplaySkin(fc.skinType);
+    }
+    else {
+        XUnmapWindow(dpy, mainWindow.window);
+#ifdef _ENABLE_TRAY
+        XDestroyWindow(dpy,tray.window);
+        tray.window = (Window) NULL;
+        tray.bTrayMapped = False;
+#endif
+    }
+
+    SetIM ();
+    if (!fc.bUseDBus) {
+        CreateFont();
+        CalculateInputWindowHeight ();
+    }
+
+    FreeQuickPhrase ();
+    LoadQuickPhrase ();
+
+    FreeAutoEng ();
+    LoadAutoEng ();
+
+    FreePunc ();
+    LoadPuncDict ();
+    SwitchIM(-2);
+    if (!fc.bUseDBus)
+    {
+        DrawMainWindow();
+        DisplaySkin(fc.skinType);
+    }
+
+
 }

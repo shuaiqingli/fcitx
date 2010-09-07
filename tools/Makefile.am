@@ -7,7 +7,7 @@ EXTRA_DIST = $(tools_DATA)
 bin_PROGRAMS = mb2txt txt2mb createPYMB readPYMB readPYBase mb2org fcitx-remote 
 readPYMB_SOURCES = pyTools.c pyTools.h readPYMB.c
 readPYBase_SOURCES = pyTools.c pyTools.h readPYBase.c
-fcitx_remote_SOURCES = client-test.c
+fcitx_remote_SOURCES = fcitx-remote.c
 
 createPYMB_LDADD = \
 				   ../src/im/pinyin/pyParser.o \

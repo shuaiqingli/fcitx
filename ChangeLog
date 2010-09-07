@@ -1,3 +1,12 @@
+2010-09-07: CSSlayer <wengxt@gmail.com>
+    * 增加利用fcitx-remote进行重新加载配置的选项
+	* 调整线程间同步，避免问题。
+	* 避免僵尸进程
+	* 菜单样式集成进皮肤
+	* 菜单配置选项和退出选项正常工作，关闭菜单把鼠标移出即可
+	* fcitx-config脚本移入fcitx当中，用于探测已安装的配置工具
+	* 否则调用系统的默认编辑器打开配置文件，因此与fcitx-config-0.1.1有一个文件冲突
+
 2010-09-06: CSSlayer <wengxt@gmail.com>
     * 调整libfcitx-config，方便GUI开发
 	* 调整dark的一些字体颜色，感谢jason52lh

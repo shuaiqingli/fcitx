@@ -30,11 +30,18 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+#include "tools/tools.h"
 #include "core/xim.h"
 #include "ui/MainWindow.h"
 #include "ui/TrayWindow.h"
+#include "ui/font.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/cutils.h"
+#include "im/pinyin/sp.h"
+#include "im/special/QuickPhrase.h"
+#include "im/special/AutoEng.h"
+#include "im/special/punc.h"
+#include "ui/AboutWindow.h"
 #ifdef _ENABLE_DBUS
 #include "interface/DBus.h"
 extern Property state_prop;
@@ -107,35 +114,47 @@ static void send_ime_state(int fd)
 extern void DisplayMainWindow (void);
 static void main_loop (int socket_fd)
 {
-	int O;  // 低16位, 0 = get, 1 = set;
+	unsigned int O;  // 低16位, 0 = get, 1 = set;
 			// 高16位, 只用于 set, 0 关闭输入法, 1 打开输入法.
 	for (;;) {
 		int client_fd = ud_accept(socket_fd);
 		read(client_fd, &O, sizeof(int));
-		if (!O) {
-			send_ime_state(client_fd);
-		} else {
-			O >>= 16;
-			SetIMState(O);
-			if (O) {
-				if (!fc.bUseDBus) {
-					DisplayMainWindow();
-					DrawMainWindow();
-				}
-			}
+        unsigned int cmd = O & 0xFFFF;
+        unsigned int arg = (O >> 16) & 0xFFFF;
+        FcitxLock();
+        switch (cmd)
+        {
+            /// {{{
+            case 0:
+                send_ime_state(client_fd);
+                break;
+            case 1:
+                SetIMState(arg);
+                if (!fc.bUseDBus) {
+                    DisplayMainWindow();
+                    DrawMainWindow();
+                }
 #ifdef _ENABLE_DBUS
-			if (fc.bUseDBus)
-				updateProperty(&state_prop);
+                if (fc.bUseDBus)
+                    updateProperty(&state_prop);
 #endif
 #ifdef _ENABLE_TRAY
-			if (!fc.bUseDBus) {
-				if (ConnectIDGetState (g_last_connect_id) == IS_CHN)
-					DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
-				else
-					DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
-			}
+                if (!fc.bUseDBus) {
+                    if (ConnectIDGetState (g_last_connect_id) == IS_CHN)
+                        DrawTrayWindow (ACTIVE_ICON, 0, 0, tray.size, tray.size );
+                    else
+                        DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size );
+                }
 #endif
+                break;
+            case 2:
+                ReloadConfig();
+                break;
+            default:
+                break;
+            /// }}}
 		}
+        FcitxUnlock();
 		close(client_fd);
 	}
 }

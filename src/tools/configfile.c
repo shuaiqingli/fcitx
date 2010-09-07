@@ -276,7 +276,6 @@ void LoadConfig()
 
 ConfigFileDesc* GetConfigDesc()
 {
-    FcitxLock();
     if (!fcitxConfigDesc)
     {
         FILE *tmpfp;
@@ -284,7 +283,6 @@ ConfigFileDesc* GetConfigDesc()
         fcitxConfigDesc = ParseConfigFileDescFp(tmpfp);
 		fclose(tmpfp);
     }
-    FcitxUnlock();
 
     return fcitxConfigDesc;
 }
@@ -373,12 +371,10 @@ void SetTriggerKeys (char **strKey, int length)
 void SaveConfig()
 {
     ConfigFileDesc* configDesc = GetConfigDesc();
-    FcitxLock();
     char *file;
     FILE *fp = GetXDGFileUser("config", "wt", &file);
     FcitxLog(INFO, "Save Config to %s", file);
     SaveConfigFileFp(fp, fc.gconfig.configFile, configDesc);
     free(file);
     fclose(fp);
-    FcitxUnlock();
 }

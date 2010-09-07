@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx 20100424\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-09-06 13:24+0800\n"
-"PO-Revision-Date: 2010-09-06 13:29+0800\n"
+"POT-Creation-Date: 2010-09-08 03:07+0800\n"
+"PO-Revision-Date: 2010-09-08 02:18+0800\n"
 "Last-Translator: Weng Xuetian <wengxt@gmail.com>\n"
 "Language-Team: Chinese Simplified <fcitx-dev@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -550,6 +550,14 @@ msgid "OtherColor"
 msgstr "其他颜色"
 
 # data/skin.desc:37
+msgid "ActiveMenuColor"
+msgstr "活动菜单项颜色"
+
+# data/skin.desc:125
+msgid "InactiveMenuColor"
+msgstr "非活动菜单项颜色"
+
+# data/skin.desc:37
 # data/skin.desc:85
 msgid "BackImg"
 msgstr "背景图片"
@@ -661,6 +669,30 @@ msgstr "激活"
 # data/skin.desc:125
 msgid "Inactive"
 msgstr "未激活"
+
+# data/skin.desc:143
+msgid "MarginTop"
+msgstr "上边距"
+
+# data/skin.desc:146
+msgid "MarginBottom"
+msgstr "下边距"
+
+# data/skin.desc:149
+msgid "MarginLeft"
+msgstr "左边距"
+
+# data/skin.desc:152
+msgid "MarginRight"
+msgstr "右边距"
+
+# data/skin.desc:122
+msgid "ActiveColor"
+msgstr "活动项背景颜色"
+
+# data/skin.desc:22
+msgid "LineColor"
+msgstr "分隔线颜色"
 
 # data/table.desc:9
 msgid "File"
@@ -777,6 +809,10 @@ msgid "SkinMainBar"
 msgstr "皮肤主窗口设置"
 
 # unknown
+msgid "SkinMenu"
+msgstr "皮肤菜单设置"
+
+# unknown
 msgid "SkinTrayIcon"
 msgstr "皮肤托盘图标设置"
 
@@ -855,7 +891,7 @@ msgstr "上屏"
 msgid "Show"
 msgstr "显示"
 
-#: ../src/interface/ImeRemote.c:148
+#: ../src/interface/ImeRemote.c:167
 #, c-format
 msgid "Can't open socket %s: %s"
 msgstr "无法打开Socket %s: %s"
@@ -875,109 +911,109 @@ msgstr "名称错误 (%s)"
 msgid "Match Error (%s)"
 msgstr "匹配错误 (%s)"
 
-#: ../src/interface/DBus.c:145
+#: ../src/interface/DBus.c:146
 msgid "MovePreeditCaret"
 msgstr "MovePreeditCaret"
 
-#: ../src/interface/DBus.c:148 ../src/interface/DBus.c:160
-#: ../src/interface/DBus.c:204
+#: ../src/interface/DBus.c:149 ../src/interface/DBus.c:161
+#: ../src/interface/DBus.c:205
 msgid "Message has no arguments!"
 msgstr "Message has no arguments!"
 
-#: ../src/interface/DBus.c:150 ../src/interface/DBus.c:162
+#: ../src/interface/DBus.c:151 ../src/interface/DBus.c:163
 msgid "Argument is not INT32!"
 msgstr "Argument is not INT32!"
 
-#: ../src/interface/DBus.c:153
+#: ../src/interface/DBus.c:154
 #, c-format
 msgid "Got Signal with value %d"
 msgstr "Got Signal with value %d"
 
-#: ../src/interface/DBus.c:157
+#: ../src/interface/DBus.c:158
 msgid "SelectCandidate: "
 msgstr "SelectCandidate: "
 
-#: ../src/interface/DBus.c:187
+#: ../src/interface/DBus.c:188
 #, c-format
 msgid "%d:%s"
 msgstr "%d:%s"
 
-#: ../src/interface/DBus.c:191
+#: ../src/interface/DBus.c:192
 msgid "LookupTablePageUp"
 msgstr "LookupTablePageUp"
 
-#: ../src/interface/DBus.c:196
+#: ../src/interface/DBus.c:197
 msgid "LookupTablePageDown"
 msgstr "LookupTablePageDown"
 
-#: ../src/interface/DBus.c:201
+#: ../src/interface/DBus.c:202
 msgid "TriggerProperty: "
 msgstr "TriggerProperty: "
 
-#: ../src/interface/DBus.c:206
+#: ../src/interface/DBus.c:207
 msgid "Argument is not STRING!"
 msgstr "Argument is not STRING!"
 
-#: ../src/interface/DBus.c:209
+#: ../src/interface/DBus.c:210
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: ../src/interface/DBus.c:215
+#: ../src/interface/DBus.c:216
 msgid "PanelCreated"
 msgstr "PanelCreated"
 
-#: ../src/interface/DBus.c:219
+#: ../src/interface/DBus.c:220
 msgid "Exit"
 msgstr "Exit"
 
-#: ../src/interface/DBus.c:222
+#: ../src/interface/DBus.c:223
 msgid "ReloadConfig"
 msgstr "ReloadConfig"
 
-#: ../src/interface/DBus.c:243 ../src/interface/DBus.c:277
-#: ../src/interface/DBus.c:324 ../src/interface/DBus.c:371
-#: ../src/interface/DBus.c:405 ../src/interface/DBus.c:439
-#: ../src/interface/DBus.c:473 ../src/interface/DBus.c:507
-#: ../src/interface/DBus.c:541 ../src/interface/DBus.c:575
-#: ../src/interface/DBus.c:637 ../src/interface/DBus.c:671
-#: ../src/interface/DBus.c:709 ../src/interface/DBus.c:748
-#: ../src/interface/DBus.c:785
+#: ../src/interface/DBus.c:245 ../src/interface/DBus.c:279
+#: ../src/interface/DBus.c:326 ../src/interface/DBus.c:373
+#: ../src/interface/DBus.c:407 ../src/interface/DBus.c:441
+#: ../src/interface/DBus.c:475 ../src/interface/DBus.c:509
+#: ../src/interface/DBus.c:543 ../src/interface/DBus.c:577
+#: ../src/interface/DBus.c:639 ../src/interface/DBus.c:673
+#: ../src/interface/DBus.c:711 ../src/interface/DBus.c:750
+#: ../src/interface/DBus.c:787
 msgid "Message Null"
 msgstr "Message Null"
 
-#: ../src/interface/DBus.c:250 ../src/interface/DBus.c:255
-#: ../src/interface/DBus.c:295 ../src/interface/DBus.c:302
-#: ../src/interface/DBus.c:342 ../src/interface/DBus.c:349
-#: ../src/interface/DBus.c:378 ../src/interface/DBus.c:383
-#: ../src/interface/DBus.c:412 ../src/interface/DBus.c:417
-#: ../src/interface/DBus.c:446 ../src/interface/DBus.c:451
-#: ../src/interface/DBus.c:480 ../src/interface/DBus.c:485
-#: ../src/interface/DBus.c:514 ../src/interface/DBus.c:519
-#: ../src/interface/DBus.c:548 ../src/interface/DBus.c:553
-#: ../src/interface/DBus.c:588 ../src/interface/DBus.c:596
-#: ../src/interface/DBus.c:605 ../src/interface/DBus.c:615
-#: ../src/interface/DBus.c:644 ../src/interface/DBus.c:649
-#: ../src/interface/DBus.c:679 ../src/interface/DBus.c:682
-#: ../src/interface/DBus.c:687 ../src/interface/DBus.c:718
-#: ../src/interface/DBus.c:721 ../src/interface/DBus.c:726
-#: ../src/interface/DBus.c:755 ../src/interface/DBus.c:758
-#: ../src/interface/DBus.c:763 ../src/interface/DBus.c:792
-#: ../src/interface/DBus.c:797
+#: ../src/interface/DBus.c:252 ../src/interface/DBus.c:257
+#: ../src/interface/DBus.c:297 ../src/interface/DBus.c:304
+#: ../src/interface/DBus.c:344 ../src/interface/DBus.c:351
+#: ../src/interface/DBus.c:380 ../src/interface/DBus.c:385
+#: ../src/interface/DBus.c:414 ../src/interface/DBus.c:419
+#: ../src/interface/DBus.c:448 ../src/interface/DBus.c:453
+#: ../src/interface/DBus.c:482 ../src/interface/DBus.c:487
+#: ../src/interface/DBus.c:516 ../src/interface/DBus.c:521
+#: ../src/interface/DBus.c:550 ../src/interface/DBus.c:555
+#: ../src/interface/DBus.c:590 ../src/interface/DBus.c:598
+#: ../src/interface/DBus.c:607 ../src/interface/DBus.c:617
+#: ../src/interface/DBus.c:646 ../src/interface/DBus.c:651
+#: ../src/interface/DBus.c:681 ../src/interface/DBus.c:684
+#: ../src/interface/DBus.c:689 ../src/interface/DBus.c:720
+#: ../src/interface/DBus.c:723 ../src/interface/DBus.c:728
+#: ../src/interface/DBus.c:757 ../src/interface/DBus.c:760
+#: ../src/interface/DBus.c:765 ../src/interface/DBus.c:794
+#: ../src/interface/DBus.c:799
 msgid "Out Of Memory!"
 msgstr "Out Of Memory!"
 
-#: ../src/interface/DBus.c:820
+#: ../src/interface/DBus.c:822
 #, c-format
 msgid "Type: %d Text: %s"
 msgstr "Type: %d Text: %s"
 
-#: ../src/interface/DBus.c:846
+#: ../src/interface/DBus.c:848
 #, c-format
 msgid "Labels %d, Texts %d, CMB:%s"
 msgstr "Labels %d, Texts %d, CMB:%s"
 
-#: ../src/interface/DBus.c:882
+#: ../src/interface/DBus.c:884
 #, c-format
 msgid "updateMesssages Up:%s"
 msgstr "updateMesssages Up:%s"
@@ -995,6 +1031,36 @@ msgstr "Fcitx只能在X下运行"
 msgid "XEvent--Expose"
 msgstr "XEvent--Expose"
 
+#: ../src/ui/ui.c:315 ../src/ui/ui.c:322
+msgid "Unable to create process"
+msgstr "无法创建进程"
+
+#: ../src/ui/MenuWindow.c:325
+msgid "About Fcitx"
+msgstr "关于Fcitx"
+
+#: ../src/ui/MenuWindow.c:327
+msgid "Switch Skin"
+msgstr "切换皮肤"
+
+# data/config.desc:136
+#: ../src/ui/MenuWindow.c:328
+msgid "Switch IM"
+msgstr "选择输入法"
+
+# data/config.desc:136
+#: ../src/ui/MenuWindow.c:329
+msgid "Switch VK"
+msgstr "选择软键盘"
+
+#: ../src/ui/MenuWindow.c:331
+msgid "Fcitx Config ..."
+msgstr "配置Fcitx..."
+
+#: ../src/ui/MenuWindow.c:332
+msgid "Exit Fcitx"
+msgstr "退出Fcitx"
+
 #: ../src/ui/InputWindow.c:164
 msgid "DISPLAY InputWindow"
 msgstr "DISPLAY InputWindow"
@@ -1011,11 +1077,11 @@ msgstr "DISPLAY MainWindow"
 msgid "DRAW MainWindow"
 msgstr "DRAW MainWindow"
 
-#: ../src/ui/skin.c:155
+#: ../src/ui/skin.c:159
 msgid "Can not load default skin, is installion correct?"
 msgstr "无法加载默认皮肤，安装是否正确？"
 
-#: ../src/ui/skin.c:160
+#: ../src/ui/skin.c:164
 #, c-format
 msgid "Can not load skin %s, return to default"
 msgstr "无法加载皮肤%s，回到默认皮肤"
@@ -1131,42 +1197,42 @@ msgstr "加载码表文件: %s"
 msgid "Table Config %s is %s"
 msgstr "Table Config %s is %s"
 
-#: ../src/im/table/table.c:258
+#: ../src/im/table/table.c:256
 msgid "Loading Table Dict"
 msgstr "加载码表词典"
 
-#: ../src/im/table/table.c:268
+#: ../src/im/table/table.c:266
 #, c-format
 msgid "Load Table Dict from %s"
 msgstr "加载码表%s"
 
-#: ../src/im/table/table.c:274
+#: ../src/im/table/table.c:272
 #, c-format
 msgid "Cannot load table file: %s"
 msgstr "无法加载码表文件: %s"
 
-#: ../src/im/table/table.c:396
+#: ../src/im/table/table.c:394
 msgid "Load Table Dict OK"
 msgstr "加载码表文件成功"
 
-#: ../src/im/table/table.c:426
+#: ../src/im/table/table.c:424
 msgid "Loading Autophrase."
 msgstr "加载自动组词信息中"
 
-#: ../src/im/table/table.c:467
+#: ../src/im/table/table.c:465
 msgid "Load Autophrase OK"
 msgstr "加载自动组词信息完成"
 
-#: ../src/im/table/table.c:607
+#: ../src/im/table/table.c:603
 #, c-format
 msgid "Cannot create table file: %s"
 msgstr "无法创建码表文件: %s"
 
-#: ../src/im/table/table.c:614
+#: ../src/im/table/table.c:610
 msgid "Saving TABLE Dict."
 msgstr "保存码表词典"
 
-#: ../src/im/table/table.c:696
+#: ../src/im/table/table.c:692
 msgid "Rename OK"
 msgstr "重命名成功"
 
@@ -1175,11 +1241,11 @@ msgstr "重命名成功"
 msgid "Load Config File %s"
 msgstr "加载配置文件: %s"
 
-#: ../src/tools/tools.c:276
+#: ../src/tools/tools.c:274
 msgid "pthread mutexattr init failed"
 msgstr "pthread mutexattr init failed"
 
-#: ../src/tools/tools.c:283
+#: ../src/tools/tools.c:281
 msgid "pthread mutex init failed"
 msgstr "pthread mutex init failed"
 
@@ -1231,7 +1297,7 @@ msgstr "Fcitx启动错误。是否有另一个名为%s的XIM守护程序正在�
 msgid "Set icid=%d(connect_id=%d) to %d"
 msgstr "Set icid=%d(connect_id=%d) to %d"
 
-#: ../src/core/MyErrorsHandlers.c:84
+#: ../src/core/MyErrorsHandlers.c:87
 #, c-format
 msgid "FCITX -- Get Signal No.: %d"
 msgstr "Fcitx接收到信号: %d"

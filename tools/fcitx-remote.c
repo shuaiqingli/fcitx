@@ -64,6 +64,7 @@ void usage()
     printf("Usage: fcitx-remote [OPTION]\n"
            "\t-c\t\tclose input method\n"
            "\t-o\t\topen input method\n"
+           "\t-r\t\treload fcitx config\n"
            "\t[no option]\tdisplay fcitx state, %d for close, %d for english, %d for chinese\n"
 		   "\t-h\t\tdisplay this help and exit\n",
 		   IS_CLOSED, IS_ENG, IS_CHN);
@@ -76,7 +77,7 @@ int main ( int argc, char *argv[] )
 
     int o = 0;
 	char c;
-	while((c = getopt(argc, argv, "cho")) != -1) {
+	while((c = getopt(argc, argv, "chor")) != -1) {
 		switch (c) {
 		case 'o':
             o = 1;
@@ -84,6 +85,9 @@ int main ( int argc, char *argv[] )
             break;
         case 'c':
             o = 1;
+            break;
+        case 'r':
+            o = 2;
             break;
         case 'h':
         default:

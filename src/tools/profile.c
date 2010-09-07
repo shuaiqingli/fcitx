@@ -65,7 +65,6 @@ void LoadProfile(void)
 
 ConfigFileDesc* GetProfileDesc()
 {
-    FcitxLock();
     if (!fcitxProfileDesc)
     {
         FILE *tmpfp;
@@ -73,7 +72,6 @@ ConfigFileDesc* GetProfileDesc()
         fcitxProfileDesc = ParseConfigFileDescFp(tmpfp);
 		fclose(tmpfp);
     }
-    FcitxUnlock();
 
     return fcitxProfileDesc;
 }
@@ -81,11 +79,9 @@ ConfigFileDesc* GetProfileDesc()
 void SaveProfile(void)
 {
     ConfigFileDesc* profileDesc = GetProfileDesc();
-    FcitxLock();
     FILE* fp = GetXDGFileUser("profile", "wt", NULL);
     SaveConfigFileFp(fp, fcitxProfile.gconfig.configFile, profileDesc);
     fclose(fp);
-    FcitxUnlock();
 }
 
 void FilterCopyIMIndex(ConfigGroup *group, ConfigOption *option, void *data, ConfigSync sync, void* arg)

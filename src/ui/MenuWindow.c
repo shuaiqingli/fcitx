@@ -22,7 +22,7 @@
 #include "MenuWindow.h"
 
 #include <ctype.h>
-
+#include <math.h>
 #include <iconv.h>
 #include <X11/Xatom.h>
 #include "skin.h"
@@ -32,16 +32,17 @@
 extern int      iScreen;
 
 xlibMenu mainMenu,imMenu,vkMenu,skinMenu; 
-					
+static void DestroyXlibMenu(xlibMenu *menu);
+static Bool CreateMainMenuWindow();
+static Bool CreateImMenuWindow (void);
+static Bool CreateSkinMenuWindow (void);
+static Bool CreateVKMenuWindow();
+
 void InitMenuDefault(xlibMenu * Menu)
 {
 	Menu->pos_x=100;
 	Menu->pos_y=100;
-	Menu->width=130;
-//	Menu->bgcolor.r=0xDCDCDC;
-//	Menu->bgselectcolor=0x0A2465;
-//	Menu->charcolor=0x111111;
-//	Menu->charselectcolor=(0xFFFFFF-0x111111);
+	Menu->width=sc.skinMenu.backImg.width;
 	Menu->font_size=14;
 	strcpy(Menu->font,gs.fontZh);
 	Menu->mark=-1;
@@ -56,34 +57,38 @@ void SetMeueShell(menuShell * shell,char * tips,int isselect,shellType type)
 
 int CreateXlibMenu(Display * dpy,xlibMenu * Menu)
 {
+    Atom            menu_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
+    Atom            type_menu = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_MENU", False);
 	XSetWindowAttributes attrib;
 	unsigned long   attribmask;
-	int             iBackPixel;
-	WINDOW_COLOR     menuWindowColor = { NULL, NULL, {0, 220 << 8, 220 << 8, 220 << 8}};
-					
-    if (XAllocColor (dpy, DefaultColormap (dpy, DefaultScreen (dpy)), &(menuWindowColor.backColor)))
-		iBackPixel = menuWindowColor.backColor.pixel;
-    else
-		iBackPixel = WhitePixel (dpy, DefaultScreen (dpy));
-	//开始只创建一个简单的窗口不做任何动作
-    Menu->menuWindow =XCreateSimpleWindow (dpy, DefaultRootWindow (dpy), 
-									0, 0,
-									MENU_WINDOW_WIDTH,MENU_WINDOW_HEIGHT,
-									0,WhitePixel (dpy, DefaultScreen (dpy)),iBackPixel);	
+	int depth;
+	int scr;
+	Colormap cmap;
+	Visual * vs;
+	scr=DefaultScreen(dpy);
+   	vs=find_argb_visual (dpy, scr);
+    InitWindowAttribute(&vs, &cmap, &attrib, &attribmask, &depth);
+	
+    //开始只创建一个简单的窗口不做任何动作
+    Menu->menuWindow =XCreateWindow (dpy,
+            RootWindow (dpy, scr),
+            0, 0,
+            MENU_WINDOW_WIDTH,MENU_WINDOW_HEIGHT,
+            0, depth, InputOutput,
+            vs, attribmask, &attrib);
+
     if (Menu->menuWindow == (Window) NULL)
 	{
-		//printf("CreateMenuWindow failed\n");
 		return False;
 	}
 	
-  	attrib.override_redirect = True;
-	attribmask = CWOverrideRedirect;
-	XChangeWindowAttributes (dpy, Menu->menuWindow, attribmask, &attrib);
+    XSetTransientForHint (dpy, Menu->menuWindow, DefaultRootWindow (dpy));
+
+    XChangeProperty (dpy, Menu->menuWindow, menu_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_menu, 1);
+
+	Menu->menu_cs=cairo_xlib_surface_create(dpy, Menu->menuWindow, vs, MENU_WINDOW_WIDTH, MENU_WINDOW_HEIGHT);
 	
-	Menu->menu_cs=cairo_xlib_surface_create(dpy, Menu->menuWindow, DefaultVisual(dpy, iScreen), MENU_WINDOW_WIDTH, MENU_WINDOW_HEIGHT);
-	
-    XSelectInput (dpy, Menu->menuWindow, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
-    //XFlush( dpy);
+    XSelectInput (dpy, Menu->menuWindow, KeyPressMask | ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask | LeaveWindowMask );
 
     return True;
 }
@@ -94,33 +99,34 @@ void GetMenuHeight(Display * dpy,xlibMenu * Menu)
 	int winheight=0;
 	int fontheight=0;
 
-	winheight = 8+8;//菜单头和尾都空8个pixel
+	winheight = sc.skinMenu.marginTop + sc.skinMenu.marginBottom;//菜单头和尾都空8个pixel
 	fontheight=FontHeight(Menu->font);
 	for(i=0;i<Menu->useItemCount;i++)
 	{
-		//printf("%d %d %x %x %x %s\n",winheight,Menu->width,Menu->bgcolor,Menu->charcolor,Menu->charselectcolor,Menu->shell[i].tipstr);
 		if( Menu->shell[i].type == menushell)
-			winheight=winheight+6+fontheight;
+			winheight += 6+fontheight;
 		else if( Menu->shell[i].type == divline)
-			winheight+=5;
+			winheight += 5;
 	}
 	Menu->height=winheight;
 	
 
 }
+
 //根据Menu内容来绘制菜单内容
 void DrawXlibMenu(Display * dpy,xlibMenu * Menu)
 {
 	int i=0;
 	int fontheight;
-	int pos_y=0;
+    int pos_y = 0;
 
 	fontheight=FontHeight(Menu->font);
 
 	GetMenuHeight(dpy,Menu);
-	//printf("%d %d\n",Menu->height,Menu->useItemCount);
-	//从第8像素点处开始绘图
-	pos_y=8;
+
+    draw_menu_background(Menu);
+
+	pos_y=sc.skinMenu.marginTop;
 	for (i=0;i<Menu->useItemCount;i++)
 	{
 		if( Menu->shell[i].type == menushell)
@@ -136,6 +142,7 @@ void DrawXlibMenu(Display * dpy,xlibMenu * Menu)
 			pos_y+=5;
 		}
 	}
+    
 	XMoveResizeWindow(dpy, Menu->menuWindow, Menu->pos_x,Menu->pos_y,Menu->width, Menu->height);
 }
 
@@ -147,28 +154,35 @@ void DisplayXlibMenu(Display * dpy,xlibMenu * Menu)
 
 void DrawDivLine(Display * dpy,xlibMenu * Menu,int line_y)
 {
-	//printf("DrawDivLine============\n");
-	//分割线的颜色写死了，浅灰色
+    int marginLeft = sc.skinMenu.marginLeft;
+    int marginRight = sc.skinMenu.marginRight;
 	cairo_t * cr;
 	cr=cairo_create(Menu->menu_cs);
-	cairo_set_source_rgb(cr, 0.2, 0.2, 0.1);
-	cairo_set_line_width (cr, 0.2);
-	cairo_move_to(cr, 5, line_y+3);
-	cairo_line_to(cr, Menu->width-10, line_y+3);
+	fcitx_cairo_set_color(cr, &sc.skinMenu.lineColor);
+	cairo_set_line_width (cr, 2);
+	cairo_move_to(cr, marginLeft + 3, line_y+3);
+	cairo_line_to(cr, Menu->width - marginRight - 3, line_y+3);
 	cairo_stroke(cr);
 	cairo_destroy(cr);
 }
 
 void menuMark(Display * dpy,xlibMenu * Menu,int y,int i)
 {
-	GC gc ;
-	gc=XCreateGC( dpy, Menu->menuWindow, 0, NULL );
+    int marginLeft = sc.skinMenu.marginLeft;
+    cairo_t *cr;
+    cr = cairo_create(Menu->menu_cs);
 	if(Menu->shell[i].isselect == 0)
-		XSetForeground(dpy,gc,0x0A2465 );
-	else
-		XSetForeground(dpy,gc,0xDCDCDC );
-	XFillArc(dpy, Menu->menuWindow, gc,  3, y+5, 11, 11, 0, 360*64);
-	XFreeGC (dpy, gc);
+    {
+        fcitx_cairo_set_color(cr, &sc.skinFont.menuFontColor[MENU_INACTIVE]);
+    }
+    else
+    {
+        fcitx_cairo_set_color(cr, &sc.skinFont.menuFontColor[MENU_ACTIVE]);
+    }
+    cairo_translate(cr, marginLeft + 7, y + 10);
+    cairo_arc(cr, 0, 0, 5.5 , 0., 2*M_PI);
+    cairo_fill(cr);
+	cairo_destroy(cr);
 }
 
 /*
@@ -177,79 +191,82 @@ void menuMark(Display * dpy,xlibMenu * Menu,int y,int i)
 */
 void DisplayText(Display * dpy,xlibMenu * Menu,int shellindex,int line_y)
 {
+    int marginLeft = sc.skinMenu.marginLeft;
+    int marginRight = sc.skinMenu.marginRight;
 	cairo_t *  cr;
 	cr=cairo_create(Menu->menu_cs);
 	if(Menu->shell[shellindex].isselect ==0)
 	{
-		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-		cairo_set_source_rgb (cr, 0.86, 0.86, 0.86);
-        cairo_rectangle (cr, 2,line_y,Menu->width-4,Menu->font_size+4);
-        cairo_fill (cr);
-      
-		cairo_set_source_rgb(cr, 0.067, 0.067, 0.067);
+		fcitx_cairo_set_color(cr, &sc.skinFont.menuFontColor[MENU_INACTIVE]);
 		cairo_select_font_face(cr, Menu->font,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_set_font_size(cr, Menu->font_size);
 	
-        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 20,line_y+Menu->font_size);
+        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 15 + marginLeft ,line_y+Menu->font_size);
 	
 		if(Menu->shell[shellindex].next == 1)
 		{	
-			cairo_set_source_rgb (cr, 0.04, 0.14, 0.4);
-			cairo_move_to(cr,Menu->width-11,line_y+4);
-			cairo_line_to(cr,Menu->width-11,line_y+16);
-			cairo_line_to(cr,Menu->width-5,line_y+10);
-			cairo_line_to(cr,Menu->width-11,line_y+4);
+			cairo_move_to(cr,Menu->width - marginRight - 6,line_y+4);
+			cairo_line_to(cr,Menu->width - marginRight - 6,line_y+16);
+			cairo_line_to(cr,Menu->width - marginRight - 1,line_y+10);
+			cairo_line_to(cr,Menu->width - marginRight - 6,line_y+4);
 			cairo_fill (cr);
 		}
 	}
 	else
 	{
 		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-		cairo_set_source_rgb (cr, 0.04, 0.14, 0.4);
-        cairo_rectangle (cr, 2,line_y,Menu->width-4,Menu->font_size+4);
+		fcitx_cairo_set_color(cr, &sc.skinMenu.activeColor);
+        cairo_rectangle (cr, marginLeft ,line_y, Menu->width - marginRight - marginLeft,Menu->font_size+4);
         cairo_fill (cr);
 	
        
-        cairo_set_source_rgb(cr, 0.93, 0.93, 0.93);
+		fcitx_cairo_set_color(cr, &sc.skinFont.menuFontColor[MENU_ACTIVE]);
 		cairo_select_font_face(cr, Menu->font,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_set_font_size(cr, Menu->font_size);
 	
-        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 20,line_y+Menu->font_size);
+        OutputStringWithContext(cr, Menu->shell[shellindex].tipstr , 15 + marginLeft ,line_y+Menu->font_size);
 		
 		if(Menu->shell[shellindex].next == 1)
-		{			
-			cairo_set_source_rgb (cr,0.93, 0.93, 0.93);
-			cairo_move_to(cr,Menu->width-11,line_y+5);
-			cairo_line_to(cr,Menu->width-11,line_y+15);
-			cairo_line_to(cr,Menu->width-5,line_y+10);
-			cairo_line_to(cr,Menu->width-11,line_y+5);
+		{
+            cairo_move_to(cr,Menu->width - marginRight - 6,line_y+4);
+			cairo_line_to(cr,Menu->width - marginRight - 6,line_y+16);
+			cairo_line_to(cr,Menu->width - marginRight - 1,line_y+10);
+			cairo_line_to(cr,Menu->width - marginRight - 6,line_y+4);
 			cairo_fill (cr);
 		}		
 	}
-		cairo_destroy(cr);
+    cairo_destroy(cr);
 }
 
 /**
 *返回鼠标指向的菜单在menu中是第多少项
 */
-int selectShellIndex(xlibMenu * Menu,int y)
+int selectShellIndex(xlibMenu * Menu, int x, int y, int* offseth)
 {
-	int i;
-	int winheight=8;
-	int fontheight;
-	
-	fontheight=FontHeight(Menu->font);
-	for(i=0;i<Menu->useItemCount;i++)
-	{
-		if( Menu->shell[i].type == menushell)
-		{
-			if(y>winheight+1 && y<winheight+6+fontheight-1)
-				return i;
-			winheight=winheight+6+fontheight;
-		}
-		else if( Menu->shell[i].type == divline)
-			winheight+=5;
-	}
+    int i;
+    int winheight=sc.skinMenu.marginTop;
+    int fontheight;
+    int marginLeft = sc.skinMenu.marginLeft;
+
+    if (x < marginLeft)
+        return -1;
+    
+    fontheight=FontHeight(Menu->font);
+    for(i=0;i<Menu->useItemCount;i++)
+    {
+        if( Menu->shell[i].type == menushell)
+        {
+            if(y>winheight+1 && y<winheight+6+fontheight-1)
+            {
+                if (offseth)
+                    *offseth = winheight;
+                return i;
+            }
+            winheight=winheight+6+fontheight;                
+        }
+        else if( Menu->shell[i].type == divline)
+            winheight+=5;
+    }
 	return -1;
 }
 
@@ -279,18 +296,40 @@ void clearSelectFlag(xlibMenu * Menu)
 //创建菜单窗口
 Bool CreateMenuWindow( )
 {
-	Bool ret;
-	int i;
+    load_menu_img();
+    CreateMainMenuWindow();
+	CreateImMenuWindow();   //创建输入法选择菜单窗口
+	CreateSkinMenuWindow(); //创建皮肤选择菜单窗口
+	CreateVKMenuWindow();	//创建软键盘布局选择菜单窗口
+	return 0;
+}
+
+void DestroyMenuWindow()
+{
+    DestroyXlibMenu(&mainMenu);
+    DestroyXlibMenu(&imMenu);
+    DestroyXlibMenu(&skinMenu);
+    DestroyXlibMenu(&vkMenu);
+}
+
+void DestroyXlibMenu(xlibMenu *menu)
+{
+    cairo_surface_destroy(menu->menu_cs);
+    XDestroyWindow(dpy, menu->menuWindow);
+}
+
+Bool CreateMainMenuWindow() 
+{
+    int i;
 	InitMenuDefault(&mainMenu);
-	mainMenu.width=MENU_WINDOW_WIDTH;
-	SetMeueShell(&mainMenu.shell[0],"关于fcitx",0,menushell);
+	SetMeueShell(&mainMenu.shell[0],_("About Fcitx"),0,menushell);
 	SetMeueShell(&mainMenu.shell[1],"",0,divline);
-	SetMeueShell(&mainMenu.shell[2],"皮肤切换",0,menushell);
-	SetMeueShell(&mainMenu.shell[3],"输入法切换",0,menushell);
-	SetMeueShell(&mainMenu.shell[4],"软键盘切换",0,menushell);
+	SetMeueShell(&mainMenu.shell[2],_("Switch Skin"),0,menushell);
+	SetMeueShell(&mainMenu.shell[3],_("Switch IM"),0,menushell);
+	SetMeueShell(&mainMenu.shell[4],_("Switch VK"),0,menushell);
 	SetMeueShell(&mainMenu.shell[5],"",0,divline);
-	SetMeueShell(&mainMenu.shell[6],"fcitx配置     ...",0,menushell);
-	SetMeueShell(&mainMenu.shell[7],"退出",0,menushell);
+	SetMeueShell(&mainMenu.shell[6],_("Fcitx Config ..."),0,menushell);
+	SetMeueShell(&mainMenu.shell[7],_("Exit Fcitx"),0,menushell);
 	mainMenu.useItemCount=8;
 	for(i=0;i<mainMenu.useItemCount;i++)
 	{
@@ -299,8 +338,8 @@ Bool CreateMenuWindow( )
 	mainMenu.shell[2].next=1;
 	mainMenu.shell[3].next=1;
 	mainMenu.shell[4].next=1;
-	ret=CreateXlibMenu(dpy,&mainMenu);
-	return 0;
+	CreateXlibMenu(dpy,&mainMenu);
+    return 0;
 }
 
 //创建输入法选择菜单窗口
@@ -350,8 +389,8 @@ void MainMenuEvent(int x,int y)
 {
 	int i,j;
 	char tmpstr[64]={0};
-	i=selectShellIndex(&mainMenu, y);
-	//printf("i=%d\n",i);
+    int offseth = 0;
+	i=selectShellIndex(&mainMenu, x, y, &offseth);
 	colorRevese(&mainMenu,i);
 	DrawXlibMenu( dpy,&mainMenu);
 	DisplayXlibMenu(dpy,&mainMenu);	
@@ -374,10 +413,10 @@ void MainMenuEvent(int x,int y)
 			else
 				skinMenu.pos_x=skinMenu.pos_x+ mainMenu.width-4;
 			
-			if( skinMenu.pos_y+y+skinMenu.height >DisplayHeight(dpy, iScreen))
+			if( skinMenu.pos_y+offseth+skinMenu.height >DisplayHeight(dpy, iScreen))
 				skinMenu.pos_y=DisplayHeight(dpy, iScreen)-skinMenu.height-10;
 			else 
-				skinMenu.pos_y=y+skinMenu.pos_y-10;
+				skinMenu.pos_y=offseth+skinMenu.pos_y-sc.skinMenu.marginTop;
 			
 			clearSelectFlag(&skinMenu);
 			DrawXlibMenu( dpy,&skinMenu);
@@ -388,7 +427,6 @@ void MainMenuEvent(int x,int y)
 			{
 				memset(tmpstr,0,sizeof(tmpstr));
 				sprintf(tmpstr,"%d.%s",i+1,_(im[i].strName));
-				//printf("%s\n",tmpstr);
 				SetMeueShell(&imMenu.shell[i],tmpstr,0,menushell);
 			}
 			imMenu.useItemCount=iIMCount;
@@ -401,10 +439,10 @@ void MainMenuEvent(int x,int y)
 			else
 				imMenu.pos_x=imMenu.pos_x+ mainMenu.width-4;
 			
-			if( imMenu.pos_y+y+imMenu.height >DisplayHeight(dpy, iScreen))
+			if( imMenu.pos_y+offseth+imMenu.height >DisplayHeight(dpy, iScreen))
 				imMenu.pos_y=DisplayHeight(dpy, iScreen)-imMenu.height-10;
 			else 
-				imMenu.pos_y=y+imMenu.pos_y-10;
+				imMenu.pos_y=offseth+imMenu.pos_y-sc.skinMenu.marginTop;
 			
 			clearSelectFlag(&imMenu);
 			DrawXlibMenu( dpy,&imMenu);
@@ -419,10 +457,10 @@ void MainMenuEvent(int x,int y)
 			else
 				vkMenu.pos_x=vkMenu.pos_x+ mainMenu.width-4;
 			
-			if( vkMenu.pos_y+y+vkMenu.height >DisplayHeight(dpy, iScreen))
+			if( vkMenu.pos_y+offseth+vkMenu.height >DisplayHeight(dpy, iScreen))
 				vkMenu.pos_y=DisplayHeight(dpy, iScreen)-vkMenu.height-10;
 			else 
-				vkMenu.pos_y=y+vkMenu.pos_y-10;
+				vkMenu.pos_y=offseth+vkMenu.pos_y-sc.skinMenu.marginTop;
 			
 			clearSelectFlag(&vkMenu)	;
 			DrawXlibMenu( dpy,&vkMenu);
@@ -444,9 +482,8 @@ void MainMenuEvent(int x,int y)
 void IMMenuEvent(int x,int y)
 {
 	int i;
-	i=selectShellIndex(&imMenu, y);
+	i=selectShellIndex(&imMenu,x, y, NULL);
 
-	//printf("i=%d\n",i);
 	colorRevese(&imMenu,i);
 	DrawXlibMenu(dpy,&imMenu);
 	DisplayXlibMenu(dpy,&imMenu);	
@@ -456,8 +493,7 @@ void IMMenuEvent(int x,int y)
 void VKMenuEvent(int x,int y)
 {
 	int i;
-	i=selectShellIndex(&vkMenu, y);
-	//printf("i=%d\n",i);
+	i=selectShellIndex(&vkMenu,x, y, NULL);
 	colorRevese(&vkMenu,i);
 	DrawXlibMenu(dpy,&vkMenu);
 	DisplayXlibMenu(dpy,&vkMenu);	
@@ -467,8 +503,7 @@ void VKMenuEvent(int x,int y)
 void SkinMenuEvent(int x,int y)
 {
 	int i;
-	i=selectShellIndex(&skinMenu, y);
-	//printf("i=%d\n",i);
+	i=selectShellIndex(&skinMenu,x, y, NULL);
 	colorRevese(&skinMenu,i);
 	DrawXlibMenu(dpy,&skinMenu);
 	DisplayXlibMenu(dpy,&skinMenu);	

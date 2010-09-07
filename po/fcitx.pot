@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-09-06 13:24+0800\n"
+"POT-Creation-Date: 2010-09-08 03:07+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -568,118 +568,152 @@ msgid "OtherColor"
 msgstr ""
 
 # data/skin.desc:37
-# data/skin.desc:85
-msgid "BackImg"
+msgid "ActiveMenuColor"
 msgstr ""
 
 # data/skin.desc:40
-msgid "Logo"
+msgid "InactiveMenuColor"
 msgstr ""
 
 # data/skin.desc:43
-msgid "ZhPunc"
+# data/skin.desc:91
+# data/skin.desc:134
+msgid "BackImg"
 msgstr ""
 
 # data/skin.desc:46
-msgid "EnPunc"
+msgid "Logo"
 msgstr ""
 
 # data/skin.desc:49
-msgid "Chs"
+msgid "ZhPunc"
 msgstr ""
 
 # data/skin.desc:52
-msgid "Cht"
+msgid "EnPunc"
 msgstr ""
 
 # data/skin.desc:55
-msgid "HalfCorner"
+msgid "Chs"
 msgstr ""
 
 # data/skin.desc:58
-msgid "FullCorner"
+msgid "Cht"
 msgstr ""
 
 # data/skin.desc:61
-msgid "Unlock"
+msgid "HalfCorner"
 msgstr ""
 
 # data/skin.desc:64
-msgid "Lock"
+msgid "FullCorner"
 msgstr ""
 
 # data/skin.desc:67
-msgid "Legend"
+msgid "Unlock"
 msgstr ""
 
 # data/skin.desc:70
-msgid "NoLegend"
+msgid "Lock"
 msgstr ""
 
 # data/skin.desc:73
-msgid "VK"
+msgid "Legend"
 msgstr ""
 
 # data/skin.desc:76
-msgid "NoVK"
+msgid "NoLegend"
 msgstr ""
 
 # data/skin.desc:79
+msgid "VK"
+msgstr ""
+
+# data/skin.desc:82
+msgid "NoVK"
+msgstr ""
+
+# data/skin.desc:85
 # unknown
 msgid "Eng"
 msgstr ""
 
-# data/skin.desc:82
+# data/skin.desc:88
 msgid "Chn"
 msgstr ""
 
-# data/skin.desc:88
+# data/skin.desc:94
+# data/skin.desc:137
 # unknown
 msgid "Resize"
 msgstr ""
 
-# data/skin.desc:95
+# data/skin.desc:101
 msgid "ResizePos"
 msgstr ""
 
-# data/skin.desc:98
+# data/skin.desc:104
 msgid "ResizeWidth"
 msgstr ""
 
-# data/skin.desc:101
+# data/skin.desc:107
 msgid "InputPos"
 msgstr ""
 
-# data/skin.desc:104
+# data/skin.desc:110
 msgid "OutputPos"
 msgstr ""
 
-# data/skin.desc:107
+# data/skin.desc:113
 msgid "LayoutLeft"
 msgstr ""
 
-# data/skin.desc:110
+# data/skin.desc:116
 msgid "LayoutRight"
 msgstr ""
 
-# data/skin.desc:113
+# data/skin.desc:119
 msgid "CursorColor"
 msgstr ""
 
-# data/skin.desc:116
+# data/skin.desc:122
 msgid "BackArrow"
 msgstr ""
 
-# data/skin.desc:119
+# data/skin.desc:125
 msgid "ForwardArrow"
 msgstr ""
 
-# data/skin.desc:122
+# data/skin.desc:128
 msgid "Active"
 msgstr ""
 
-# data/skin.desc:125
+# data/skin.desc:131
 msgid "Inactive"
+msgstr ""
+
+# data/skin.desc:143
+msgid "MarginTop"
+msgstr ""
+
+# data/skin.desc:146
+msgid "MarginBottom"
+msgstr ""
+
+# data/skin.desc:149
+msgid "MarginLeft"
+msgstr ""
+
+# data/skin.desc:152
+msgid "MarginRight"
+msgstr ""
+
+# data/skin.desc:156
+msgid "ActiveColor"
+msgstr ""
+
+# data/skin.desc:159
+msgid "LineColor"
 msgstr ""
 
 # data/table.desc:9
@@ -800,6 +834,10 @@ msgid "SkinMainBar"
 msgstr ""
 
 # unknown
+msgid "SkinMenu"
+msgstr ""
+
+# unknown
 msgid "SkinTrayIcon"
 msgstr ""
 
@@ -879,7 +917,7 @@ msgstr ""
 msgid "Show"
 msgstr ""
 
-#: ../src/interface/ImeRemote.c:148
+#: ../src/interface/ImeRemote.c:167
 #, c-format
 msgid "Can't open socket %s: %s"
 msgstr ""
@@ -899,109 +937,109 @@ msgstr ""
 msgid "Match Error (%s)"
 msgstr ""
 
-#: ../src/interface/DBus.c:145
+#: ../src/interface/DBus.c:146
 msgid "MovePreeditCaret"
 msgstr ""
 
-#: ../src/interface/DBus.c:148 ../src/interface/DBus.c:160
-#: ../src/interface/DBus.c:204
+#: ../src/interface/DBus.c:149 ../src/interface/DBus.c:161
+#: ../src/interface/DBus.c:205
 msgid "Message has no arguments!"
 msgstr ""
 
-#: ../src/interface/DBus.c:150 ../src/interface/DBus.c:162
+#: ../src/interface/DBus.c:151 ../src/interface/DBus.c:163
 msgid "Argument is not INT32!"
 msgstr ""
 
-#: ../src/interface/DBus.c:153
+#: ../src/interface/DBus.c:154
 #, c-format
 msgid "Got Signal with value %d"
 msgstr ""
 
-#: ../src/interface/DBus.c:157
+#: ../src/interface/DBus.c:158
 msgid "SelectCandidate: "
 msgstr ""
 
-#: ../src/interface/DBus.c:187
+#: ../src/interface/DBus.c:188
 #, c-format
 msgid "%d:%s"
 msgstr ""
 
-#: ../src/interface/DBus.c:191
+#: ../src/interface/DBus.c:192
 msgid "LookupTablePageUp"
 msgstr ""
 
-#: ../src/interface/DBus.c:196
+#: ../src/interface/DBus.c:197
 msgid "LookupTablePageDown"
 msgstr ""
 
-#: ../src/interface/DBus.c:201
+#: ../src/interface/DBus.c:202
 msgid "TriggerProperty: "
 msgstr ""
 
-#: ../src/interface/DBus.c:206
+#: ../src/interface/DBus.c:207
 msgid "Argument is not STRING!"
 msgstr ""
 
-#: ../src/interface/DBus.c:209
+#: ../src/interface/DBus.c:210
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: ../src/interface/DBus.c:215
+#: ../src/interface/DBus.c:216
 msgid "PanelCreated"
 msgstr ""
 
-#: ../src/interface/DBus.c:219
+#: ../src/interface/DBus.c:220
 msgid "Exit"
 msgstr ""
 
-#: ../src/interface/DBus.c:222
+#: ../src/interface/DBus.c:223
 msgid "ReloadConfig"
 msgstr ""
 
-#: ../src/interface/DBus.c:243 ../src/interface/DBus.c:277
-#: ../src/interface/DBus.c:324 ../src/interface/DBus.c:371
-#: ../src/interface/DBus.c:405 ../src/interface/DBus.c:439
-#: ../src/interface/DBus.c:473 ../src/interface/DBus.c:507
-#: ../src/interface/DBus.c:541 ../src/interface/DBus.c:575
-#: ../src/interface/DBus.c:637 ../src/interface/DBus.c:671
-#: ../src/interface/DBus.c:709 ../src/interface/DBus.c:748
-#: ../src/interface/DBus.c:785
+#: ../src/interface/DBus.c:245 ../src/interface/DBus.c:279
+#: ../src/interface/DBus.c:326 ../src/interface/DBus.c:373
+#: ../src/interface/DBus.c:407 ../src/interface/DBus.c:441
+#: ../src/interface/DBus.c:475 ../src/interface/DBus.c:509
+#: ../src/interface/DBus.c:543 ../src/interface/DBus.c:577
+#: ../src/interface/DBus.c:639 ../src/interface/DBus.c:673
+#: ../src/interface/DBus.c:711 ../src/interface/DBus.c:750
+#: ../src/interface/DBus.c:787
 msgid "Message Null"
 msgstr ""
 
-#: ../src/interface/DBus.c:250 ../src/interface/DBus.c:255
-#: ../src/interface/DBus.c:295 ../src/interface/DBus.c:302
-#: ../src/interface/DBus.c:342 ../src/interface/DBus.c:349
-#: ../src/interface/DBus.c:378 ../src/interface/DBus.c:383
-#: ../src/interface/DBus.c:412 ../src/interface/DBus.c:417
-#: ../src/interface/DBus.c:446 ../src/interface/DBus.c:451
-#: ../src/interface/DBus.c:480 ../src/interface/DBus.c:485
-#: ../src/interface/DBus.c:514 ../src/interface/DBus.c:519
-#: ../src/interface/DBus.c:548 ../src/interface/DBus.c:553
-#: ../src/interface/DBus.c:588 ../src/interface/DBus.c:596
-#: ../src/interface/DBus.c:605 ../src/interface/DBus.c:615
-#: ../src/interface/DBus.c:644 ../src/interface/DBus.c:649
-#: ../src/interface/DBus.c:679 ../src/interface/DBus.c:682
-#: ../src/interface/DBus.c:687 ../src/interface/DBus.c:718
-#: ../src/interface/DBus.c:721 ../src/interface/DBus.c:726
-#: ../src/interface/DBus.c:755 ../src/interface/DBus.c:758
-#: ../src/interface/DBus.c:763 ../src/interface/DBus.c:792
-#: ../src/interface/DBus.c:797
+#: ../src/interface/DBus.c:252 ../src/interface/DBus.c:257
+#: ../src/interface/DBus.c:297 ../src/interface/DBus.c:304
+#: ../src/interface/DBus.c:344 ../src/interface/DBus.c:351
+#: ../src/interface/DBus.c:380 ../src/interface/DBus.c:385
+#: ../src/interface/DBus.c:414 ../src/interface/DBus.c:419
+#: ../src/interface/DBus.c:448 ../src/interface/DBus.c:453
+#: ../src/interface/DBus.c:482 ../src/interface/DBus.c:487
+#: ../src/interface/DBus.c:516 ../src/interface/DBus.c:521
+#: ../src/interface/DBus.c:550 ../src/interface/DBus.c:555
+#: ../src/interface/DBus.c:590 ../src/interface/DBus.c:598
+#: ../src/interface/DBus.c:607 ../src/interface/DBus.c:617
+#: ../src/interface/DBus.c:646 ../src/interface/DBus.c:651
+#: ../src/interface/DBus.c:681 ../src/interface/DBus.c:684
+#: ../src/interface/DBus.c:689 ../src/interface/DBus.c:720
+#: ../src/interface/DBus.c:723 ../src/interface/DBus.c:728
+#: ../src/interface/DBus.c:757 ../src/interface/DBus.c:760
+#: ../src/interface/DBus.c:765 ../src/interface/DBus.c:794
+#: ../src/interface/DBus.c:799
 msgid "Out Of Memory!"
 msgstr ""
 
-#: ../src/interface/DBus.c:820
+#: ../src/interface/DBus.c:822
 #, c-format
 msgid "Type: %d Text: %s"
 msgstr ""
 
-#: ../src/interface/DBus.c:846
+#: ../src/interface/DBus.c:848
 #, c-format
 msgid "Labels %d, Texts %d, CMB:%s"
 msgstr ""
 
-#: ../src/interface/DBus.c:882
+#: ../src/interface/DBus.c:884
 #, c-format
 msgid "updateMesssages Up:%s"
 msgstr ""
@@ -1017,6 +1055,34 @@ msgstr ""
 
 #: ../src/ui/ui.c:124
 msgid "XEvent--Expose"
+msgstr ""
+
+#: ../src/ui/ui.c:315 ../src/ui/ui.c:322
+msgid "Unable to create process"
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:325
+msgid "About Fcitx"
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:327
+msgid "Switch Skin"
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:328
+msgid "Switch IM"
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:329
+msgid "Switch VK"
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:331
+msgid "Fcitx Config ..."
+msgstr ""
+
+#: ../src/ui/MenuWindow.c:332
+msgid "Exit Fcitx"
 msgstr ""
 
 #: ../src/ui/InputWindow.c:164
@@ -1035,11 +1101,11 @@ msgstr ""
 msgid "DRAW MainWindow"
 msgstr ""
 
-#: ../src/ui/skin.c:155
+#: ../src/ui/skin.c:159
 msgid "Can not load default skin, is installion correct?"
 msgstr ""
 
-#: ../src/ui/skin.c:160
+#: ../src/ui/skin.c:164
 #, c-format
 msgid "Can not load skin %s, return to default"
 msgstr ""
@@ -1155,42 +1221,42 @@ msgstr ""
 msgid "Table Config %s is %s"
 msgstr ""
 
-#: ../src/im/table/table.c:258
+#: ../src/im/table/table.c:256
 msgid "Loading Table Dict"
 msgstr ""
 
-#: ../src/im/table/table.c:268
+#: ../src/im/table/table.c:266
 #, c-format
 msgid "Load Table Dict from %s"
 msgstr ""
 
-#: ../src/im/table/table.c:274
+#: ../src/im/table/table.c:272
 #, c-format
 msgid "Cannot load table file: %s"
 msgstr ""
 
-#: ../src/im/table/table.c:396
+#: ../src/im/table/table.c:394
 msgid "Load Table Dict OK"
 msgstr ""
 
-#: ../src/im/table/table.c:426
+#: ../src/im/table/table.c:424
 msgid "Loading Autophrase."
 msgstr ""
 
-#: ../src/im/table/table.c:467
+#: ../src/im/table/table.c:465
 msgid "Load Autophrase OK"
 msgstr ""
 
-#: ../src/im/table/table.c:607
+#: ../src/im/table/table.c:603
 #, c-format
 msgid "Cannot create table file: %s"
 msgstr ""
 
-#: ../src/im/table/table.c:614
+#: ../src/im/table/table.c:610
 msgid "Saving TABLE Dict."
 msgstr ""
 
-#: ../src/im/table/table.c:696
+#: ../src/im/table/table.c:692
 msgid "Rename OK"
 msgstr ""
 
@@ -1199,11 +1265,11 @@ msgstr ""
 msgid "Load Config File %s"
 msgstr ""
 
-#: ../src/tools/tools.c:276
+#: ../src/tools/tools.c:274
 msgid "pthread mutexattr init failed"
 msgstr ""
 
-#: ../src/tools/tools.c:283
+#: ../src/tools/tools.c:281
 msgid "pthread mutex init failed"
 msgstr ""
 
@@ -1255,7 +1321,7 @@ msgstr ""
 msgid "Set icid=%d(connect_id=%d) to %d"
 msgstr ""
 
-#: ../src/core/MyErrorsHandlers.c:84
+#: ../src/core/MyErrorsHandlers.c:87
 #, c-format
 msgid "FCITX -- Get Signal No.: %d"
 msgstr ""

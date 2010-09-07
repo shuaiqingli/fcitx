@@ -135,6 +135,7 @@ Bool            IsIM (char *strName);
 void            SaveIM (void);
 void            SetIM (void);
 void            ConvertPunc (void);
+void            ReloadConfig();
 
 extern FcitxState gs;
 

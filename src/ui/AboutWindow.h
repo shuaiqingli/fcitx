@@ -36,7 +36,6 @@ typedef struct AboutWindow
     ConfigColor fontColor;
     int width;
     int fontSize;
-    Atom     about_protocol_atom;
     Atom     about_kill_atom;
 } AboutWindow;
 

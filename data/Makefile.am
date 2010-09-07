@@ -9,6 +9,8 @@ general_DATA = pybase.mb pyphrase.mb pySym.mb sp.dat punc.mb \
 		 $(configdescfile)
 EXTRA_DIST = $(general_DATA)
 
+bin_SCRIPTS = fcitx-config
+
 py_data = pybase.mb pyphrase.mb
 
 $(py_data): @top_srcdir@/data/pyPhrase.org @top_srcdir@/data/gbkpy.org

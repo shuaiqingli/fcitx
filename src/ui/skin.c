@@ -59,6 +59,7 @@ cairo_surface_t *  chs_t[2];
 cairo_surface_t *  lock[2];	
 cairo_surface_t *  vk[2];
 cairo_surface_t *  input;
+cairo_surface_t *  menuBack;
 cairo_surface_t *  prev;
 cairo_surface_t *  next;
 cairo_surface_t *  english;
@@ -79,7 +80,6 @@ ConfigFileDesc * fcitxSkinDesc = NULL;
 
 ConfigFileDesc* GetSkinDesc()
 {
-    FcitxLock();
     if (!fcitxSkinDesc)
     {
         FILE *tmpfp;
@@ -87,7 +87,6 @@ ConfigFileDesc* GetSkinDesc()
         fcitxSkinDesc = ParseConfigFileDescFp(tmpfp);
 		fclose(tmpfp);
     }
-    FcitxUnlock();
 
     return fcitxSkinDesc;
 }
@@ -100,6 +99,7 @@ int LoadSkinConfig()
 {	
 	FILE    *fp;
   	char  buf[PATH_MAX]={0};
+    Bool    isreload = False;
     if (sc.config.configFile)
     {
         FreeConfigFile(sc.config.configFile);
@@ -113,14 +113,18 @@ int LoadSkinConfig()
 reload:
     //获取配置文件的绝对路径
     {
-        snprintf(buf, PATH_MAX, "%s/fcitx_skin.conf", fc.skinType);
-        buf[PATH_MAX-1] ='\0';
-        size_t len;
-        char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/skin" , DATADIR, "fcitx/skin" );
+        if (!isreload)
+        {
+            snprintf(buf, PATH_MAX, "%s/fcitx_skin.conf", fc.skinType);
+            buf[PATH_MAX-1] ='\0';
+            size_t len;
+            char ** path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/skin" , DATADIR, "fcitx/skin" );
 
-        fp = GetXDGFile(buf, path, "r", len, NULL);
-
-        FreeXDGPath(path);
+            fp = GetXDGFile(buf, path, "r", len, NULL);
+            FreeXDGPath(path);
+        }
+        else
+            fp = fopen(DATADIR "/fcitx/skin/default/fcitx_skin.conf", "r");
     }
 
     if (fp)
@@ -161,6 +165,7 @@ reload:
         if (fc.skinType)
             free(fc.skinType);
         fc.skinType = strdup("default");
+        isreload = True;
         goto reload;
     }
 
@@ -224,7 +229,6 @@ int load_a_img(FcitxImage * img,cairo_surface_t ** png)
             {
                 img->width=cairo_image_surface_get_width(*png);
                 img->height=cairo_image_surface_get_height(*png);
-                //printf("width:%d  height:%d\n",img->width,img->height);
                 img->response_w=img->width;
                 img->response_h=img->height;
             }
@@ -270,6 +274,85 @@ void load_main_img()
     }
 }
 
+void draw_menu_background(xlibMenu * menu)
+{
+	int png_height=sc.skinMenu.backImg.height;
+    int resizeHeight = png_height - sc.skinMenu.marginTop - sc.skinMenu.marginBottom;
+    int marginTop = sc.skinMenu.marginTop;
+    int marginBottom = sc.skinMenu.marginBottom;
+
+    if (resizeHeight <= 0)
+        resizeHeight = 1;
+
+    cairo_t *c = cairo_create(menu->menu_cs);
+	cairo_set_source_surface(c, menuBack, 0, 0);
+	cairo_save(c);
+
+    /* 第一部分 */
+	cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+	cairo_rectangle	(c, 0, 0, menu->width, marginTop);
+	cairo_clip(c);
+	cairo_paint(c);
+    
+    /* 第三部分 */
+    cairo_restore(c);
+	cairo_save(c);
+	cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+	cairo_translate(c, 0, menu->height - marginBottom);
+	cairo_set_source_surface(c, menuBack, 0, -marginTop -resizeHeight);
+	cairo_rectangle	(c, 0, 0, menu->width, marginBottom);
+	cairo_clip(c);
+	cairo_paint(c);
+
+	//重绘的次数
+	int repaint_times=(menu->height - marginTop - marginBottom)/resizeHeight;
+	//不够汇一次的剩余的长度
+	int remain_height=(menu->height - marginTop - marginBottom)% resizeHeight;
+	
+    if( sc.skinMenu.resize == R_COPY)
+    {
+		int i=0;
+			
+		//先把整段的都绘上去
+		for(i=0;i<repaint_times;i++)
+		{
+			cairo_restore(c);
+			cairo_save(c);
+			cairo_translate(c, 0, marginTop + i*resizeHeight);
+			cairo_set_source_surface(c, menuBack, 0, -marginTop);
+            cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+			cairo_rectangle	(c,0,0,menu->width,resizeHeight);
+			cairo_clip(c);
+			cairo_paint(c);
+		}
+		
+	//绘制剩余段
+		if(remain_height != 0)
+		{
+			cairo_restore(c);
+			cairo_translate(c, 0, marginTop + resizeHeight * repaint_times);
+			cairo_set_source_surface(c, menuBack, 0, -marginTop);
+            cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+			cairo_rectangle	(c,0,0,menu->width,remain_height);
+			cairo_clip(c);
+			cairo_paint(c);
+		}
+	}
+	else if( sc.skinMenu.resize == R_RESIZE)
+	{
+		cairo_restore(c);
+		cairo_translate(c, 0 , marginTop);
+		cairo_scale(c, 1, (double)(menu->height - marginTop - marginBottom)/(double)resizeHeight);
+		cairo_set_source_surface(c, menuBack, 0, -marginTop);
+		cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
+		cairo_rectangle	(c,0,0, menu->width, resizeHeight);
+		cairo_clip(c);
+		cairo_paint(c);
+	}
+
+    cairo_destroy(c);
+}
+
 void load_input_img()
 {
 	load_a_img( &sc.skinInputBar.backImg, &input);
@@ -281,6 +364,11 @@ void load_tray_img()
 {
     load_a_img( &sc.skinTrayIcon.active, &trayActive);
     load_a_img( &sc.skinTrayIcon.inactive, &trayInactive);
+}
+
+void load_menu_img()
+{
+    load_a_img( &sc.skinMenu.backImg, &menuBack);
 }
 
 void destroy_a_img(cairo_surface_t ** png)
@@ -314,6 +402,8 @@ void destroy_img()
 	destroy_a_img(&next);
     destroy_a_img(&trayActive);
     destroy_a_img(&trayInactive);
+    
+    destroy_a_img(&menuBack);
 
     int i = 0;
     for (; i < iIMCount; i ++)
@@ -337,7 +427,7 @@ void load_input_msg()
     for (i = 0; i < 7 ; i ++)
     {
         inputWindow.c_font[i] = cairo_create(inputWindow.cs_input_bar);
-        cairo_set_source_rgb(inputWindow.c_font[i], sc.skinFont.fontColor[i].r, sc.skinFont.fontColor[i].g, sc.skinFont.fontColor[i].b);
+        fcitx_cairo_set_color(inputWindow.c_font[i], &sc.skinFont.fontColor[i]);
         cairo_select_font_face(inputWindow.c_font[i], gs.fontZh,CAIRO_FONT_SLANT_NORMAL,CAIRO_FONT_WEIGHT_NORMAL);
         cairo_set_font_size(inputWindow.c_font[i], fontSize);
     }
@@ -345,7 +435,7 @@ void load_input_msg()
 
     //光标画笔
 	inputWindow.c_cursor=cairo_create(inputWindow.cs_input_bar);
-	cairo_set_source_rgb(inputWindow.c_cursor, cursorColor.r, cursorColor.g, cursorColor.b);
+	fcitx_cairo_set_color(inputWindow.c_cursor, &cursorColor);
 	cairo_set_line_width (inputWindow.c_cursor, 1);
 }
 
@@ -464,21 +554,14 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 	//不够汇一次的剩余的长度
 	remain_width=(input_bar_len - png_width)%resizeWidth;
 	
-	
-	//把背景清空
 	c=cairo_create(inputWindow.cs_input_bar);
-	cairo_set_source_rgba(c, 0, 0, 0,0);
-	cairo_rectangle (c, 0, 0, INPUT_BAR_MAX_LEN, sc.skinInputBar.backImg.height);
-	//cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
-	cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
-	cairo_fill(c);
 	
 	//把cr设定位png图像,并保存
 	cairo_set_source_surface(c, input, 0, 0);
 	cairo_save(c);
 	
 	//画输入条第一部分(从开始到重复或者延伸段开始的位置)
-	cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+	cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 	cairo_rectangle	(c,0,0,resizePos,png_height);
 	cairo_clip(c);
 	cairo_paint(c);
@@ -486,9 +569,8 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 	//再画输入条的第三部分(因为第二部分可变,最后处理会比较方便)
 	cairo_restore(c);
 	cairo_save(c);
-	cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+	cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 	cairo_translate(c, input_bar_len-(png_width-resizePos-resizeWidth), 0);
-	//printf("%d %d %d\n",input_bar_len,png_width-resizePos-resizeWidth,input_bar_len-(png_width-resizePos-resizeWidth));
 	cairo_set_source_surface(c, input, -resizePos-resizeWidth, 0);
 	cairo_rectangle	(c,0,0,png_width-resizePos-resizeWidth,png_height);
 	cairo_clip(c);
@@ -506,7 +588,7 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 			cairo_save(c);
 			cairo_translate(c,resizePos+i*resizeWidth, 0);
 			cairo_set_source_surface(c, input,-resizePos, 0);
-			cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+            cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 			cairo_rectangle	(c,0,0,resizeWidth,png_height);
 			cairo_clip(c);
 			cairo_paint(c);
@@ -518,7 +600,7 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 			cairo_restore(c);
 			cairo_translate(c,resizePos+resizeWidth*repaint_times, 0);
 			cairo_set_source_surface(c, input,-resizePos, 0);
-			cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+			cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 			cairo_rectangle	(c,0,0,remain_width,png_height);
 			cairo_clip(c);
 			cairo_paint(c);
@@ -530,7 +612,7 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 		cairo_translate(c,resizePos, 0);
 		cairo_scale(c, (double)(input_bar_len-png_width+resizeWidth)/(double)resizeWidth,1);
 		cairo_set_source_surface(c, input,-resizePos, 0);
-		cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+        cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 		cairo_rectangle	(c,0,0,resizeWidth,png_height);
 		cairo_clip(c);
 		cairo_paint(c);
@@ -540,11 +622,12 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 		cairo_restore(c);
 		cairo_translate(c,resizePos, 0);
 		cairo_set_source_surface(c, input,-resizePos, 0);
-		cairo_set_operator(c, CAIRO_OPERATOR_OVER);
+        cairo_set_operator(c, CAIRO_OPERATOR_SOURCE);
 		cairo_rectangle	(c,0,0,resizeWidth,png_height);
 		cairo_clip(c);
 		cairo_paint(c);
 	}
+    cairo_set_operator(c, CAIRO_OPERATOR_OVER);
 	
 	if(inputWindow.bShowCursor )
 	{	
@@ -624,11 +707,14 @@ void DisplaySkin(char * skinname)
 
     DestroyMainWindow();
 	DestroyInputWindow();
+    DestroyMenuWindow();
 	
 	LoadSkinConfig();
     CreateFont();
 	CreateMainWindow ();
 	CreateInputWindow ();
+
+    CreateMenuWindow();
 
 	DrawMainWindow ();
 	DrawInputWindow ();
@@ -706,5 +792,3 @@ int loadSkinDir()
 
 	return 0;
 }
-
-

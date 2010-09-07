@@ -34,6 +34,12 @@ Type=Color
 [SkinFont/OtherColor]
 Type=Color
 
+[SkinFont/ActiveMenuColor]
+Type=Color
+
+[SkinFont/InactiveMenuColor]
+Type=Color
+
 [SkinMainBar/BackImg]
 Type=Image
 
@@ -124,3 +130,31 @@ Type=Image
 
 [SkinTrayIcon/Inactive]
 Type=Image
+
+[SkinMenu/BackImg]
+Type=Image
+
+[SkinMenu/Resize]
+Type=Enum
+EnumCount=2
+Enum0=Copy
+Enum1=Resize
+
+[SkinMenu/MarginTop]
+Type=Integer
+
+[SkinMenu/MarginBottom]
+Type=Integer
+
+[SkinMenu/MarginLeft]
+Type=Integer
+
+[SkinMenu/MarginRight]
+Type=Integer
+
+
+[SkinMenu/ActiveColor]
+Type=Color
+
+[SkinMenu/LineColor]
+Type=Color

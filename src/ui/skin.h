@@ -44,6 +44,7 @@
 #include "core/IC.h"
 #include "core/ime.h"
 #include "tools/utarray.h"
+#include "ui/MenuWindow.h"
 
 #define SIZEX 800
 #define SIZEY 200
@@ -69,7 +70,20 @@ typedef struct
 {
 	int fontSize;
     ConfigColor fontColor[7];
+    ConfigColor menuFontColor[2];
 } SkinFont;
+
+typedef struct
+{
+    FcitxImage backImg;
+    RESIZERULE resize;
+	int marginTop;
+	int marginBottom;
+    int marginLeft;
+    int marginRight;
+    ConfigColor activeColor;
+    ConfigColor lineColor;
+} SkinMenu;
 
 typedef struct 
 {
@@ -124,6 +138,7 @@ typedef struct
     SkinMainBar skinMainBar;
     SkinInputBar skinInputBar;
     SkinTrayIcon skinTrayIcon;	
+    SkinMenu skinMenu;
 } FcitxSkin;
 
 /**
@@ -181,11 +196,13 @@ extern int str2skin_img(char * str,FcitxImage * img);
 extern Visual * find_argb_visual (Display *dpy, int scr);
 extern void load_main_img();
 void load_tray_img();
+void load_menu_img();
 void load_input_img();
 void load_input_msg();
 void draw_a_img(cairo_t **c,FcitxImage img,cairo_surface_t * png,MouseE mouse);
 void destroy_a_img(cairo_surface_t ** png);
 extern void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth);
+extern void draw_menu_background(xlibMenu * menu);
 extern void set_mouse_status(MouseE m);
 /**
 * 加载皮肤配置文件
@@ -211,6 +228,9 @@ extern Visual * find_argb_visual (Display *dpy, int scr);
 
 extern void SelectIM(int imidx);
 extern void SelectVK(int );
+
+#define fcitx_cairo_set_color(c, color) cairo_set_source_rgb((c), (color)->r, (color)->g, (color)->b)
+
 
 CONFIG_BINDING_DECLARE(FcitxSkin);
 #endif

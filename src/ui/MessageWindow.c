@@ -33,6 +33,7 @@
 
 extern Display *dpy;
 extern int      iScreen;
+extern Atom killAtom;
 
 MessageWindow messageWindow;
 
@@ -65,11 +66,13 @@ Bool CreateMessageWindow (void)
 void InitMessageWindowProperty (void)
 {
     Atom            message_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
-    Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_TOOLBAR", False);
+    Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 
     XSetTransientForHint (dpy, messageWindow.window, DefaultRootWindow (dpy));
 
     XChangeProperty (dpy, messageWindow.window, message_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_toolbar, 1);
+
+    XSetWMProtocols(dpy, messageWindow.window, &killAtom, 1);
 }
 
 void DisplayMessageWindow (void)
@@ -162,4 +165,6 @@ void DrawMessageWindow (char *title, char **msg, int length)
     }
 
     cairo_destroy(c);
+
+    ActiveWindow(dpy, messageWindow.window);
 }

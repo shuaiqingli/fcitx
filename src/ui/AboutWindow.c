@@ -41,6 +41,7 @@ char            AboutCopyRight[] = "(c) 2005, Yuking";
 char            strTitle[100];
 
 AboutWindow aboutWindow;
+extern Atom killAtom;
 static void            InitAboutWindowProperty (void);
 
 Bool CreateAboutWindow (void)
@@ -72,15 +73,13 @@ void InitAboutWindowProperty (void)
     XTextProperty   tp;
 
     Atom            about_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
-    Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_TOOLBAR", False);
+    Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 
     XSetTransientForHint (dpy, aboutWindow.window, DefaultRootWindow (dpy));
 
     XChangeProperty (dpy, aboutWindow.window, about_wm_window_type, XA_ATOM, 32, PropModeReplace, (void *) &type_toolbar, 1);
 
-    aboutWindow.about_protocol_atom = XInternAtom (dpy, "WM_PROTOCOLS", False);
-    aboutWindow.about_kill_atom = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols (dpy, aboutWindow.window, &aboutWindow.about_kill_atom, 1);
+    XSetWMProtocols (dpy, aboutWindow.window, &killAtom, 1);
 
 	char           *p;
 

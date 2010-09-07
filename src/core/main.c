@@ -187,9 +187,6 @@ int main (int argc, char *argv[])
     CreateInputWindow ();	//创建输入窗口
     CreateVKWindow ();		//创建虚拟键盘窗口   
     CreateMenuWindow( );    //创建菜单窗口
-	CreateImMenuWindow();   //创建输入法选择菜单窗口
-	CreateSkinMenuWindow(); //创建皮肤选择菜单窗口
-	CreateVKMenuWindow();	//创建软键盘布局选择菜单窗口
 	CreateMessageWindow();	//创建软键盘布局选择菜单窗口
 
     if (!fc.bUseDBus)
@@ -212,15 +209,7 @@ int main (int argc, char *argv[])
 
     //以后台方式运行
     if (bBackground) {
-	pid_t           id;
-
-	id = fork ();
-	if (id == -1) {
-	    printf ("Can't run as a daemon！\n");
-	    exit (1);
-	}
-	else if (id > 0)
-	    exit (0);
+    InitAsDaemon();
     }
 
 #ifdef _ENABLE_RECORDING
@@ -253,10 +242,15 @@ int main (int argc, char *argv[])
     //主循环，即XWindow的消息循环
     for (;;) {
 	XNextEvent (dpy, &event);			//等待一个事件发生
+
+    FcitxLock();
 	    
 	if (XFilterEvent (&event, None) == False)
 	    MyXEventHandler (&event);		//处理X事件
+    
+    FcitxUnlock();
     }
+
 
     return 0;
 }

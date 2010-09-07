@@ -22,18 +22,11 @@
 
 #include <X11/Xlib.h>
 #include <cairo.h>
-#include "ui/skin.h"
+#include "fcitx-config/fcitx-config.h"
 
 #define LIGHT_COLOR	0xffff
 #define BACK_COLOR	0x0000
 #define DIM_COLOR	0x6666
-
-typedef struct {
-    GC              foreGC;
-    GC              backGC;
-    XColor          backColor;
-    XColor          foreColor;
-} WINDOW_COLOR;
 
 typedef struct {
     GC              gc;
@@ -61,6 +54,7 @@ int             FontHeightWithContext (cairo_t *c);
 Bool            MouseClick (int *x, int *y, Window window);
 Bool		IsWindowVisible(Window window);
 void InitWindowAttribute(Visual** vs, Colormap *cmap, XSetWindowAttributes *attrib, unsigned long *attribmask, int* depth);
+void ActiveWindow(Display *dpy, Window window);
 
 /*
 int             FillImageByXPMData (XImage * pImage, char **apcData);
