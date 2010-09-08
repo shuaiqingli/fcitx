@@ -1,6 +1,8 @@
 2010-09-08: CSSlayer <wengxt@gmail.com>
     * 修复非UTF-8 Locale的问题
 	* 主窗口设置名称
+	* 放松环境变量检查（大小写）
+	* 更新deb包build信息
 
 2010-09-07: CSSlayer <wengxt@gmail.com>
     * 增加利用fcitx-remote进行重新加载配置的选项

@@ -45,7 +45,10 @@
 #include "fcitx-config/cutils.h"
 #include "tools/xdg.h"
 
-#define CHECK_ENV(env, value) (!getenv(env) || (0 != strcmp(getenv(env), (value))))
+#define CHECK_ENV(env, value, icase) (!getenv(env) \
+        || (icase ? \
+            (0 != strcmp(getenv(env), (value))) \
+            : (0 != strcasecmp(getenv(env), (value)))))
 
 CONNECT_ID     *connectIDsHead = (CONNECT_ID *) NULL;
 ICID	       *icidsHead = (ICID *) NULL;
@@ -607,9 +610,9 @@ Bool InitXIM (char *imname)
         char strTemp[PATH_MAX];
         snprintf(strTemp, PATH_MAX, "@im=%s", imname);
         strTemp[PATH_MAX - 1] = '\0';
-        if (CHECK_ENV("XMODIFIERS", strTemp) ||
-            CHECK_ENV("GTK_IM_MODULE", "xim") ||
-            CHECK_ENV("QT_IM_MODULE", "xim"))
+        if (CHECK_ENV("XMODIFIERS", strTemp, True) ||
+            CHECK_ENV("GTK_IM_MODULE", "xim", False) ||
+            CHECK_ENV("QT_IM_MODULE", "xim", False))
         {
             char *msg[6];
             msg[0] = _("Please check your environment varibles.");

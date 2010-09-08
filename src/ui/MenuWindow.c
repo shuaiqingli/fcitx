@@ -59,6 +59,7 @@ int CreateXlibMenu(Display * dpy,xlibMenu * Menu)
 {
     Atom            menu_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
     Atom            type_menu = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_MENU", False);
+    char		strWindowName[]="Fcitx Menu Window";
 	XSetWindowAttributes attrib;
 	unsigned long   attribmask;
 	int depth;
@@ -89,6 +90,14 @@ int CreateXlibMenu(Display * dpy,xlibMenu * Menu)
 	Menu->menu_cs=cairo_xlib_surface_create(dpy, Menu->menuWindow, vs, MENU_WINDOW_WIDTH, MENU_WINDOW_HEIGHT);
 	
     XSelectInput (dpy, Menu->menuWindow, KeyPressMask | ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask | LeaveWindowMask );
+
+    XTextProperty	tp;
+    /* Set the name of the window */
+    tp.value = (void *)strWindowName;
+    tp.encoding = XA_STRING;
+    tp.format = 16;
+    tp.nitems = strlen(strWindowName);
+    XSetWMName (dpy, Menu->menuWindow, &tp);
 
     return True;
 }

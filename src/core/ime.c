@@ -129,7 +129,6 @@ extern int      iInputWindowX;
 extern int      iInputWindowY;
 
 extern Bool	bMainWindow_Hiden;
-extern char    *strFullCorner;
 
 extern CARD16	connect_id;
 
@@ -1100,7 +1099,6 @@ void ResetRecording (void)
 void SwitchIM (INT8 index)
 {
     INT8        iLastIM;
-    char	*str;
 
     if (index != (INT8) - 2 && bVK)
     return;
@@ -1119,13 +1117,6 @@ void SwitchIM (INT8 index)
         gs.iIMIndex = index;
     }
     }
-
-    if (bVK)
-        str = vks[iCurrentVK].strName;
-    else if (fcitxProfile.bCorner)
-    str = strFullCorner;
-    else
-    str = im[gs.iIMIndex].strName;
 
     if (!fc.bUseDBus) {
 	XResizeWindow (dpy, mainWindow.window, sc.skinMainBar.backImg.width, sc.skinMainBar.backImg.height);

@@ -40,8 +40,6 @@ MainWindow          mainWindow;
 
 Bool		bMainWindow_Hiden = False;
 
-char           *strFullCorner = "全角模式";
-
 extern Display *dpy;
 extern Bool     bSP;
 extern Bool     bVK;
