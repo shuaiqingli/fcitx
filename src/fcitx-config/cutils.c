@@ -1,9 +1,13 @@
 #include "tools/tools.h"
 #include "fcitx-config/cutils.h"
+#include "fcitx-config/sprintf.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <iconv.h>
+
+static iconv_t iconvW = NULL;
 
 /** 
  * @brief 返回申请后的内存，并清零
@@ -63,25 +67,52 @@ void FcitxLogFunc(ErrorLevel e, const char* filename, const int line, const char
     switch (e)
     {
         case INFO:
-            fprintf(stderr, _("Info:"));
+            fprintf(stderr, "Info:");
             break;
         case ERROR:
-            fprintf(stderr, _("Error:"));
+            fprintf(stderr, "Error:");
             break;
         case DEBUG:
-            fprintf(stderr, _("Debug:"));
+            fprintf(stderr, "Debug:");
             break;
         case WARNING:
-            fprintf(stderr, _("Warning:"));
+            fprintf(stderr, "Warning:");
             break;
         case FATAL:
-            fprintf(stderr, _("Fatal:"));
+            fprintf(stderr, "Fatal:");
             break;
     }
+
+    char *buffer;
     va_list ap;
     fprintf(stderr, "%s:%u-", filename, line);
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
+    vasprintf(&buffer, fmt, ap);
     va_end(ap);
+
+    if (iconvW == NULL)
+        iconvW = iconv_open("WCHAR_T", "utf-8");
+
+    if (iconvW == (iconv_t) -1)
+    {
+        fprintf(stderr, "%s\n", buffer);
+    }
+    else
+    {
+        size_t len = strlen(buffer);
+        wchar_t *wmessage;
+        size_t wlen = (len + 1) * sizeof (wchar_t);
+        wmessage = (wchar_t *) malloc0 ((len + 1) * sizeof (wchar_t));
+
+        char *inp = buffer;
+        char *outp = (char*) wmessage;
+        
+        iconv(iconvW, &inp, &len, &outp, &wlen);
+        
+        fprintf(stderr, "%ls\n", wmessage);
+
+        free(wmessage);
+    }
+
+    free(buffer);
 }

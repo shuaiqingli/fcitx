@@ -1,3 +1,7 @@
+2010-09-08: CSSlayer <wengxt@gmail.com>
+    * 修复非UTF-8 Locale的问题
+	* 主窗口设置名称
+
 2010-09-07: CSSlayer <wengxt@gmail.com>
     * 增加利用fcitx-remote进行重新加载配置的选项
 	* 调整线程间同步，避免问题。

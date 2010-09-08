@@ -140,7 +140,7 @@ Bool CreateInputWindow (void)
 	load_input_msg();
     XSelectInput (dpy, inputWindow.window, ButtonPressMask | ButtonReleaseMask  | PointerMotionMask | ExposureMask);
 
-    //Set the name of the window
+    /* Set the name of the window */
     tp.value = (void *)strWindowName;
     tp.encoding = XA_STRING;
     tp.format = 16;

@@ -65,6 +65,7 @@ Bool CreateMainWindow (void)
 	XSetWindowAttributes attrib;
     unsigned long	attribmask;
 	GC gc;
+    char		strWindowName[]="Fcitx Main Window";
     
     InitMainWindow();
 
@@ -87,7 +88,6 @@ Bool CreateMainWindow (void)
 		return False;
 		
 	xgv.foreground = WhitePixel(dpy, iScreen);
-	//创建pixmap缓冲区,创建主cs
 	mainWindow.pm_main_bar = XCreatePixmap(
             dpy,
             mainWindow.window,
@@ -108,6 +108,13 @@ Bool CreateMainWindow (void)
 	XChangeWindowAttributes (dpy, mainWindow.window, attribmask, &attrib);	
 	XSelectInput (dpy, mainWindow.window, ExposureMask | ButtonPressMask | ButtonReleaseMask  | PointerMotionMask);
 
+    XTextProperty	tp;
+    /* Set the name of the window */
+    tp.value = (void *)strWindowName;
+    tp.encoding = XA_STRING;
+    tp.format = 16;
+    tp.nitems = strlen(strWindowName);
+    XSetWMName (dpy, mainWindow.window, &tp);
 	
     return True;
 }

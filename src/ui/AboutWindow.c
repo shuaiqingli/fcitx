@@ -70,8 +70,6 @@ Bool CreateAboutWindow (void)
 
 void InitAboutWindowProperty (void)
 {
-    XTextProperty   tp;
-
     Atom            about_wm_window_type = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", False);
     Atom            type_toolbar = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 
@@ -85,11 +83,10 @@ void InitAboutWindowProperty (void)
 
 	p = AboutCaption;
 
-    tp.value = (void *) p;
-    tp.encoding = XA_STRING;
-    tp.format = 16;
-    tp.nitems = strlen (p);
+    XTextProperty   tp;
+    Xutf8TextListToTextProperty(dpy, &p, 1, XUTF8StringStyle, &tp);
     XSetWMName (dpy, aboutWindow.window, &tp);
+    XFree(tp.value);
 }
 
 void DisplayAboutWindow (void)
