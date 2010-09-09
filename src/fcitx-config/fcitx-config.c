@@ -693,9 +693,8 @@ ConfigFile* ParseIniFp(FILE *fp, ConfigFile* reuse)
         }
         else
         {
-            if (!curGroup)
-            {
-            }
+            if (curGroup == NULL)
+                continue;
             char *value = strchr(line, '=');
             if (!value)
             {

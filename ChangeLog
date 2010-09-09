@@ -1,3 +1,6 @@
+2010-09-09: CSSlayer <wengxt@gmail.com>
+    * 修复读取老版本profile时的崩溃错误。issue 291
+
 2010-09-08: CSSlayer <wengxt@gmail.com>
     * 修复非UTF-8 Locale的问题
 	* 主窗口设置名称
@@ -73,6 +76,10 @@
     * 合并Skin Dark 0.5，感谢Jarryson
     * 修复一个内存访问越界的Bug
     * 修复Issue 259
+    * 修复在XVnc等X Server环境下无法启动的问题
+	* 修复两个disable选项时的编译问题
+
+2010-06-26: CSSlayer <wengxt@gmail.com>
     * 修复在XVnc等X Server环境下无法启动的问题
 	* 修复两个disable选项时的编译问题
 
@@ -842,10 +849,6 @@
 2004-05-17 Yuking <yuking_net@sohu.com>
 	* 更改界面，将输入法名称用文字显示。
 	* 主窗口和输入条是否使用3D显示可以分别设置。
-
-2004-05-16 Yuking <yuking_net@sohu.com>
-	* 去掉设置“区域设置”；
-	* 将五笔码表从文本文件改为格式文件；
 	* 增加一个工具，将原来的五笔码表文件转换为新的格式；
 	* 五笔重码的自动调频可以设置为不调/快速/按频率；
 	* 版本号改为2.1.0.
