@@ -8,6 +8,7 @@
 #include "im/pinyin/sp.h"
 #include "pyTools.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/xdg.h"
 
 FcitxConfig fc;
 
@@ -21,20 +22,57 @@ int main(int argc, char **argv)
 {
   FILE *fi, *fi2;
   int i, j, k;
-  char *pyusrphrase_mb, *pybase_mb, *HZPY, tMap[3], tPY[10];
+  char *pyusrphrase_mb = NULL, *pybase_mb = NULL, *HZPY, tMap[3], tPY[10];
   struct _HZMap *HZMap;
   struct _PYMB *PYMB;
+  char c;
+  Bool isUser = True;
 
-  if (argc > 3)
-    usage();
+  while((c = getopt(argc, argv, "f:b:sh")) != -1)
+  {
+      switch(c)
+      {
+          case 'f':
+              pyusrphrase_mb = strdup(optarg);
+              break;
+          case 'b':
+              pybase_mb = strdup(optarg);
+              break;
+          case 's':
+              isUser = False;
+              break;
+          case 'h':
+          default:
+              usage();
+      }
+  }
 
-  pyusrphrase_mb = getuserfile(PY_USERPHRASE_FILE, (argc > 1) ? argv[1] : "");
-  fi = tryopen(pyusrphrase_mb);
+  if (pyusrphrase_mb)
+      fi = fopen (pyusrphrase_mb , "r");
+  else
+      fi = GetXDGFileUser( PY_USERPHRASE_FILE, "r" , &pyusrphrase_mb);
+  if (!fi)
+  {
+    perror("fopen");
+    fprintf(stderr, "Can't open file `%s' for reading\n", pyusrphrase_mb);
+    exit(1);
+  }
+  free(pyusrphrase_mb);
 
-  pybase_mb = strdup((argc > 2) ? argv[2] : (PKGDATADIR "/data/" PY_BASE_FILE));
-  fi2 = tryopen(pybase_mb);
+  if (pybase_mb)
+      fi2 = fopen (pybase_mb , "r");
+  else
+      fi2 = GetXDGFileData(PY_BASE_FILE, "r", &pybase_mb);
+  if (!fi2)
+  {
+    perror("fopen");
+    fprintf(stderr, "Can't open file `%s' for reading\n", pybase_mb);
+    exit(1);
+  }
+  free(pybase_mb);
 
-  LoadPYMB(fi, &PYMB);
+
+  LoadPYMB(fi, &PYMB, isUser);
   LoadPYBase(fi2, &HZMap);
 
   for (i = 0; PYMB[i].HZ[0]; ++i)
@@ -57,7 +95,6 @@ int main(int argc, char **argv)
 
       free(HZPY);
     }
-    printf("\n");
   }
 
   return 0;
@@ -68,14 +105,14 @@ int main(int argc, char **argv)
   If no match is found, "*" is returned.
 */
 
-char *HZToPY(struct _HZMap *pHZMap1, char HZ[3])
+char *HZToPY(struct _HZMap *pHZMap1, char* HZ)
 {
   int i;
   char Map[3], tPY[10];
 
   Map[0] = '\0';
   for (i = 0; i < pHZMap1->BaseCount; ++i)
-    if (memcmp(HZ, pHZMap1->HZ + 2 * i, 2))
+    if (strcmp(HZ, pHZMap1->HZ[i]) == 0)
     {
       strcpy(Map, pHZMap1->Map);
       break;
@@ -92,17 +129,19 @@ void usage()
   puts(
 "mb2org - Convert .mb file to .org file (SEE NOTES BELOW)\n"
 "\n"
-"  usage: mb2org [<pyusrphrase.mb>] [<pybase.mb>]\n"
+"  usage: mb2org [OPTION]\n"
 "\n"
-"  <pyusrphrase.mb>   this is the .mb file to be decoded, usually this is\n"
-"                     ~/.fcitx/" PY_USERPHRASE_FILE "\n"
-"                     if not specified, defaults to\n"
-"                     ~/.fcitx/" PY_USERPHRASE_FILE "\n"
-"  <pybase.mb>        this is the pybase.mb file used to determine the\n"
-"                     of the first character in HZ. Usually, this is\n"
-"                     " PKGDATADIR "/data/" PY_BASE_FILE "\n"
-"                     if not specified, defaults to\n"
-"                     " PKGDATADIR "/data/" PY_BASE_FILE "\n"
+"  -f <pyusrphrase.mb> this is the .mb file to be decoded, usually this is\n"
+"                      ~/.fcitx/" PY_USERPHRASE_FILE "\n"
+"                      if not specified, defaults to\n"
+"                      ~/.fcitx/" PY_USERPHRASE_FILE "\n"
+"  -b <pybase.mb>      this is the pybase.mb file used to determine the\n"
+"                      of the first character in HZ. Usually, this is\n"
+"                      " PKGDATADIR "/data/" PY_BASE_FILE "\n"
+"                      if not specified, defaults to\n"
+"                      " PKGDATADIR "/data/" PY_BASE_FILE "\n"
+"  -s                  Is MB from user or from system (they have different format).\n"
+"  -h                  display this help\n"
 "\n"
 "NOTES:\n"
 "1. If no match is found for a particular HZ, then the pinyin for that HZ\n"

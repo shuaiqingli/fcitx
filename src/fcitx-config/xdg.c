@@ -37,9 +37,7 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
-#include "interface/DBus.h"
-
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "fcitx-config/sprintf.h"
 
 static void make_path (const char *path);
@@ -135,6 +133,15 @@ FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len
     char buf[PATH_MAX];
     int i;
     FILE *fp = NULL;
+
+    /* check absolute path */
+    if (strlen(fileName) > 0 && fileName[0] == '/')
+    {
+        fp = fopen (fileName, mode);
+        if (retFile)
+            *retFile = strdup(fileName);
+        return fp;
+    }
 
     if (!mode)
     {

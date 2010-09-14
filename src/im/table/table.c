@@ -44,7 +44,7 @@
 #include "tools/utarray.h"
 #include <sys/types.h>
 #include <dirent.h>
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "fcitx-config/profile.h"
 #include "fcitx-config/cutils.h"
 

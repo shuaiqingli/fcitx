@@ -4,7 +4,7 @@
 #include "tools/tools.h"
 #include "fcitx-config/fcitx-config.h"
 #include "fcitx-config/profile.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "core/ime.h"
 
 extern Display* dpy;

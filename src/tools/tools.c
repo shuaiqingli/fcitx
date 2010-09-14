@@ -50,6 +50,7 @@
 #include "im/qw/qw.h"
 #include "fcitx-config/uthash.h"
 #include "fcitx-config/cutils.h"
+#include "fcitx-config/xdg.h"
 
 #include "utf8_in_gb18030.h"
 
@@ -76,7 +77,6 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
 {
     FILE           *fp;
     char           *ret;
-    char            strPath[PATH_MAX];
     int             i, len, ret_len;
     char           *strBuf = NULL;
     size_t          bufLen = 0;
@@ -88,18 +88,7 @@ char           *ConvertGBKSimple2Tradition (char *strHZ)
     if (!s2t_table) {
 	len = 0;
 
-	strcpy (strPath, PKGDATADIR "/data/");
-	strcat (strPath, TABLE_GBKS2T);
-
-	/* zxd add begin */
-        if( access( strPath, 0 ) && getenv( "FCITXDIR" ) ) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat( strPath, "/share/fcitx/data/" );
-            strcat( strPath, TABLE_GBKS2T );
-        }
-        /* zxd add end */
-	
-	fp = fopen (strPath, "rb");
+	fp = GetXDGFileData(TABLE_GBKS2T, "rb", NULL);
 	if (!fp) {
 	    ret = (char *) malloc (sizeof (char) * (strlen (strHZ) + 1));
 	    strcpy (ret, strHZ);

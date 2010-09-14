@@ -27,7 +27,7 @@
 #include "im/pinyin/pyParser.h"
 #include "ui/MainWindow.h"
 #include "fcitx-config/configfile.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 
 SP_C            SPMap_C[] = {
     {"ai", 'l'}

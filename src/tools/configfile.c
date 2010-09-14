@@ -3,7 +3,7 @@
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/fcitx-config.h"
 #include "fcitx-config/cutils.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "im/pinyin/PYFA.h"
 #include "ui/font.h"
 #include <errno.h>

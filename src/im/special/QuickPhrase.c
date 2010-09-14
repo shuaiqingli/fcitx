@@ -24,7 +24,7 @@
 #include "im/special/QuickPhrase.h"
 #include "ui/InputWindow.h"
 #include "tools/utarray.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "fcitx-config/configfile.h"
 
 uint uQuickPhraseCount;
@@ -72,7 +72,6 @@ int PhraseCmpA(const void* a, const void* b)
 void LoadQuickPhrase(void)
 {
     FILE *fp;
-    char            strPath[PATH_MAX];
     char strCode[QUICKPHRASE_CODE_LEN+1];
     char strPhrase[QUICKPHRASE_PHRASE_LEN*2+1];
     QUICK_PHRASE tempQuickPhrase;
@@ -81,21 +80,8 @@ void LoadQuickPhrase(void)
     uQuickPhraseCount=0;
 
     fp =  GetXDGFileData("QuickPhrase.mb", "rt", NULL);
-    if (!fp) {
-    strcpy (strPath, PKGDATADIR "/data/");
-    strcat (strPath, "QuickPhrase.mb");
-
-    /* add by zxd begin */
-        if( access( strPath, 0) && getenv( "FCITXDIR") ) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-            strcat (strPath, "/share/fcitx/data/AutoEng.dat");
-        }
-        /* add by zxd end */
-    
-    fp = fopen (strPath, "rt");
     if (!fp)
         return;
-    }
 
     // 这儿的处理比较简单。因为是单索引对单值。
     // 应该注意的是，它在内存中是以单链表保存的。

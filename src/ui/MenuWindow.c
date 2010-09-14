@@ -418,9 +418,9 @@ void MainMenuEvent(int x,int y)
 			skinMenu.pos_y=mainMenu.pos_y;
 		
 			if( skinMenu.pos_x+ mainMenu.width+skinMenu.width > DisplayWidth(dpy,iScreen))
-				skinMenu.pos_x=skinMenu.pos_x-skinMenu.width+4;
+				skinMenu.pos_x=skinMenu.pos_x - skinMenu.width + sc.skinMenu.marginLeft + 4;
 			else
-				skinMenu.pos_x=skinMenu.pos_x+ mainMenu.width-4;
+				skinMenu.pos_x=skinMenu.pos_x + mainMenu.width - sc.skinMenu.marginRight - 4;
 			
 			if( skinMenu.pos_y+offseth+skinMenu.height >DisplayHeight(dpy, iScreen))
 				skinMenu.pos_y=DisplayHeight(dpy, iScreen)-skinMenu.height-10;
@@ -444,9 +444,9 @@ void MainMenuEvent(int x,int y)
 			imMenu.pos_y=mainMenu.pos_y;
 		
 			if( imMenu.pos_x+ mainMenu.width+imMenu.width > DisplayWidth(dpy,iScreen))
-				imMenu.pos_x=imMenu.pos_x-imMenu.width+4;
+				imMenu.pos_x=imMenu.pos_x-imMenu.width+ sc.skinMenu.marginLeft + 4;
 			else
-				imMenu.pos_x=imMenu.pos_x+ mainMenu.width-4;
+				imMenu.pos_x=imMenu.pos_x+ mainMenu.width - sc.skinMenu.marginRight-4;
 			
 			if( imMenu.pos_y+offseth+imMenu.height >DisplayHeight(dpy, iScreen))
 				imMenu.pos_y=DisplayHeight(dpy, iScreen)-imMenu.height-10;
@@ -462,9 +462,9 @@ void MainMenuEvent(int x,int y)
 			vkMenu.pos_y=mainMenu.pos_y;
 		
 			if( vkMenu.pos_x+ mainMenu.width+vkMenu.width > DisplayWidth(dpy,iScreen))
-				vkMenu.pos_x=vkMenu.pos_x-vkMenu.width+4;
+				vkMenu.pos_x=vkMenu.pos_x-vkMenu.width+ sc.skinMenu.marginLeft + 4;
 			else
-				vkMenu.pos_x=vkMenu.pos_x+ mainMenu.width-4;
+				vkMenu.pos_x=vkMenu.pos_x+ mainMenu.width - sc.skinMenu.marginRight-4;
 			
 			if( vkMenu.pos_y+offseth+vkMenu.height >DisplayHeight(dpy, iScreen))
 				vkMenu.pos_y=DisplayHeight(dpy, iScreen)-vkMenu.height-10;

@@ -1,10 +1,12 @@
 #ifndef _PY_TOOLS_H
 #define _PY_TOOLS_H
 
+#include "tools/utf8.h"
+
 struct _PYMB
 {
   int PYFAIndex;
-  char HZ[3];
+  char HZ[UTF8_MAX_LENGTH + 1];
   int UserPhraseCount;
   struct
   {
@@ -20,16 +22,12 @@ struct _HZMap
 {
   char Map[3];
   int BaseCount;
-  char *HZ;
+  char **HZ;
   int *Index;
 };
 
 int LoadPYBase(FILE *, struct _HZMap **);
-void LoadPYMB(FILE *, struct _PYMB **);
-
-char *getuserfile(char *, char *);
-
-FILE *tryopen(char *);
+void LoadPYMB(FILE *fi, struct _PYMB **pPYMB, int isUser);
 
 #endif /* _PY_TOOLS_H */
 

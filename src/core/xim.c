@@ -43,7 +43,6 @@
 #include "fcitx-config/profile.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/cutils.h"
-#include "tools/xdg.h"
 
 #define CHECK_ENV(env, value, icase) (!getenv(env) \
         || (icase ? \

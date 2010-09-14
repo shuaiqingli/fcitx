@@ -43,7 +43,7 @@
 #include "fcitx-config/profile.h"
 #include "fcitx-config/cutils.h"
 #include "fcitx-config/configfile.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 
 int iPYFACount;
 PYFA *PYFAList;
@@ -109,21 +109,9 @@ void PYInit(void)
 Bool LoadPYBaseDict(void)
 {
     FILE *fp;
-    char strPath[PATH_MAX];
     int i, j, iLen;
 
-    strcpy(strPath, PKGDATADIR "/data/");
-    strcat(strPath, PY_BASE_FILE);
-
-    /* add by zxd begin */
-    if (access(strPath, 0) && getenv("FCITXDIR")) {
-        strcpy(strPath, getenv("FCITXDIR"));
-        strcat(strPath, "/share/fcitx/data/");
-        strcat(strPath, PY_BASE_FILE);
-    }
-    /* add by zxd end */
-
-    fp = fopen(strPath, "rb");
+    fp = GetXDGFileData(PY_BASE_FILE, "r", NULL);
     if (!fp)
         return False;
 
@@ -167,7 +155,6 @@ Bool LoadPYOtherDict(void)
 {
     //下面开始读系统词组
     FILE *fp;
-    char strPath[PATH_MAX];
     int i, j, k, iLen;
     char strBase[UTF8_MAX_LENGTH + 1];
     PyPhrase *phrase, *temp;
@@ -177,18 +164,7 @@ Bool LoadPYOtherDict(void)
 
     bPYOtherDictLoaded = True;
 
-    strcpy(strPath, PKGDATADIR "/data/");
-    strcat(strPath, PY_PHRASE_FILE);
-
-    /* add by zxd begin */
-    if (access(strPath, 0) && getenv("FCITXDIR")) {
-        strcpy(strPath, getenv("FCITXDIR"));
-        strcat(strPath, "/share/fcitx/data/");
-        strcat(strPath, PY_PHRASE_FILE);
-    }
-    /* add by zxd end */
-
-    fp = fopen(strPath, "rb");
+    fp = GetXDGFileData(PY_PHRASE_FILE, "r", NULL);
     if (!fp)
         FcitxLog(ERROR, _("Can not find System Database of Pinyin!"));
     else {
@@ -355,20 +331,6 @@ Bool LoadPYOtherDict(void)
     }
     //下面读取特殊符号表
     fp = GetXDGFileData(PY_SYMBOL_FILE, "rb", NULL);
-    if (!fp) {
-        strcpy(strPath, PKGDATADIR "/data/");
-        strcat(strPath, PY_SYMBOL_FILE);
-
-        /* add by zxd begin */
-        if (access(strPath, 0) && getenv("FCITXDIR")) {
-            strcpy(strPath, getenv("FCITXDIR"));
-            strcat(strPath, "/share/fcitx/data/");
-            strcat(strPath, PY_SYMBOL_FILE);
-        }
-        /* add by zxd end */
-
-        fp = fopen(strPath, "rt");
-    }
     if (fp) {
         char strTxt[256];
         char str1[MAX_PY_PHRASE_LENGTH * MAX_PY_LENGTH + 1], str2[MAX_PY_PHRASE_LENGTH * UTF8_MAX_LENGTH + 1];

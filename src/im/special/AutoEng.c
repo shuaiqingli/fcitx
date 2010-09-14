@@ -19,7 +19,7 @@
  ***************************************************************************/
 #include "im/special/AutoEng.h"
 #include "tools/tools.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 
 #include <limits.h>
 
@@ -39,23 +39,11 @@ int             iAutoEng;
 void LoadAutoEng (void)
 {
     FILE	*fp;
-    char	strPath[PATH_MAX];
+    char    strPath[PATH_MAX];
 
     fp = GetXDGFileData("AutoEng.dat", "rt", NULL);
-    if (!fp) {
-	strcpy (strPath, PKGDATADIR "/data/");
-	strcat (strPath, "AutoEng.dat");
-	/* add by zxd begin */
-        if( access( strPath,0 ) && getenv( "FCITXDIR")) {
-            strcpy( strPath, getenv( "FCITXDIR" ) );
-    	    strcat (strPath, "/share/fcitx/data/AutoEng.dat");
-        }
-        /* add by zxd end */
-
-	fp = fopen (strPath, "rt");
 	if (!fp)
 	    return;
-    }
 
     iAutoEng = CalculateRecordNumber (fp);
     AutoEng = (AUTO_ENG *) malloc (sizeof (AUTO_ENG) * iAutoEng);

@@ -9,5 +9,5 @@ libtools_a_SOURCES= utf8.c utf8.h\
 					utarray.h \
 					configfile.c \
 					profile.c \
-					xdg.c xdg.h
+					$(NULL)
 

@@ -27,7 +27,7 @@
 #include "tools/tools.h"
 #include "im/special/punc.h"
 #include "core/ime.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "fcitx-config/cutils.h"
 
 ChnPunc        *chnPunc = (ChnPunc *) NULL;
@@ -46,31 +46,15 @@ int LoadPuncDict (void)
     FILE           *fpDict;				// 词典文件指针
     int             iRecordNo;
     char            strText[4 + MAX_PUNC_LENGTH * UTF8_MAX_LENGTH];
-    char            strPath[PATH_MAX];	// 词典文件的全名（包含绝对路径）
     char           *pstr;				// 临时指针
     int             i;
 
     fpDict = GetXDGFileData(PUNC_DICT_FILENAME, "rt", NULL);
 
-    // 如果该文件不存在，就使用安装目录下的文件
-    if (!fpDict) {
-	strcpy (strPath, PKGDATADIR "/data/");
-	strcat (strPath, PUNC_DICT_FILENAME);
-
-	/* zxd add begin */
-        if (access (strPath, 0) && getenv( "FCITXDIR" ) ) {
-	    strcpy (strPath, getenv( "FCITXDIR") );
-	    strcat (strPath, "/share/fcitx/data/" );
-	    strcat (strPath, PUNC_DICT_FILENAME);
-        }
-        /* zxd add end */
-
-	fpDict = fopen (strPath, "rt");
 	if (!fpDict) {
-	    FcitxLog(WARNING, _("Can't open Chinese punc file: %s"), strPath);
+	    FcitxLog(WARNING, _("Can't open Chinese punc file."));
 	    return False;
 	}
-    }
 
     /* 计算词典里面有多少的数据
      * 这个函数非常简单，就是计算该文件有多少行（包含空行）。

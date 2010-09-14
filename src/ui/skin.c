@@ -32,7 +32,7 @@
 #include "ui/ui.h"
 #include "ui/skin.h"
 #include "ui/font.h"
-#include "tools/xdg.h"
+#include "fcitx-config/xdg.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/profile.h"
 #include "fcitx-config/fcitx-config.h"
