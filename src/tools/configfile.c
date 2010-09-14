@@ -311,7 +311,7 @@ void SetTriggerKeys (char **strKey, int length)
     }
 
     for (i = 0; i <= iTriggerKeyCount; i++) {
-        if (strcmp (strKey[i], "CTRL_")) {
+        if (MyStrcmp (strKey[i], "CTRL_")) {
             Trigger_Keys[i].modifier = Trigger_Keys[i].modifier | ControlMask;
             Trigger_Keys[i].modifier_mask = Trigger_Keys[i].modifier_mask | ControlMask;
         }

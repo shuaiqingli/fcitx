@@ -1,3 +1,6 @@
+2010-09-14: CSSlayer <wengxt@gmail.com>
+    * 修复一个设置输入法切换快捷键的问题（笔误……）
+
 2010-09-09: CSSlayer <wengxt@gmail.com>
     * 修复读取老版本profile时的崩溃错误。issue 291
 
