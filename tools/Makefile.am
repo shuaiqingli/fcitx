@@ -23,6 +23,7 @@ createPYMB_LDADD = \
 				   ../src/tools/utf8.o \
 				   ../src/im/pinyin/PYFA.o \
 				   ../src/im/pinyin/sp.o \
+				   ../src/fcitx-config/libfcitx-config.la \
 				   $(NULL)
 mb2org_LDADD = \
 			   ../src/im/pinyin/pyParser.o \
