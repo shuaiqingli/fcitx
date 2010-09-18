@@ -9,6 +9,7 @@ libfcitx_config_la_SOURCES= \
 						   profile.h \
 						   configfile.h \
 						   hotkey.c hotkey.h \
+						   uthash.h \
 						   xdg.c xdg.h
 libfcitx_config_la_LDFLAGS= -version-number 4:0:0 -no-undefined
 libfcitx_configincludedir= $(includedir)/fcitx-config

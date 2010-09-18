@@ -7,7 +7,7 @@ configdescfile = config.desc profile.desc table.desc skin.desc
 general_DATA = pybase.mb pyphrase.mb pySym.mb sp.dat punc.mb \
 	     vk.conf gbks2t.tab AutoEng.dat \
 		 $(configdescfile)
-EXTRA_DIST = $(general_DATA)
+EXTRA_DIST = $(general_DATA) pyPhrase.org gbkpy.org getdescpo fcitx-config
 
 bin_SCRIPTS = fcitx-config
 

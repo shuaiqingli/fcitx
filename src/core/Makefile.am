@@ -3,7 +3,7 @@ DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\" -DLOCALEDIR=\"$(l
 
 bin_PROGRAMS=fcitx
 fcitx_SOURCES= IC.c IC.h\
-			   MyErrorsHandlers.c MyErrorHandlers.h\
+			   MyErrorsHandlers.c MyErrorsHandlers.h\
 			   ime.c ime.h \
 			   internalVersion.c \
 			   xim.c xim.h \
