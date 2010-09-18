@@ -1,3 +1,9 @@
+fcitx (1:4.0~beta1~r430) lucid; urgency=low
+  * New Nightly build
+    - for fcitx-config 0.1.2
+
+ -- CSSlayer <wengxt@gmail.com>  Wed, 08 Sep 2010 13:01:14 +0800
+
 fcitx (1:4.0-beta1-1) unstable; urgency=low
   * New upstream release
     - many improvement
