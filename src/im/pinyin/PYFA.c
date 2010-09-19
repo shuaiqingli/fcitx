@@ -597,6 +597,8 @@ PYTABLE         PYTable[] = {
     ,
     {"leng", NULL}
     ,
+    {"len", &MHPY_C[1].bMode}
+    ,
     {"lei", NULL}
     ,
     {"le", NULL}
