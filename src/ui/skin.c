@@ -528,6 +528,9 @@ void draw_input_bar(Messages * msgup, Messages *msgdown ,unsigned int * iwidth)
 
     }
 
+    if (iChar >= 0)
+        cursor_pos = sc.skinInputBar.layoutLeft + up_len;
+
     down_len = 0;
     for (i = 0; i < msgdown->msgCount ; i++)
     {

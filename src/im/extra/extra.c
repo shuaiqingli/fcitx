@@ -117,9 +117,9 @@ static void DisplayEIM(EXTRA_IM *im)
 		inputWindow.bShowCursor=True;
 		iCodeInputCount=strlen(im->CodeInput);
 		if(im->CaretPos!=-1)
-			iCursorPos=strlen(im->StringGet)+im->CaretPos;
+			iCursorPos=im->CaretPos;
 		else
-			iCursorPos=strlen(im->StringGet)+iCodeInputCount;
+			iCursorPos=strlen(im->StringGet) + strlen(im->CodeInput);
 		bCursorAuto=True;
 	}
 
