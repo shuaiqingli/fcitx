@@ -37,9 +37,14 @@ extern char     strStringGet[];
 char     strQWHZ[3];
 char     strQWHZUTF8[UTF8_MAX_LENGTH + 1];
 
-INPUT_RETURN_VALUE DoQWInput(int iKey)
+INPUT_RETURN_VALUE DoQWInput(unsigned int sym, unsigned int state, int keyCount)
 {
 	INPUT_RETURN_VALUE retVal;
+    unsigned int iKeyState;
+    unsigned int iKey;
+    
+    iKeyState = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
+    iKey = GetKey (sym, iKeyState, keyCount);
 	
 	retVal = IRV_TO_PROCESS;
 	if ( iKey>='0' && iKey<='9') {

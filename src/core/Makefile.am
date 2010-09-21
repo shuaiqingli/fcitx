@@ -8,7 +8,17 @@ fcitx_SOURCES= IC.c IC.h\
 			   internalVersion.c \
 			   xim.c xim.h \
 			   main.c  \
-			   fcitx.h
+			   fcitx.h im.h \
+			   $(NULL)
+
+fcitxincludedir= $(includedir)/fcitx
+fcitxinclude_HEADERS= \
+					  im.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = fcitx.pc
+EXTRA_DIST = \
+	fcitx.pc.in
 
 fcitx_LDADD=../../lib/libXimd.a \
 			../im/pinyin/libimpinyin.a \

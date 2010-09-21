@@ -38,9 +38,6 @@
 #include "tools/utf8.h"
 #include "fcitx-config/fcitx-config.h"
 
-#define MAX_CAND_WORD	10
-#define MAX_USER_INPUT	300
-
 #define HOT_KEY_COUNT	2
 #define TEMP_FILE		"FCITX_DICT_TEMP"
 
@@ -51,29 +48,6 @@ typedef enum _INPUT_METHOD {
     IM_TABLE,
     IM_EXTRA
 } INPUT_METHOD;
-
-typedef enum _SEARCH_MODE {
-    SM_FIRST,
-    SM_NEXT,
-    SM_PREV
-} SEARCH_MODE;
-
-typedef enum _INPUT_RETURN_VALUE {
-    //IRV_UNKNOWN = -1,
-    IRV_DO_NOTHING = 0,
-    IRV_DONOT_PROCESS,
-    IRV_DONOT_PROCESS_CLEAN,
-    IRV_CLEAN,
-    IRV_TO_PROCESS,
-    IRV_DISPLAY_MESSAGE,
-    IRV_DISPLAY_CANDWORDS,
-    IRV_DISPLAY_LAST,
-    IRV_PUNC,
-    IRV_ENG,
-    IRV_GET_LEGEND,
-    IRV_GET_CANDWORDS,
-    IRV_GET_CANDWORDS_NEXT
-} INPUT_RETURN_VALUE;
 
 typedef struct _SINGLE_HZ {
     char            strHZ[UTF8_MAX_LENGTH + 1];
@@ -92,7 +66,7 @@ typedef struct IM{
     char            strName[MAX_IM_NAME + 1];
     char            strIconName[MAX_IM_NAME + 1];
     void            (*ResetIM) (void);
-                    INPUT_RETURN_VALUE (*DoInput) (int);
+                    INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int);
                     INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE);
     char           *(*GetCandWord) (int);
     char           *(*GetLegendCandWord) (int);
@@ -127,7 +101,7 @@ void		ChangeRecording (void);
 void		ResetRecording (void);
 #endif
 
-void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
+void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
 			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void));
 void            SwitchIM (INT8 index);
 void            DoPhraseTips ();

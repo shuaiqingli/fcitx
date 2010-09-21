@@ -50,13 +50,9 @@ typedef struct FcitxConfig
     char *fontEn;
     char *fontZh;
     char *strUserLocale;
-#ifdef _ENABLE_RECORDING
     char *strRecordingPath;
-#endif
-#ifdef _ENABLE_TRAY
     Bool bUseTrayIcon;
     Bool bUseTrayIcon_;
-#endif
     Bool bUseDBus;
     Bool bUseDBus_;
     /* output config */
@@ -98,10 +94,8 @@ typedef struct FcitxConfig
     HOTKEYS hkNextPage[2];
     HOTKEYS str2nd3rdCand[2];
     HOTKEYS hkSaveAll[2];
-#ifdef _ENABLE_RECORDING
     HOTKEYS hkRecording[2];
     HOTKEYS hkResetRecording[2];
-#endif
 
     /* im config */
     int inputMethods[INPUT_METHODS];

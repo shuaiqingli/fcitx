@@ -25,3 +25,6 @@ all: tools $(py_data) desc.po
 
 desc.po: *.desc
 	./getdescpo
+
+clean:
+	rm -f $(py_data)

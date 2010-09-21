@@ -18,9 +18,7 @@ typedef struct FcitxProfile
     Bool bLocked;
     Bool bCompactMainWindow;
     Bool bUseGBKT;
-#ifdef _ENABLE_RECORDING
     Bool bRecording;
-#endif
 } FcitxProfile;
 
 extern FcitxProfile fcitxProfile;

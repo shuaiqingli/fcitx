@@ -192,7 +192,7 @@ Bool            IsIgnoreChar (char cChar);
 Bool            IsEndKey (char cChar);
 INT8            IsChooseKey (int iKey);
 
-INPUT_RETURN_VALUE DoTableInput (int iKey);
+INPUT_RETURN_VALUE DoTableInput (unsigned int sym, unsigned int state, int keyCount);
 INPUT_RETURN_VALUE TableGetCandWords (SEARCH_MODE mode);
 void            TableAddCandWord (RECORD * wbRecord, SEARCH_MODE mode);
 void            TableAddAutoCandWord (INT16 which, SEARCH_MODE mode);

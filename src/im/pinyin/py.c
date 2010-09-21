@@ -422,12 +422,22 @@ int GetBaseIndex(int iPYFA, char *strBase)
     return -1;
 }
 
-INPUT_RETURN_VALUE DoPYInput(int iKey)
+INPUT_RETURN_VALUE DoPYInput(unsigned int sym, unsigned int state, int keyCount)
 {
     int i = 0;
     int val;
     char *strGet = NULL;
     char strTemp[MAX_USER_INPUT + 1];
+    unsigned int iKeyState;
+    unsigned int iKey;
+
+    if (sym == 0 && state == 0 && keyCount == -1)
+        iKey = -1;
+    else
+    {
+        iKeyState = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
+        iKey = GetKey (sym, iKeyState, keyCount);
+    }
 
     if (!bPYBaseDictLoaded)
         LoadPYBaseDict();
@@ -1319,7 +1329,7 @@ char *PYGetCandWord(int iIndex)
     strFindString[0] = '\0';
     for (; i < findMap.iHZCount; i++)
         strcat(strFindString, findMap.strPYParsed[i]);
-    DoPYInput(-1);
+    DoPYInput(0,0,-1);
     iPYInsertPoint = strlen(strFindString);
     return NULL;
 }

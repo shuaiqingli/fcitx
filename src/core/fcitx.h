@@ -9,10 +9,9 @@
 #define __(msgid) (msgid)
 
 #include "tools/utf8.h"
+#include "core/im.h"
 
 #define EIM_MAX		4
-
-#define MAX_IM_NAME	(8 * UTF8_MAX_LENGTH)
 
 #define KEYM_MASK	0xff0000
 #define KEYM_CTRL	0x010000
@@ -47,34 +46,4 @@
 #define VK_INSERT	0xff63
 
 #define MAX_CODE_LEN	63
-#define MAX_CAND_LEN	127
-#define MAX_TIPS_LEN	9
-
-typedef struct {
-	char Name[MAX_IM_NAME + 1];
-    char IconName[MAX_IM_NAME + 1];
-
-	void (*Reset) (void);
-	int (*DoInput) (int);
-	int (*GetCandWords)(int);
-	char *(*GetCandWord) (int);
-	int (*Init) (char *arg);
-	int (*Destroy) (void);
-	void *Bihua;
-
-	char *CodeInput;
-	char *StringGet;
-	char (*CandTable)[MAX_CAND_LEN+1];
-	char (*CodeTips)[MAX_TIPS_LEN+1];
-	char *(*GetPath)(char *);
-	int CandWordMax;
-
-	int CodeLen;
-	int CurCandPage;
-	int CandWordCount;
-	int CandPageCount;
-	int SelectIndex;
-	int CaretPos;
-}EXTRA_IM;
-
 #endif/*_FCITX_H_*/

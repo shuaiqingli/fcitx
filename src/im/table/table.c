@@ -792,11 +792,16 @@ INT8 IsChooseKey (int iKey)
     return 0;
 }
 
-INPUT_RETURN_VALUE DoTableInput (int iKey)
+INPUT_RETURN_VALUE DoTableInput (unsigned int sym, unsigned int state, int keyCount)
 {
     INPUT_RETURN_VALUE retVal;
     TABLECANDWORD* tableCandWord = tbl.tableCandWord;
     TABLE* table = (TABLE*) utarray_eltptr(tbl.table, tbl.iTableIMIndex);
+        
+    unsigned int iKeyState;
+    unsigned int iKey;
+    iKeyState = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
+    iKey = GetKey (sym, iKeyState, keyCount);
 
     if (!tbl.bTableDictLoaded)
 	LoadTableDict ();
@@ -1261,7 +1266,7 @@ INPUT_RETURN_VALUE TableGetPinyinCandWords (SEARCH_MODE mode)
     if (mode == SM_FIRST) {
 	strcpy (strFindString, strCodeInput + 1);
 
-	DoPYInput (-1);
+	DoPYInput (0,0,-1);
 
 	strCodeInput[0] = table->cPinyin;
 	strCodeInput[1] = '\0';

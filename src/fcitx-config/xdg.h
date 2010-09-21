@@ -29,6 +29,7 @@
 #ifndef XDG_H
 #define XDG_H
 
+#include <stdio.h>
 #include <X11/Xlib.h>
 
 FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len, char **retFile);

@@ -296,9 +296,9 @@ void ProcessKey (IMForwardEventStruct * call_data)
     XKeyEvent      *kev;
     int             keyCount;
     INPUT_RETURN_VALUE retVal;
-    int             iKeyState;
+    unsigned int    iKeyState;
     char            strbuf[STRBUFLEN];
-    int             iKey;
+    unsigned int    iKey;
     char           *pstr;
     int             iLen;
     
@@ -519,7 +519,7 @@ void ProcessKey (IMForwardEventStruct * call_data)
         		if (!iInCap) {
         		    char            strTemp[MAX_USER_INPUT];
 
-        		    retVal = im[gs.iIMIndex].DoInput (iKey);
+        		    retVal = im[gs.iIMIndex].DoInput (keysym, iKeyState, keyCount);
         		    if (!bCursorAuto && !IsIM (strNameOfPinyin) && !IsIM (strNameOfShuangpin))
         			iCursorPos = iCodeInputCount;
 
@@ -1196,8 +1196,8 @@ void DoPhraseTips (void)
     lastIsSingleHZ = 0;
 }
 
-void RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void),
-            INPUT_RETURN_VALUE (*DoInput) (int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int), Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void))
+void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
+			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void))
 {
 #ifdef _DEBUG
     printf ("REGISTER %s\n", strName);

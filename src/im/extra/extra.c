@@ -6,6 +6,7 @@
 #include "im/extra/extra.h"
 #include "ui/InputWindow.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/profile.h"
 
 #include <dlfcn.h>
 #include <limits.h>
@@ -128,26 +129,7 @@ static void DisplayEIM(EXTRA_IM *im)
 	if(iCandPageCount) iCandPageCount--;
 }
 
-static int ExtraKeyConv(int key)
-{
-	if(key == (XK_BackSpace & 0x00FF))
-		key='\b';
-	switch(key){
-	case LEFT:key=VK_LEFT;break;
-	case RIGHT:key=VK_RIGHT;break;
-	case UP:key=VK_UP;break;
-	case DOWN:key=VK_DOWN;break;
-	case HOME:key=VK_HOME;break;
-	case END:key=VK_END;break;
-	case CTRL_INSERT:key=KEYM_CTRL|VK_INSERT;break;
-	case CTRL_DELETE:key=KEYM_CTRL|VK_DELETE;break;
-	case CTRL_0...CTRL_9:key=KEYM_CTRL|('0'+key-CTRL_0);break;
-	case CTRL_A...CTRL_Z:key=KEYM_CTRL|('A'+key-CTRL_A);break;
-	};
-	return key;
-}
-
-static INPUT_RETURN_VALUE ExtraDoInput(int key)
+static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int count)
 {
 	int i;
 	EXTRA_IM *eim=NULL;
@@ -161,9 +143,14 @@ static INPUT_RETURN_VALUE ExtraDoInput(int key)
 		}
 	}
 	if(!eim) return IRV_TO_PROCESS;
-	key=ExtraKeyConv(key);
 	if(eim->DoInput)
-		ret=eim->DoInput(key);
+		ret=eim->DoInput(sym, state, count);
+
+    unsigned int istate;
+    unsigned int key;
+    
+    istate = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
+    key = GetKey (sym, state, count);
 	if(ret==IRV_GET_CANDWORDS||ret==IRV_GET_CANDWORDS_NEXT)
 	{
 		strcpy(strStringGet,eim->StringGet);
@@ -299,42 +286,17 @@ char *ExtraGetPath(char *type)
 {
 	static char ret[256];
 	ret[0]=0;
-	if(!strcmp(type,"HOME"))
-	{
-		sprintf(ret,"%s/.fcitx",getenv("HOME"));
-	}
-	else if(!strcmp(type,"DATA"))
+	if(!strcmp(type,"DATA"))
 	{
 		strcpy(ret,PKGDATADIR"/data");
-		/* zxd add begin */
-                if (access (ret, 0) && getenv( "FCITXDIR")) {
-	            memset( ret, 0, 256 );
-                    strcpy( ret, getenv("FCTIXDIR") );
-                    strcat( ret, "/share/fcitx/data" );
-                }
-                /* zxd add end */
 	}
 	else if(!strcmp(type,"LIB"))
 	{
-		strcpy(ret,PKGDATADIR"/data");
-		/* zxd add begin */
-                if (access (ret, 0) && getenv( "FCITXDIR")) {
-	            memset( ret, 0, 256 );
-                    strcpy( ret, getenv("FCTIXDIR") );
-                    strcat( ret, "/share/fcitx/data" );
-                }
-                /* zxd add end */
+		strcpy(ret,LIBDIR);
 	}
 	else if(!strcmp(type,"BIN"))
 	{
 		strcpy(ret,PKGDATADIR"/../../bin");
-		/* zxd add begin */
-                if (access (ret, 0) && getenv( "FCITXDIR")) {
-	            memset( ret, 0, 256 );
-                    strcpy( ret, getenv("FCTIXDIR") );
-                    strcat( ret, "/bin" );
-                }
-                /* zxd add end */
 	}
 	return ret;
 }
@@ -382,6 +344,8 @@ int InitExtraIM(EXTRA_IM *eim,char *arg)
 	eim->GetPath=ExtraGetPath;
 	eim->CandWordMax=fc.iMaxCandWord;
 	eim->CaretPos=-1;
+    eim->fc = (void*)&fc;
+    eim->profile = (void*)&fcitxProfile;
 
 	if(eim->Init(arg))
 	{

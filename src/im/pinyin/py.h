@@ -158,7 +158,7 @@ Bool            LoadPYBaseDict (void);
 Bool            LoadPYOtherDict (void);
 void            ResetPYStatus ();
 int             GetBaseIndex (int iPYFA, char *strBase);
-INPUT_RETURN_VALUE DoPYInput (int iKey);
+INPUT_RETURN_VALUE DoPYInput(unsigned int sym, unsigned int state, int keyCount);
 void            UpdateCodeInputPY (void);
 void            UpdateFindString (int val);
 void            CalculateCursorPosition (void);

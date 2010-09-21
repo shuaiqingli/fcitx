@@ -216,6 +216,7 @@ AC_CONFIG_FILES([
            src/tools/Makefile
            src/fcitx-config/Makefile
            src/fcitx-config/fcitx-config.pc
+           src/core/fcitx.pc
            tools/Makefile
            debian/Makefile
            po/Makefile.in
