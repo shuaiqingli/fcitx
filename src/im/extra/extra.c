@@ -150,7 +150,6 @@ static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int
     unsigned int key;
     
     istate = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
-    key = GetKey (sym, state, count);
 	if(ret==IRV_GET_CANDWORDS||ret==IRV_GET_CANDWORDS_NEXT)
 	{
 		strcpy(strStringGet,eim->StringGet);
@@ -180,60 +179,6 @@ static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int
 		iCodeInputCount=strlen(strCodeInput);
 		iInCap=3;
 		ret=IRV_DONOT_PROCESS;
-	}
-	else if(ret==IRV_TO_PROCESS)
-	{
-		if(key==ENTER_K)
-		{
-			iCodeInputCount=strlen(strCodeInput);
-			strcpy(strStringGet,strCodeInput);
-			SetMessageCount(&messageDown, 0);
-			SetMessageCount(&messageUp, 0);
-			ret=IRV_GET_CANDWORDS;
-		}
-		else if(key==' ')
-		{
-			if(!eim->CodeInput[0])
-				return IRV_TO_PROCESS;
-			strcpy(strStringGet,eim->GetCandWord(eim->SelectIndex));
-			SetMessageCount(&messageDown, 0);
-			SetMessageCount(&messageUp, 0);
-			ret=IRV_GET_CANDWORDS;
-		}
-		else if(key>='0' && key<= '9')
-		{
-			int index;
-			if(key=='0') index=9;
-			else index=key-'0'-1;
-			if(index>=eim->CandWordCount)
-			{
-				if(eim->CodeInput[0])
-					return IRV_DO_NOTHING;
-				else return IRV_TO_PROCESS;
-			}
-			strcpy(strStringGet,eim->GetCandWord(index));
-			SetMessageCount(&messageDown, 0);
-			SetMessageCount(&messageUp, 0);
-			ret=IRV_GET_CANDWORDS;
-		}
-		else if(key==VK_UP)
-		{
-			if(eim->SelectIndex>0)
-			{
-				eim->SelectIndex=eim->SelectIndex-1;
-				DisplayEIM(eim);
-			}
-			ret=IRV_DISPLAY_CANDWORDS;
-		}
-		else if(key==VK_DOWN)
-		{
-			if(eim->SelectIndex<eim->CandWordCount-1)
-			{
-				eim->SelectIndex=eim->SelectIndex+1;
-				DisplayEIM(eim);
-			}
-			ret=IRV_DISPLAY_CANDWORDS;
-		}
 	}
 
 	return ret;
