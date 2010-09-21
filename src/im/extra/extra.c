@@ -22,7 +22,7 @@ static INT8 EIM_index[EIM_MAX];
 
 static char CandTableEngine[10][MAX_CAND_LEN+1];
 static char CodeTipsEngine[10][MAX_TIPS_LEN+1];
-static char StringGetEngine[MAX_CAND_LEN+1];
+static char StringGetEngine[MAX_USER_INPUT+1];
 
 extern INT8 iIMCount;
 extern INT8 iInCap;
