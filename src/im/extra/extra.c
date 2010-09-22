@@ -146,10 +146,6 @@ static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int
 	if(eim->DoInput)
 		ret=eim->DoInput(sym, state, count);
 
-    unsigned int istate;
-    unsigned int key;
-    
-    istate = state - (state & KEY_NUMLOCK) - (state & KEY_CAPSLOCK) - (state & KEY_SCROLLLOCK);
 	if(ret==IRV_GET_CANDWORDS||ret==IRV_GET_CANDWORDS_NEXT)
 	{
 		strcpy(strStringGet,eim->StringGet);
