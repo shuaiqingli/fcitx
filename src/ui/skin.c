@@ -1,5 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2002~2005 by Yuking                                     *
+ *   Copyright (C) 2009~2010 by t3swing                                    *
+ *   t3swing@gmail.com                                                     *
+ *   Copyright (C) 2009~2010 by Yuking                                     *
  *   yuking_net@sohu.com                                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,6 +19,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+
 /**
  * @file   skin.c
  * @author Yuking yuking_net@sohu.com  t3swing  t3swing@sina.com

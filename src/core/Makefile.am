@@ -1,4 +1,9 @@
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
+INCLUDES = \
+		   -I$(top_srcdir)/lib \
+		   -I$(top_srcdir)/src \
+		   @CAIRO_XLIB_CFLAGS@ \
+		   @DBUS_CFLAGS@ \
+		   $(NULL)
 DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\" -DLOCALEDIR=\"$(localedir)\"
 
 bin_PROGRAMS=fcitx
@@ -29,6 +34,9 @@ fcitx_LDADD=../../lib/libXimd.a \
 			../tools/libtools.a \
 			../ui/libui.a \
 			../interface/libinterface.a \
-            ../fcitx-config/libfcitx-config.la
+            ../fcitx-config/libfcitx-config.la \
+			@CAIRO_XLIB_LIBS@ \
+			@DBUS_LIBS@ \
+			$(NULL)
 
 fcitx_LDFLAGS = -ldl -lpthread

@@ -1,3 +1,23 @@
+/***************************************************************************
+ *   Copyright (C) 2010~2010 by CSSlayer                                   *
+ *   wengxt@gmail.com                                                      *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #include "core/fcitx.h"
 #include "tools/tools.h"
 #include "fcitx-config/configfile.h"
@@ -6,6 +26,7 @@
 #include "fcitx-config/xdg.h"
 #include "im/pinyin/PYFA.h"
 #include "ui/font.h"
+#include "core/ime.h"
 #include <errno.h>
 #include <ctype.h>
 
@@ -52,12 +73,11 @@ CONFIG_BINDING_REGISTER("Output", "HalfPuncAfterNumber", bEngPuncAfterNumber);
 CONFIG_BINDING_REGISTER("Output", "EnterAction", enterToDo);
 CONFIG_BINDING_REGISTER("Output", "SemiColonAction", semicolonToDo);
 CONFIG_BINDING_REGISTER("Output", "InputEngByCapitalChar", bEngAfterCap);
-CONFIG_BINDING_REGISTER("Output", "TransEngPunc", bConvertPunc);
+CONFIG_BINDING_REGISTER("Output", "ConvertPunc", bConvertPunc);
 CONFIG_BINDING_REGISTER("Output", "LegendModeDisablePaging", bDisablePagingInLegend);
 CONFIG_BINDING_REGISTER("Output", "SendTextWhenSwitchEng", bSendTextWhenSwitchEng);
 CONFIG_BINDING_REGISTER("Appearance", "CandidateWordNumber", iMaxCandWord);
 CONFIG_BINDING_REGISTER("Appearance", "MainWindowHideMode", hideMainWindow);
-CONFIG_BINDING_REGISTER("Appearance", "ShowVK", bShowVK);
 CONFIG_BINDING_REGISTER("Appearance", "CenterInputWindow", bCenterInputWindow);
 CONFIG_BINDING_REGISTER("Appearance", "ShowInputWindowAfterTriggering", bSendTextWhenSwitchEng);
 CONFIG_BINDING_REGISTER("Appearance", "ShowPointAfterIndex", bPointAfterNumber);
@@ -76,7 +96,7 @@ CONFIG_BINDING_REGISTER("Hotkey", "TraditionalChnSwitchKey", hkGBT);
 CONFIG_BINDING_REGISTER("Hotkey", "LegendSwitchKey", hkLegend);
 CONFIG_BINDING_REGISTER("Hotkey", "LookupPinyinKey", hkGetPY);
 CONFIG_BINDING_REGISTER("Hotkey", "FullWidthSwitchKey", hkCorner);
-CONFIG_BINDING_REGISTER("Hotkey", "ChnPunSwitchKey", hkPunc);
+CONFIG_BINDING_REGISTER("Hotkey", "ChnPuncSwitchKey", hkPunc);
 CONFIG_BINDING_REGISTER("Hotkey", "PrevPageKey", hkPrevPage);
 CONFIG_BINDING_REGISTER("Hotkey", "NextPageKey", hkNextPage);
 CONFIG_BINDING_REGISTER_WITH_FILTER("Hotkey", "SecondThirdCandWordKey", str2nd3rdCand, Filter2nd3rdKey);
@@ -102,17 +122,17 @@ CONFIG_BINDING_REGISTER_WITH_FILTER("Pinyin", "InputWordFromPhraseKey", strPYGet
 CONFIG_BINDING_REGISTER("Pinyin", "BaseOrder", baseOrder);
 CONFIG_BINDING_REGISTER("Pinyin", "PhraseOrder", phraseOrder);
 CONFIG_BINDING_REGISTER("Pinyin", "FreqOrder", freqOrder);
-CONFIG_BINDING_REGISTER_WITH_FILTER("Pinyin", "MixAnAng", MHPY_C[0].bMode, FilterAnAng);
-CONFIG_BINDING_REGISTER("Pinyin", "MixEnEng", MHPY_C[1].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixIanIang", MHPY_C[2].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixInIng", MHPY_C[3].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixOuU", MHPY_C[4].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixUanUang", MHPY_C[5].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixCCh", MHPY_S[0].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixFH", MHPY_S[1].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixLN", MHPY_S[2].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixSSH", MHPY_S[3].bMode);
-CONFIG_BINDING_REGISTER("Pinyin", "MixZZH", MHPY_S[4].bMode);
+CONFIG_BINDING_REGISTER_WITH_FILTER("Pinyin", "FuzzyAnAng", MHPY_C[0].bMode, FilterAnAng);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyEnEng", MHPY_C[1].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyIanIang", MHPY_C[2].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyInIng", MHPY_C[3].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyOuU", MHPY_C[4].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyUanUang", MHPY_C[5].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyCCh", MHPY_S[0].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyFH", MHPY_S[1].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyLN", MHPY_S[2].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzySSH", MHPY_S[3].bMode);
+CONFIG_BINDING_REGISTER("Pinyin", "FuzzyZZH", MHPY_S[4].bMode);
 CONFIG_BINDING_END()
 
 Bool MyStrcmp (char *str1, char *str2)

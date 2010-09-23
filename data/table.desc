@@ -3,7 +3,7 @@ Description=Code Table Name
 Type=String
 
 [CodeTable/IconName]
-Description=IconName
+Description=Icon Name
 Type=String
 
 [CodeTable/File]

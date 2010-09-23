@@ -19,8 +19,8 @@
  ***************************************************************************/
 
 /** 
- * @file util.c
- * @brief 通用函数
+ * @file xdg.c
+ * @brief xdg related path handle
  * @author CSSlayer
  * @version 4.0.0
  * @date 2010-05-02

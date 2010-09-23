@@ -40,7 +40,6 @@
 #include "im/pinyin/py.h"
 #include "im/pinyin/pyParser.h"
 #include "ui/ui.h"
-#include "interface/DBus.h"
 #include "tools/utarray.h"
 #include <sys/types.h>
 #include <dirent.h>

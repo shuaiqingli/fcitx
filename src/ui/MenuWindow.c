@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Yunfan                                          *
- *   yunfan_zg@163.com                                                     *
+ *   Copyright (C) 2009~2010 by t3swing                                    *
+ *   t3swing@sina.com                                                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,7 +16,6 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *   t3swing  t3swing@sina.com    20091117                                 *
  ***************************************************************************/
 
 #include "MenuWindow.h"

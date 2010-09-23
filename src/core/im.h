@@ -1,5 +1,5 @@
-#ifndef _EXTRA_IM_H_
-#define _EXTRA_IM_H_
+#ifndef _IM_H_
+#define _IM_H_
 
 #define MAX_IM_NAME	(8 * 6)
 

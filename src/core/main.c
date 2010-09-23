@@ -1,7 +1,7 @@
 /***************************************************************************
- *   小企鹅中文输入法(Free Chinese Input Toys for X, FCITX)                   *
- *   由Yuking(yuking_net@sohu.com)编写                                           *
- *   协议: GPL                                                              *
+ *   小企鹅中文输入法(Free Chinese Input Toys for X, FCITX)                *
+ *   由Yuking(yuking_net@sohu.com)编写                                     *
+ *   协议: GPL                                                             *
  *   FCITX( A Chinese XIM Input Method) by Yuking (yuking_net@sohu.com)    *
  *                                                                         *
  *   Copyright (C) 2002~2005 by Yuking                                     *

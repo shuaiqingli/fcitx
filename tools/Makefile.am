@@ -1,13 +1,21 @@
+INCLUDES = \
+		   -I$(top_srcdir)/lib \
+		   -I$(top_srcdir)/src \
+		   @CAIRO_XLIB_CFLAGS@ \
+		   $(NULL)
 DEFS = -DPKGDATADIR=\"$(pkgdatadir)\"
 
 toolsdir = $(pkgdatadir)/tools
-INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/lib
 EXTRA_DIST = $(tools_DATA)
 
 bin_PROGRAMS = mb2txt txt2mb createPYMB readPYMB readPYBase mb2org fcitx-remote 
 readPYMB_SOURCES = pyTools.c pyTools.h readPYMB.c
 readPYBase_SOURCES = pyTools.c pyTools.h readPYBase.c
 fcitx_remote_SOURCES = fcitx-remote.c
+
+fcitx_remote_LDADD = \
+					 @CAIRO_XLIB_LIBS@ \
+					 $(NULL)
 
 readPYBase_LDADD = \
 				   ../src/fcitx-config/libfcitx-config.la \

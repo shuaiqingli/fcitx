@@ -1,4 +1,9 @@
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
+INCLUDES = \
+		   -I$(top_srcdir)/lib \
+		   -I$(top_srcdir)/src \
+		   @CAIRO_XLIB_CFLAGS@ \
+		   @DBUS_CFLAGS@ \
+		   $(NULL)
 DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\" -DBINDIR=\"$(bindir)\"
 
 noinst_LIBRARIES=libui.a

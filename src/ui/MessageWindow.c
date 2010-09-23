@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Yunfan                                          *
- *   yunfan_zg@163.com                                                     *
+ *   Copyright (C) 2010~2010 by CSSlayer                                   *
+ *   wengxt@gmail.com                                                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *

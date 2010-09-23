@@ -36,19 +36,10 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include "tools/tools.h"
-#include "core/ime.h"
-#include "ui/ui.h"
-#include "version.h"
-#include "ui/MainWindow.h"
-#include "ui/InputWindow.h"
-#include "ui/skin.h"
-#include "im/pinyin/PYFA.h"
-#include "im/pinyin/py.h"
-#include "im/pinyin/sp.h"
-#include "im/table/table.h"
-#include "im/qw/qw.h"
 #include "fcitx-config/uthash.h"
+#include "core/ime.h"
+#include "tools/tools.h"
+#include "version.h"
 #include "fcitx-config/cutils.h"
 #include "fcitx-config/xdg.h"
 

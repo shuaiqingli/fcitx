@@ -59,8 +59,8 @@ src/im/table/tableconfig.c
 src/im/extra/extra.h
 src/im/extra/extra.c
 src/tools/utf8_in_gb18030.h
-src/tools/xdg.h
-src/tools/xdg.c
+src/fcitx-config/xdg.h
+src/fcitx-config/xdg.c
 src/tools/configfile.c
 src/tools/utarray.h
 src/tools/utf8.h
