@@ -69,6 +69,7 @@ CONFIG_BINDING_REGISTER_WITH_FILTER("Program", "UseTray", bUseTrayIcon_, FilterC
 #ifdef _ENABLE_DBUS
 CONFIG_BINDING_REGISTER_WITH_FILTER("Program", "UseDBus", bUseDBus_, FilterCopyUseDBus);
 #endif
+CONFIG_BINDING_REGISTER("Program", "EnableAddons", bEnableAddons);
 CONFIG_BINDING_REGISTER("Output", "HalfPuncAfterNumber", bEngPuncAfterNumber);
 CONFIG_BINDING_REGISTER("Output", "EnterAction", enterToDo);
 CONFIG_BINDING_REGISTER("Output", "SemiColonAction", semicolonToDo);
@@ -111,7 +112,6 @@ CONFIG_BINDING_REGISTER("InputMethod", "DefaultShuangpinSchema", strDefaultSP);
 CONFIG_BINDING_REGISTER("InputMethod", "QuweiOrder", inputMethods[IM_QW]);
 CONFIG_BINDING_REGISTER("InputMethod", "TableOrder", inputMethods[IM_TABLE]);
 CONFIG_BINDING_REGISTER("InputMethod", "PhraseTips", bPhraseTips);
-CONFIG_BINDING_REGISTER("InputMethod", "ExtraIM", strExternIM);
 CONFIG_BINDING_REGISTER("Pinyin", "UseCompletePinyin", bFullPY);
 CONFIG_BINDING_REGISTER("Pinyin", "AutoCreatePhrase", bPYCreateAuto);
 CONFIG_BINDING_REGISTER("Pinyin", "SaveAutoPhrase", bPYSaveAutoAsPhrase);

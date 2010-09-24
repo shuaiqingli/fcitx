@@ -160,6 +160,9 @@ char *sCornerTrans[] = {
 
 static void DoForwardEvent(IMForwardEventStruct *call_data);
 
+/** 
+ * @brief 重置输入状态
+ */
 void ResetInput (void)
 {
     iCandPageCount = 0;
@@ -190,6 +193,11 @@ void ResetInput (void)
     iFirstQuickPhrase = -1;
 }
 
+/** 
+ * @brief 关闭输入法
+ * 
+ * @param call_data
+ */
 void CloseIM (IMForwardEventStruct * call_data)
 {
     CloseInputWindow();
@@ -215,6 +223,11 @@ void CloseIM (IMForwardEventStruct * call_data)
 #endif
 }
 
+/** 
+ * @brief 更改输入法状态
+ * 
+ * @param _connect_id
+ */
 void ChangeIMState (CARD16 _connect_id)
 {
     if (ConnectIDGetState (_connect_id) == IS_ENG) {
@@ -249,8 +262,8 @@ void ChangeIMState (CARD16 _connect_id)
 #endif
 }
 
-/*
- * 转换strStringGet中的标点为中文标点
+/** 
+ * @brief 转换strStringGet中的标点为中文标点
  */
 void ConvertPunc (void)
 {
@@ -290,6 +303,11 @@ void DoForwardEvent(IMForwardEventStruct *call_data)
     IMForwardEvent(ims, (XPointer) &fe);
 }
 
+/** 
+ * @brief 处理按键
+ * 
+ * @param call_data
+ */
 void ProcessKey (IMForwardEventStruct * call_data)
 {
     KeySym          keysym;
@@ -1196,8 +1214,17 @@ void DoPhraseTips (void)
     lastIsSingleHZ = 0;
 }
 
-void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
-			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void))
+void RegisterNewIM (char *strName,
+                    char *strIconName,
+                    void (*ResetIM) (void),
+                    INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int),
+                    INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE),
+                    char *(*GetCandWord) (int),
+                    char *(*GetLegendCandWord) (int),
+                    Bool (*PhraseTips) (void),
+                    void (*Init) (void),
+                    void (*Save) (void),
+                    FcitxAddon *addon)
 {
 #ifdef _DEBUG
     printf ("REGISTER %s\n", strName);
@@ -1216,6 +1243,7 @@ void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM)
     strcpy(im[iIMCount].image.img_name, strIconName);
     strcat(im[iIMCount].image.img_name, ".png");
     im[iIMCount].icon = NULL;
+    im[iIMCount].addonInfo = addon;
 
 
     iIMCount++;
@@ -1239,18 +1267,26 @@ void SaveIM (void)
     }
 }
 
+void UnloadIM()
+{
+    INT8 i;
+    if (im)
+    {
+        for (i = 0; i < iIMCount; i ++)
+        {
+            destroy_a_img(&im[i].icon);
+            if (im[i].addonInfo)
+                UnloadExtraIM(i);
+        }
+        free (im);
+        im = NULL;
+    }
+}
+
 void SetIM (void)
 {
     INT8            i, j, k=0, l;
     Bool	    bFlag[INPUT_METHODS];
-
-    if (im)
-    {
-        for (i = 0; i < iIMCount; i ++)
-            destroy_a_img(&im[i].icon);
-        free (im);
-    }
-
     if (fc.inputMethods[IM_TABLE])
     LoadTableInfo ();
 
@@ -1297,18 +1333,18 @@ void SetIM (void)
     if ( fc.inputMethods[k]>0 ) {
         switch (k) {
         case IM_PY:
-        RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, SavePY);
+        RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, SavePY, NULL);
         break;
         case IM_SP:
-        RegisterNewIM (strNameOfShuangpin, strIconNameOfShuangpin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, SPInit, SavePY);
+        RegisterNewIM (strNameOfShuangpin, strIconNameOfShuangpin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, SPInit, SavePY, NULL);
         break;
         case IM_QW:
-        RegisterNewIM (strNameOfQuwei, strIconNameOfQuwei, NULL, DoQWInput, QWGetCandWords, QWGetCandWord, NULL, NULL, NULL, NULL);
+        RegisterNewIM (strNameOfQuwei, strIconNameOfQuwei, NULL, DoQWInput, QWGetCandWords, QWGetCandWord, NULL, NULL, NULL, NULL, NULL);
         break;
         case IM_TABLE:
         for (l = 0; l < tbl.iTableCount; l++) {
             TABLE* table = (TABLE*) utarray_eltptr(tbl.table, l);
-            RegisterNewIM (table->strName, table->strIconName, TableResetStatus, DoTableInput, TableGetCandWords, TableGetCandWord, TableGetLegendCandWord, TablePhraseTips, TableInit, FreeTableIM);
+            RegisterNewIM (table->strName, table->strIconName, TableResetStatus, DoTableInput, TableGetCandWords, TableGetCandWord, TableGetLegendCandWord, TablePhraseTips, TableInit, FreeTableIM, NULL);
             table->iIMIndex = iIMCount - 1;
         }
         default:
@@ -1318,10 +1354,10 @@ void SetIM (void)
     }
 
     if ( (!fc.inputMethods[IM_SP] && (!fc.inputMethods[IM_TABLE] || !tbl.iTableCount)) && !iIMCount )	 //至少应该有一种输入法
-    RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, NULL);
+    RegisterNewIM (strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus, DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, NULL, NULL);
 
-    if (fc.strExternIM[0] && fc.strExternIM[1])
-    LoadExtraIM(fc.strExternIM);
+    if (fc.bEnableAddons)
+        LoadExtraIM();
 
     SwitchIM (gs.iIMIndex);
 }
@@ -1359,6 +1395,10 @@ void ReloadConfig()
 #endif
     }
 
+    UnloadIM();
+
+    LoadAddonInfo();
+
     SetIM ();
     if (!fc.bUseDBus) {
         CreateFont();
@@ -1379,6 +1419,4 @@ void ReloadConfig()
         DrawMainWindow();
         DisplaySkin(fc.skinType);
     }
-
-
 }

@@ -117,8 +117,6 @@ void GetMenuHeight(Display * dpy,xlibMenu * Menu)
 			winheight += 5;
 	}
 	Menu->height=winheight;
-	
-
 }
 
 //根据Menu内容来绘制菜单内容
@@ -278,15 +276,24 @@ int selectShellIndex(xlibMenu * Menu, int x, int y, int* offseth)
 	return -1;
 }
 
-void colorRevese(xlibMenu * Menu,int shellIndex)
+Bool colorRevese(xlibMenu * Menu,int shellIndex)
 {
+    Bool flag = False;
 	int i;
+
+    int last = -1;
+
 	for(i=0;i<Menu->useItemCount;i++)
 	{
-		Menu->shell[i].isselect=0;
+        if (Menu->shell[i].isselect)
+            last = i;
+
+        Menu->shell[i].isselect=0;
 	}
-	if(shellIndex>=0)
-		Menu->shell[shellIndex].isselect=1;
+    if (shellIndex == last)
+        flag = True;
+    Menu->shell[shellIndex].isselect = 1;
+    return flag;
 }
 
 void clearSelectFlag(xlibMenu * Menu)
@@ -399,9 +406,12 @@ void MainMenuEvent(int x,int y)
 	char tmpstr[64]={0};
     int offseth = 0;
 	i=selectShellIndex(&mainMenu, x, y, &offseth);
-	colorRevese(&mainMenu,i);
-	DrawXlibMenu( dpy,&mainMenu);
-	DisplayXlibMenu(dpy,&mainMenu);	
+	Bool flag = colorRevese(&mainMenu,i);
+    if (flag)
+        return;
+    
+    DrawXlibMenu( dpy,&mainMenu);
+    DisplayXlibMenu(dpy,&mainMenu);	
 	
 	switch(i)
 	{
@@ -492,7 +502,9 @@ void IMMenuEvent(int x,int y)
 	int i;
 	i=selectShellIndex(&imMenu,x, y, NULL);
 
-	colorRevese(&imMenu,i);
+    Bool flag = colorRevese(&imMenu,i);
+    if (flag)
+        return;
 	DrawXlibMenu(dpy,&imMenu);
 	DisplayXlibMenu(dpy,&imMenu);	
 }
@@ -502,7 +514,10 @@ void VKMenuEvent(int x,int y)
 {
 	int i;
 	i=selectShellIndex(&vkMenu,x, y, NULL);
-	colorRevese(&vkMenu,i);
+	Bool flag = colorRevese(&vkMenu,i);
+
+    if (flag)
+        return;
 	DrawXlibMenu(dpy,&vkMenu);
 	DisplayXlibMenu(dpy,&vkMenu);	
 }
@@ -512,7 +527,9 @@ void SkinMenuEvent(int x,int y)
 {
 	int i;
 	i=selectShellIndex(&skinMenu,x, y, NULL);
-	colorRevese(&skinMenu,i);
+	Bool flag = colorRevese(&skinMenu,i);
+    if (flag)
+        return;
 	DrawXlibMenu(dpy,&skinMenu);
 	DisplayXlibMenu(dpy,&skinMenu);	
 }

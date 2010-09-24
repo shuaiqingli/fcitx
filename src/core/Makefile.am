@@ -12,6 +12,7 @@ fcitx_SOURCES= IC.c IC.h\
 			   ime.c ime.h \
 			   internalVersion.c \
 			   xim.c xim.h \
+			   addon.c addon.h \
 			   main.c  \
 			   fcitx.h im.h \
 			   $(NULL)

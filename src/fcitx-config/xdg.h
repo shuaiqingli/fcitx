@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <X11/Xlib.h>
 
+FILE *GetLibFile(const char *filename, const char *mode, char **retFile);
 FILE *GetXDGFile(const char *fileName, char **path, const char *mode, size_t len, char **retFile);
 char **GetXDGPath(
         size_t *len,

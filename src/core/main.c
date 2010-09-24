@@ -42,6 +42,7 @@
 
 #include "core/MyErrorsHandlers.h"
 #include "core/ime.h"
+#include "core/addon.h"
 #include "ui/ui.h"
 #include "ui/MainWindow.h"
 #include "ui/InputWindow.h"
@@ -84,11 +85,22 @@ static void Usage();
 static void Version();
 static void InitGlobal();
 
+/** 
+ * @brief 初始化全局状态 
+ */
 void InitGlobal()
 {
     memset(&gs, 0, sizeof(FcitxState));
 }
 
+/** 
+ * @brief 主程序入口
+ * 
+ * @param argc 命令行参数个数
+ * @param argv[] 命令行参数
+ * 
+ * @return 
+ */
 int main (int argc, char *argv[])
 {
     setlocale(LC_ALL, "");
@@ -97,44 +109,45 @@ int main (int argc, char *argv[])
     textdomain(PACKAGE);
 
     XEvent          event;
-    int             c; 	//用于保存用户输入的参数
+    int             c; 	/* 用于保存用户输入的参数 */
     Bool            bBackground = True;
     char	    *imname=(char *)NULL;
     pthread_t	    pid;
 
     InitGlobal();
 
-    SetMyExceptionHandler();		//处理事件
+    SetMyExceptionHandler();		/* 处理信号 */
 
-    /* 先初始化 X 再加载配置文件，因为设置快捷键从 keysym 转换到
+    /*
+     * 先初始化 X 再加载配置文件，因为设置快捷键从 keysym 转换到
      * keycode 的时候需要 Display
      */
     if (!InitX ())
 	exit (1);
 
-    /*加载用户配置文件，如果该文件不存在就从安装目录中拷贝
-     * “/data/config”到“~/.fcitx/config”
+    /*
+     * 加载用户配置文件
      */
     LoadConfig ();
 
     while((c = getopt(argc, argv, "cdDn:vh")) != -1) {
         switch(c){
-	    case 'd':
+            case 'd':
                 /* nothing to do */
                 break;
             case 'D':
                 bBackground = False;
                 break;
-	    case 'c':
-		SaveConfig();
-		return 0;
-	    case 'n':
-	    	imname=optarg;
-		break;
-            case 'v':	//输出版本号
+            case 'c':
+                SaveConfig();
+                return 0;
+            case 'n':
+                imname=optarg;
+                break;
+            case 'v':	/* 输出版本号 */
                 Version();
                 return 0;
-            case 'h':	//h或者其他任何不合法的参数均，输出参数帮助信息
+            case 'h':	/* h或者其他任何不合法的参数均，输出参数帮助信息 */
             case '?':
                 Usage();
                 return 0;
@@ -142,13 +155,16 @@ int main (int argc, char *argv[])
     }
 
 #ifdef _ENABLE_DBUS
+    /*
+     * 启用DBus时初始化DBus
+     */
     if (fc.bUseDBus && !InitDBus ())
 	exit (5);
 #endif
 	
-	/**
-	*  加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
-	*/
+	/*
+     * 加载皮肤配置文件,一般在share/fcixt/skin/skinname dir/fcitx_skin.conf中,制作皮肤的时候配置好
+     */
 	LoadSkinConfig();
 
     InitFont();
@@ -156,62 +172,74 @@ int main (int argc, char *argv[])
     /* 加载皮肤和配置之后才有字体 */
     CreateFont();
 
-    //根据字体计算输入窗口的高度
+    /* 根据字体计算输入窗口的高度 */
     CalculateInputWindowHeight ();
-    /*加载配置文件，这个配置文件不是用户配置的，而是用于记录fctix的运行状态的，
+
+    /*
+     * 加载配置文件，这个配置文件不是用户配置的，而是用于记录fctix的运行状态的
      * 比如是全角还是半角等等。
      */
     LoadProfile ();
 
+    LoadAddonInfo();
+
     iClientCursorX = fcitxProfile.iInputWindowOffsetX;
     iClientCursorY = fcitxProfile.iInputWindowOffsetY;
 
-    //加载字典文件
+    /* 加载标点字典文件 */
     LoadPuncDict ();
-    //加载成语
+    /* 加载快速词组 */
     LoadQuickPhrase ();
-    /*从用户配置目录中读取AutoEng.dat （如果不存在，
-     * 则从 /usr/local/share/fcitx/data/AutoEng.dat）
+    /*
+     * 从用户配置目录中读取AutoEng.dat
+     * 如果不存在，则从 DATADIR/fcitx/data/AutoEng.dat）
      * 读取需要自动转换到英文输入状态的情况的数据
      */
     LoadAutoEng ();
 
-    //以下是界面的处理
-
+    /* 以下是界面的处理 */
+    /* 创建主窗口，即输入法状态窗口 */
     if (!fc.bUseDBus)
-	CreateMainWindow ();	//创建主窗口，即输入法状态窗口
+        CreateMainWindow ();
 #ifdef _ENABLE_DBUS
     else
-	registerProperties();
+        registerProperties();
 #endif
 
-    CreateInputWindow ();	//创建输入窗口
-    CreateVKWindow ();		//创建虚拟键盘窗口   
-    CreateMenuWindow( );    //创建菜单窗口
-	CreateMessageWindow();	//创建软键盘布局选择菜单窗口
+    /* 创建输入窗口 */
+    CreateInputWindow ();
 
+    /* 创建虚拟键盘窗口 */
+    CreateVKWindow ();
+    
+    /* 创建菜单窗口 */
+    CreateMenuWindow( ); 
+
+	/* 创建信息提示窗口 */
+	CreateMessageWindow();
+
+    /* 创建关于窗口 */
     if (!fc.bUseDBus)
-	CreateAboutWindow ();	//创建关于窗口
+        CreateAboutWindow ();
 
-    //将本程序加入到输入法组，告诉系统，使用我输入字符
+    /* 将本程序加入到输入法组，告诉系统，使用我输入字符 */
     SetIM ();
 
     if (!fc.bUseDBus) {
-	//处理主窗口的显示
-	if (fc.hideMainWindow != HM_HIDE) {
-	    DisplayMainWindow ();
-	    DrawMainWindow ();
-	}
+        /* 处理主窗口的显示 */
+        if (fc.hideMainWindow != HM_HIDE) {
+            DisplayMainWindow ();
+            DrawMainWindow ();
+        }
     }
 
-    //初始化输入法
+    /* 初始化XIM */
     if (!InitXIM (imname))
 	exit (4);
 
-    //以后台方式运行
-    if (bBackground) {
-    InitAsDaemon();
-    }
+    /* 以后台方式运行 */
+    if (bBackground)
+        InitAsDaemon();
 
 #ifdef _ENABLE_RECORDING
     OpenRecording(True);
@@ -232,30 +260,36 @@ int main (int argc, char *argv[])
 
 #ifdef _ENABLE_TRAY
     tray.window = (Window) NULL;
+
+    /* 创建系统托盘窗口 */
     if (!fc.bUseDBus) {
-        CreateTrayWindow ();		//创建系统托盘窗口
-    	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);	//显示托盘图标
+        CreateTrayWindow ();
+    	DrawTrayWindow (INACTIVE_ICON, 0, 0, tray.size, tray.size);
     }
 #endif
 
     DisplaySkin(fc.skinType);
 
-    //主循环，即XWindow的消息循环
+    /* 主循环，即XWindow的消息循环 */
     for (;;) {
-	XNextEvent (dpy, &event);			//等待一个事件发生
-
-    FcitxLock();
-	    
-	if (XFilterEvent (&event, None) == False)
-	    MyXEventHandler (&event);		//处理X事件
-    
-    FcitxUnlock();
+        XNextEvent (dpy, &event);			//等待一个事件发生
+        
+        FcitxLock();
+        
+        /* 处理X事件 */
+        if (XFilterEvent (&event, None) == False)
+            MyXEventHandler (&event);
+        
+        FcitxUnlock();
     }
 
 
     return 0;
 }
 
+/** 
+ * @brief 显示命令行参数
+ */
 void Usage ()
 {
     printf("Usage: fcitx [OPTION]\n"
@@ -267,6 +301,9 @@ void Usage ()
            "\t-h\t\tdisplay this help and exit\n");
 }
 
+/** 
+ * @brief 显示版本
+ */
 void Version ()
 {
     printf ("fcitx version: %s\n", FCITX_VERSION);

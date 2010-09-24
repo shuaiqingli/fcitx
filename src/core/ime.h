@@ -37,6 +37,7 @@
 #include "core/fcitx.h"
 #include "tools/utf8.h"
 #include "fcitx-config/fcitx-config.h"
+#include "core/addon.h"
 
 #define HOT_KEY_COUNT	2
 #define TEMP_FILE		"FCITX_DICT_TEMP"
@@ -63,18 +64,19 @@ typedef enum _KEY_RELEASED {
 } KEY_RELEASED;
 
 typedef struct IM{
-    char            strName[MAX_IM_NAME + 1];
-    char            strIconName[MAX_IM_NAME + 1];
-    void            (*ResetIM) (void);
-                    INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int);
-                    INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE);
-    char           *(*GetCandWord) (int);
-    char           *(*GetLegendCandWord) (int);
-                    Bool (*PhraseTips) (void);
-    void            (*Init) (void);
-    void            (*Save) (void);
-    FcitxImage      image;
-    cairo_surface_t *icon;
+    char               strName[MAX_IM_NAME + 1];
+    char               strIconName[MAX_IM_NAME + 1];
+    void               (*ResetIM) (void);
+    INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int);
+    INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE);
+    char              *(*GetCandWord) (int);
+    char              *(*GetLegendCandWord) (int);
+    Bool               (*PhraseTips) (void);
+    void               (*Init) (void);
+    void               (*Save) (void);
+    FcitxImage         image;
+    cairo_surface_t   *icon;
+    FcitxAddon        *addonInfo;
 } IM;
 
 typedef struct FcitxState {
@@ -101,12 +103,22 @@ void		ChangeRecording (void);
 void		ResetRecording (void);
 #endif
 
-void            RegisterNewIM (char *strName, char *strIconName, void (*ResetIM) (void), INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int), INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE), char *(*GetCandWord) (int), char *(*GetLegendCandWord) (int),
-			       Bool (*PhraseTips) (void), void (*Init) (void), void (*Save) (void));
+void            RegisterNewIM (char *strName,
+                               char *strIconName,
+                               void (*ResetIM) (void),
+                               INPUT_RETURN_VALUE (*DoInput) (unsigned int, unsigned int, int),
+                               INPUT_RETURN_VALUE (*GetCandWords) (SEARCH_MODE),
+                               char *(*GetCandWord) (int),
+                               char *(*GetLegendCandWord) (int),
+                               Bool (*PhraseTips) (void),
+                               void (*Init) (void),
+                               void (*Save) (void),
+                               FcitxAddon *addon);
 void            SwitchIM (INT8 index);
 void            DoPhraseTips ();
 Bool            IsIM (char *strName);
 void            SaveIM (void);
+void            UnloadIM();
 void            SetIM (void);
 void            ConvertPunc (void);
 void            ReloadConfig();

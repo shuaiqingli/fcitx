@@ -2,7 +2,7 @@ SUBDIRS=table
 
 generaldir = $(pkgdatadir)/data
 
-configdescfile = config.desc profile.desc table.desc skin.desc module.desc
+configdescfile = config.desc profile.desc table.desc skin.desc addon.desc
 
 general_DATA = pybase.mb pyphrase.mb pySym.mb sp.dat punc.mb \
 	     vk.conf gbks2t.tab AutoEng.dat \

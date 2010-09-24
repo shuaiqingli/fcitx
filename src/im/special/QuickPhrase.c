@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include <stdio.h>
 #include <limits.h>
+#include <ctype.h>
 
 #include "tools/tools.h"
 #include "im/special/QuickPhrase.h"
@@ -130,13 +131,6 @@ void LoadQuickPhrase(void)
         utarray_sort(quickPhrases, PhraseCmp);
     }
 
-    QUICK_PHRASE * currentQuickPhrase;
-    for( currentQuickPhrase = (QUICK_PHRASE*) utarray_front(quickPhrases);
-         currentQuickPhrase != NULL;
-         currentQuickPhrase = (QUICK_PHRASE*) utarray_next(quickPhrases, currentQuickPhrase))
-    {
-        printf("%s %s\n", currentQuickPhrase->strCode, currentQuickPhrase->strPhrase);
-    }
     fclose(fp);
 }
 
@@ -209,11 +203,6 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
         lastQuickPhrase = utarray_custom_bsearch(pKey, quickPhrases, False, PhraseCmpA);
         iLastQuickPhrase = utarray_eltidx(quickPhrases, lastQuickPhrase);
         iCandPageCount = (iLastQuickPhrase - iFirstQuickPhrase + fc.iMaxCandWord - 1) / fc.iMaxCandWord - 1;
-        printf("%d %d %d %d\n" ,iCandPageCount, iLastQuickPhrase, iFirstQuickPhrase, fc.iMaxCandWord);
-        if (iFirstQuickPhrase != -1)
-            printf("%s\n" ,currentQuickPhrase->strCode);
-        if (iLastQuickPhrase != -1)
-            printf("%s\n" ,lastQuickPhrase->strCode);
         if ( !currentQuickPhrase || strncmp(strCodeInput,currentQuickPhrase->strCode,iInputLen) ) {
             SetMessageCount(&messageDown, 0);
             currentQuickPhrase = NULL;
@@ -221,7 +210,6 @@ INPUT_RETURN_VALUE QuickPhraseGetCandWords (SEARCH_MODE mode)
         }
     }
     else if (mode==SM_NEXT) {
-        printf("%d %d\n" , iCurrentCandPage, iCandPageCount);
         if (iCurrentCandPage >= iCandPageCount)
             return IRV_DO_NOTHING;
         iCandWordCount=0;

@@ -26,6 +26,11 @@ Type=Boolean
 DefaultValue=False
 Description=Use DBus to display UI (Require KIMPanel)
 
+[Program/EnableAddons]
+Type=Boolean
+DefaultValue=True
+Description=Enable Addons to Fcitx
+
 [Output/HalfPuncAfterNumber]
 Type=Boolean
 DefaultValue=True

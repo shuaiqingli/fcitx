@@ -89,6 +89,20 @@ FILE *GetXDGFileData(const char *fileName, const char *mode, char **retFile)
     return fp;
 }
 
+FILE *GetLibFile(const char *filename, const char *mode, char **retFile)
+{
+    size_t len;
+    char ** path;
+    path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/lib" , LIBDIR, "" );
+
+    FILE* fp = GetXDGFile(filename, path, mode, len, retFile);
+
+    FreeXDGPath(path);
+
+    return fp;
+
+}
+
 FILE *GetXDGFileTable(const char *fileName, const char *mode, char **retFile, Bool forceUser)
 {
     size_t len;

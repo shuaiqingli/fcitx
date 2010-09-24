@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010~2010 by dgod                                       *
+ *   Copyright (C) 2010~2010 by CSSlayer                                   *
+ *   wengxt@gmail.com                                                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,14 +18,47 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef _EXTRA_H_
-#define _EXTRA_H_
+#ifndef ADDON_H
+#define ADDON_H
 
-#include "core/ime.h"
 #include "core/fcitx.h"
+#include "X11/Xmd.h"
+#include "fcitx-config/fcitx-config.h"
+#include "tools/utarray.h"
 
-void UnloadExtraIM(int index);
-void LoadExtraIM();
+typedef enum AddonCategory
+{
+    AC_INPUTMETHOD = 0
+} AddonCategory;
 
-#endif/*_EXTRA_H_*/
+typedef enum AddonType
+{
+    AT_SHAREDLIBRARY = 0
+} AddonType;
 
+typedef struct FcitxAddonLibIM
+{
+    INT8 index;
+    void *handle;
+    EXTRA_IM *eim;
+} FcitxAddonLibIM;
+
+typedef struct FcitxAddon
+{
+    GenericConfig config;
+    char *name;
+    Bool bEnabled;
+    AddonCategory category;
+    AddonType type;
+    char *module;
+    union {
+        FcitxAddonLibIM im;
+    };
+} FcitxAddon;
+
+void FreeAddon(void *v);
+void LoadAddonInfo(void);
+
+extern UT_array *addons;
+
+#endif

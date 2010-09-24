@@ -17,22 +17,21 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "core/addon.h"
 #include "im/extra/extra.h"
 #include "ui/InputWindow.h"
 #include "fcitx-config/configfile.h"
 #include "fcitx-config/profile.h"
+#include "fcitx-config/xdg.h"
+#include "fcitx-config/cutils.h"
 
 #include <dlfcn.h>
 #include <limits.h>
 #include <iconv.h>
 
-#define EIM_MAX		4
-extern Display *dpy;
+extern IM             *im;
 
-static EXTRA_IM *EIMS[EIM_MAX];
-static void *EIM_handle[EIM_MAX];
-static char EIM_file[EIM_MAX][PATH_MAX];
-static INT8 EIM_index[EIM_MAX];
+extern Display *dpy;
 
 static char CandTableEngine[10][MAX_CAND_LEN+1];
 static char CodeTipsEngine[10][MAX_TIPS_LEN+1];
@@ -49,42 +48,28 @@ extern char     strCodeInput[];
 extern int      iCodeInputCount;
 extern Bool	bCursorAuto;
 
-static void ResetAll(void)
+#define GetCurrentEIM() ((im[gs.iIMIndex].addonInfo)?im[gs.iIMIndex].addonInfo->im.eim:NULL)
+
+void UnloadExtraIM(int index)
 {
-	int i;
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIMS[i])
-		{
-			if(EIMS[i]->Destroy)
-				EIMS[i]->Destroy();
-			EIMS[i]=NULL;
-		}
-		if(EIM_handle[i])
-		{
-			dlclose(EIM_handle[i]);
-			EIM_handle[i]=NULL;
-		}
-		if(EIM_file[i][0])
-		{
-			EIM_file[i][0]=0;
-		}
-		EIM_index[i]=0;
-	}
+    FcitxAddon* addon = im[index].addonInfo;
+    if (!addon)
+        return;
+    EXTRA_IM *eim = GetCurrentEIM();
+    if (!eim)
+        return;
+    if (eim->Destroy)
+        eim->Destroy();
+    if (addon->im.handle)
+        dlclose(addon->im.handle);
+    addon->im.index = 0;
+    addon->im.handle = NULL;
+    addon->im.eim = NULL;
 }
 
 static void ExtraReset(void)
 {
-	int i;
-	EXTRA_IM *eim=NULL;
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIM_index[i]==gs.iIMIndex)
-		{
-			eim=EIMS[i];
-			break;
-		}
-	}
+	EXTRA_IM *eim = GetCurrentEIM();
 	inputWindow.bShowCursor=False;
 	bCursorAuto=False;
 	if(!eim) return;
@@ -145,17 +130,8 @@ static void DisplayEIM(EXTRA_IM *im)
 
 static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int count)
 {
-	int i;
-	EXTRA_IM *eim=NULL;
+	EXTRA_IM *eim = GetCurrentEIM();
 	INPUT_RETURN_VALUE ret=IRV_DO_NOTHING;
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIM_index[i]==gs.iIMIndex)
-		{
-			eim=EIMS[i];
-			break;
-		}
-	}
 	if(!eim) return IRV_TO_PROCESS;
 	if(eim->DoInput)
 		ret=eim->DoInput(sym, state, count);
@@ -196,17 +172,8 @@ static INPUT_RETURN_VALUE ExtraDoInput(unsigned int sym, unsigned int state, int
 
 static INPUT_RETURN_VALUE ExtraGetCandWords(SEARCH_MODE sm)
 {
-	int i;
-	EXTRA_IM *eim=NULL;
+	EXTRA_IM *eim = GetCurrentEIM();
 	INPUT_RETURN_VALUE ret=IRV_DO_NOTHING;
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIM_index[i]==gs.iIMIndex)
-		{
-			eim=EIMS[i];
-			break;
-		}
-	}
 	if(!eim) return IRV_TO_PROCESS;
 	if(eim->GetCandWords)
 		ret=eim->GetCandWords(sm);
@@ -217,16 +184,7 @@ static INPUT_RETURN_VALUE ExtraGetCandWords(SEARCH_MODE sm)
 
 static char *ExtraGetCandWord(int index)
 {
-	int i;
-	EXTRA_IM *eim=NULL;
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIM_index[i]==gs.iIMIndex)
-		{
-			eim=EIMS[i];
-			break;
-		}
-	}
+	EXTRA_IM *eim = GetCurrentEIM();
 	if(!eim) return 0;
 	if(eim->GetCandWord)
 	{
@@ -311,73 +269,53 @@ int InitExtraIM(EXTRA_IM *eim,char *arg)
 	return 0;
 }
 
-void LoadExtraIM(char *fn)
+void LoadExtraIM()
 {
-	void *handle;
-	int i;
-	EXTRA_IM *eim;
-	char path[PATH_MAX];
-	char temp[256];
-	char *arg;
-	char fnr[256];
-
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(EIM_file[i][0] && !strcmp(EIM_file[i],path))
-		{
-			ResetAll();
-			break;
-		}
-	}
-	for(i=0;i<EIM_MAX;i++)
-	{
-		if(!EIMS[i])
-		{
-			break;
-		}
-	}
-	if(i==EIM_MAX)
-	{
-		printf("eim: no space\n");
-		return;
-	}
-
-	strcpy(fnr,fn);
-	arg=strstr(fnr,".so ");
-	if(arg)
-	{
-		arg[3]=0;
-		arg+=4;
-	}
-	if(fnr[0]=='~' && fnr[1]=='/')
-		sprintf(temp,"%s/%s",getenv("HOME"),fnr+2);
-	else if(strchr(fnr,'/'))
-		strcpy(temp,fnr);
-	else
-		sprintf(temp,"%s/%s",ExtraGetPath("LIB"),fnr);
-
-	handle=dlopen(temp,RTLD_LAZY);
-
-	if(!handle)
-	{
-		printf("eim: open %s fail %s\n",temp,dlerror());
-		return;
-	}
-	eim=dlsym(handle,"EIM");
-	if(!eim || !eim->Init)
-	{
-		printf("eim: bad im\n");
-		dlclose(handle);
-		return;
-	}
-	if(InitExtraIM(eim,arg))
-	{
-		dlclose(handle);
-		return;
-	}
-	RegisterNewIM(eim->Name, eim->IconName,ExtraReset,ExtraDoInput,ExtraGetCandWords,ExtraGetCandWord,NULL,NULL,NULL,NULL);
-	EIMS[i]=eim;
-	EIM_handle[i]=handle;
-	strcpy(EIM_file[i],fn);
-	EIM_index[i]=iIMCount-1;
+    FcitxAddon *addon;
+    for ( addon = (FcitxAddon *) utarray_front(addons);
+          addon != NULL;
+          addon = (FcitxAddon *) utarray_next(addons, addon))
+    {
+        if (addon->category == AC_INPUTMETHOD)
+        {
+            switch (addon->type)
+            {
+                case AT_SHAREDLIBRARY:
+                    {
+                        char *modulePath;
+                        FILE *fp = GetLibFile(addon->module, "r", &modulePath);
+                        void *handle;
+                        EXTRA_IM* eim;
+                        if (!fp)
+                            break;
+                        fclose(fp);
+                        handle = dlopen(modulePath,RTLD_LAZY);
+                        if(!handle)
+                        {
+                            FcitxLog(ERROR, _("ExtraIM: open %s fail %s") ,modulePath ,dlerror());
+                            break;
+                        }
+                        eim=dlsym(handle,"EIM");
+                        if(!eim || !eim->Init)
+                        {
+                            FcitxLog(ERROR, _("ExtraIM: bad im"));
+                            dlclose(handle);
+                            break;
+                        }
+                        if(InitExtraIM(eim,addon->module))
+                        {
+                            dlclose(handle);
+                            return;
+                        }
+                        RegisterNewIM(eim->Name, eim->IconName,ExtraReset,ExtraDoInput,ExtraGetCandWords,ExtraGetCandWord,NULL,NULL,NULL,NULL, addon);
+                        addon->im.handle = handle;
+                        addon->im.index = iIMCount - 1;
+                        addon->im.eim = eim;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 }

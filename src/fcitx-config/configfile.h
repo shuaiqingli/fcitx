@@ -74,6 +74,7 @@ typedef struct FcitxConfig
     Bool bUseTrayIcon_;
     Bool bUseDBus;
     Bool bUseDBus_;
+    Bool bEnableAddons;
     /* output config */
     Bool bEngPuncAfterNumber;
     ENTER_TO_DO enterToDo;
@@ -119,7 +120,6 @@ typedef struct FcitxConfig
     int inputMethods[INPUT_METHODS];
     char *strDefaultSP;
     Bool bPhraseTips;
-    char *strExternIM;
 
     /* py config */
     Bool bFullPY;

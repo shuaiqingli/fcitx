@@ -1,5 +1,5 @@
 INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/src
-DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\"
+DEFS = -DPKGDATADIR=\"$(pkgdatadir)\" -DDATADIR=\"$(datadir)\" -DLIBDIR=\"$(libdir)\"
 
 lib_LTLIBRARIES=libfcitx-config.la
 libfcitx_config_la_SOURCES= \

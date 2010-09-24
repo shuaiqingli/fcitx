@@ -68,6 +68,8 @@ src/tools/profile.c
 src/tools/tools.c
 src/tools/tools.h
 src/tools/utf8.c
+src/core/addon.h
+src/core/addon.c
 src/core/xim.h
 src/core/main.c
 src/core/IC.h

@@ -110,6 +110,7 @@ void OnException (int signo)
     switch (signo) {
     case SIGHUP:
 	LoadConfig ();
+    UnloadIM();
 	SetIM ();
 	break;
     case SIGINT:
