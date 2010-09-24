@@ -24,6 +24,7 @@
 #include "im/special/QuickPhrase.h"
 #include "ui/InputWindow.h"
 #include "tools/utarray.h"
+#include "fcitx-config/cutils.h"
 #include "fcitx-config/xdg.h"
 #include "fcitx-config/configfile.h"
 
