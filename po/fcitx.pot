@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-09-25 02:24+0800\n"
+"POT-Creation-Date: 2010-09-25 09:17+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1725,12 +1725,16 @@ msgstr ""
 msgid "Rename OK"
 msgstr ""
 
-#: ../src/im/extra/extra.c:278
+#: ../src/im/extra/extra.c:249
+msgid "ExtraIM: init fail"
+msgstr ""
+
+#: ../src/im/extra/extra.c:279
 #, c-format
 msgid "ExtraIM: open %s fail %s"
 msgstr ""
 
-#: ../src/im/extra/extra.c:284
+#: ../src/im/extra/extra.c:285
 msgid "ExtraIM: bad im"
 msgstr ""
 
@@ -1747,12 +1751,12 @@ msgstr ""
 msgid "pthread mutex init failed"
 msgstr ""
 
-#: ../src/core/addon.c:112
+#: ../src/core/addon.c:134
 #, c-format
 msgid "Load Addon Config File:%s"
 msgstr ""
 
-#: ../src/core/addon.c:122
+#: ../src/core/addon.c:144
 #, c-format
 msgid "Addon Config %s is %s"
 msgstr ""

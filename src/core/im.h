@@ -48,7 +48,6 @@ typedef struct {
 	char *StringGet;
 	char (*CandTable)[MAX_CAND_LEN+1];
 	char (*CodeTips)[MAX_TIPS_LEN+1];
-	char *(*GetPath)(char *);
 	int CandWordMax;
 
 	int CodeLen;

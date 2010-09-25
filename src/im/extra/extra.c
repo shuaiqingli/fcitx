@@ -188,30 +188,17 @@ static char *ExtraGetCandWord(int index)
 	if(!eim) return 0;
 	if(eim->GetCandWord)
 	{
-		SetMessageCount(&messageDown, 0);
-        SetMessageCount(&messageUp, 0);
-		return eim->GetCandWord(index);
+		char *ret = eim->GetCandWord(index);
+        if (ret)
+        {
+            SetMessageCount(&messageDown, 0);
+            SetMessageCount(&messageUp, 0);
+            return ret;
+        }
+        else
+            DisplayEIM(eim);
 	}
 	return 0;
-}
-
-char *ExtraGetPath(char *type)
-{
-	static char ret[256];
-	ret[0]=0;
-	if(!strcmp(type,"DATA"))
-	{
-		strcpy(ret,PKGDATADIR"/data");
-	}
-	else if(!strcmp(type,"LIB"))
-	{
-		strcpy(ret,LIBDIR);
-	}
-	else if(!strcmp(type,"BIN"))
-	{
-		strcpy(ret,PKGDATADIR"/../../bin");
-	}
-	return ret;
 }
 
 /* the result is slow, why? */
@@ -232,14 +219,12 @@ char *GetClipboardString(Display *disp)
 	w=XGetSelectionOwner(disp,sel);
 	if(w==None)
 	{
-		//printf("None owner\n");
 		return NULL;
 	}
 	XConvertSelection(disp,sel,target,sel,w,CurrentTime);
 	ret=XGetWindowProperty(disp,w,sel,0,1023,False,target,&type,&fmt,&n,&after,&pret);
 	if(ret!=Success || !pret || fmt!=8)
 	{
-		//printf("Error %d\n",ret);
 		return NULL;
 	}
 	memcpy(result,pret,n);
@@ -254,7 +239,6 @@ int InitExtraIM(EXTRA_IM *eim,char *arg)
 	eim->StringGet=StringGetEngine;
 	eim->CandTable=CandTableEngine;
 	eim->CodeTips=CodeTipsEngine;
-	eim->GetPath=ExtraGetPath;
 	eim->CandWordMax=fc.iMaxCandWord;
 	eim->CaretPos=-1;
     eim->fc = (void*)&fc;
@@ -262,7 +246,7 @@ int InitExtraIM(EXTRA_IM *eim,char *arg)
 
 	if(eim->Init(arg))
 	{
-		printf("eim: init fail\n");
+		FcitxLog(ERROR, _("ExtraIM: init fail"));
 		return -1;
 	}
 

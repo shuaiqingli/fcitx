@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx 20100424\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2010-09-25 02:24+0800\n"
-"PO-Revision-Date: 2010-09-23 14:39+0800\n"
+"POT-Creation-Date: 2010-09-25 09:17+0800\n"
+"PO-Revision-Date: 2010-09-25 08:26+0800\n"
 "Last-Translator: Weng Xuetian <wengxt@gmail.com>\n"
 "Language-Team: Chinese Simplified <fcitx-dev@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -38,7 +38,7 @@ msgstr "使用DBus来显示界面(需要KIMPanel)"
 
 #: data/config.desc:32
 msgid "Enable Addons to Fcitx"
-msgstr ""
+msgstr "在Fcitx启用附加组件"
 
 #: data/config.desc:37
 msgid "Use English Punc After a Number"
@@ -652,7 +652,7 @@ msgstr "名称"
 
 #: data/addon.desc:4
 msgid "Category"
-msgstr ""
+msgstr "分组"
 
 #: data/addon.desc:9 data/table.desc:105
 msgid "Enabled"
@@ -692,9 +692,8 @@ msgid "UseDBus"
 msgstr "启用DBus"
 
 #: data/config.desc:29
-#, fuzzy
 msgid "EnableAddons"
-msgstr "启用"
+msgstr "启用附加组件"
 
 #: data/config.desc:34
 msgid "HalfPuncAfterNumber"
@@ -1250,7 +1249,7 @@ msgstr "符号文件"
 
 # unknown
 msgid "Addon"
-msgstr ""
+msgstr "附加组件"
 
 # unknown
 msgid "Appearance"
@@ -1397,7 +1396,7 @@ msgstr "右Super"
 
 #: unknown
 msgid "SharedLibrary"
-msgstr ""
+msgstr "共享库"
 
 #: unknown
 msgid "Show"
@@ -1745,15 +1744,18 @@ msgstr "保存码表词典"
 msgid "Rename OK"
 msgstr "重命名成功"
 
-#: ../src/im/extra/extra.c:278
+#: ../src/im/extra/extra.c:249
+msgid "ExtraIM: init fail"
+msgstr "额外输入法: 初始化失败"
+
+#: ../src/im/extra/extra.c:279
 #, c-format
 msgid "ExtraIM: open %s fail %s"
-msgstr ""
+msgstr "额外输入法: 打开%s失败 %s"
 
-#: ../src/im/extra/extra.c:284
-#, fuzzy
+#: ../src/im/extra/extra.c:285
 msgid "ExtraIM: bad im"
-msgstr "额外输入法"
+msgstr "额外输入法: 不正确的输入法"
 
 #: ../src/tools/configfile.c:273
 #, c-format
@@ -1768,15 +1770,15 @@ msgstr "pthread mutexattr init failed"
 msgid "pthread mutex init failed"
 msgstr "pthread mutex init failed"
 
-#: ../src/core/addon.c:112
-#, fuzzy, c-format
+#: ../src/core/addon.c:134
+#, c-format
 msgid "Load Addon Config File:%s"
-msgstr "加载配置文件: %s"
+msgstr "加载附加组件配置文件: %s"
 
-#: ../src/core/addon.c:122
-#, fuzzy, c-format
+#: ../src/core/addon.c:144
+#, c-format
 msgid "Addon Config %s is %s"
-msgstr "Table Config %s is %s"
+msgstr "Addon Config %s is %s"
 
 #: ../src/core/xim.c:492
 msgid "Recording file must be an absolute path."
