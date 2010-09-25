@@ -1,3 +1,10 @@
+fcitx (1:4.0~beta1~r445) lucid; urgency=low
+  * New Nightly build
+    - for fcitx-config 0.1.3
+    - for fcitx-sunpinyin 0.1.1
+
+ -- CSSlayer <wengxt@gmail.com>  Sat, 25 Sep 2010 11:16:37 +0800
+
 fcitx (1:4.0~beta1~r430) lucid; urgency=low
   * New Nightly build
     - for fcitx-config 0.1.2
