@@ -609,7 +609,7 @@ Bool InitXIM (char *imname)
         char strTemp[PATH_MAX];
         snprintf(strTemp, PATH_MAX, "@im=%s", imname);
         strTemp[PATH_MAX - 1] = '\0';
-        if (CHECK_ENV("XMODIFIERS", strTemp, True) ||
+        if ((getenv("XMODIFIERS") != NULL && CHECK_ENV("XMODIFIERS", strTemp, True)) ||
             CHECK_ENV("GTK_IM_MODULE", "xim", False) ||
             CHECK_ENV("QT_IM_MODULE", "xim", False))
         {
@@ -648,13 +648,10 @@ Bool InitXIM (char *imname)
 	    p = getenv ("LANG");
     }
     if (p) {
-#ifdef _DEBUG
-	strcpy (strUserLocale, p);
-#endif
-	if (!strcasestr (strLocale, p)) {
-	    strcat (strLocale, ",");
-	    strcat (strLocale, p);
-	}
+        if (!strcasestr (strLocale, p)) {
+            strcat (strLocale, ",");
+            strcat (strLocale, p);
+        }
     }
 
     ims = IMOpenIM (dpy,

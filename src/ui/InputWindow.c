@@ -36,6 +36,7 @@
 #include "skin.h"
 #include "fcitx-config/profile.h"
 #include "fcitx-config/configfile.h"
+#include "fcitx-config/cutils.h"
 
 InputWindow     inputWindow;
 Messages        messageUp;
@@ -195,9 +196,6 @@ void CalInputWindow (void)
         AddMessageAtLast(&messageUp, MSG_TIPS, "FCITX " FCITX_VERSION);
 	}
 
-#ifdef _DEBUG
-    AddMessageAtLast(&messageDown, MSG_CODE, "%s - %s", strUserLocale, strXModifiers);
-#else
 	//显示打字速度
 	if (bStartRecordType && fc.bShowUserSpeed) {
 	    double          timePassed;
@@ -214,7 +212,6 @@ void CalInputWindow (void)
         AddMessageAtLast(&messageDown, MSG_OTHER, "秒  字数：");
         AddMessageAtLast(&messageDown, MSG_CODE, "%u", iHZInputed);
 	}
-#endif
     }
 
 #ifdef _ENABLE_RECORDING
