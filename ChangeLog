@@ -1,4 +1,11 @@
-2010-09-21: CSSlayer <wengxt@gmail.com>
+2010-09-26: CSSlayer <wengxt@gmail.com>
+    * 多词库支持，但性能一般，推荐主词库较大，附加小词库。
+	* 搜狗细胞词库转化为pinyin原始文件工具。
+
+2010-09-24: CSSlayer <wengxt@gmail.com>
+    * 修复系统托盘重新加入问题
+
+2010-09-24: CSSlayer <wengxt@gmail.com>
     * 新Addon信息配置
 
 2010-09-21: CSSlayer <wengxt@gmail.com>

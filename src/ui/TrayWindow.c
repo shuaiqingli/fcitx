@@ -109,7 +109,6 @@ void DrawTrayWindow(int f_state, int x, int y, int w, int h) {
 	cairo_surface_t *png_surface ;
     FcitxImage* skinImg;
     if (!tray.bTrayMapped) {
-        tray.bTrayMapped = True;
         if (!TrayFindDock(dpy, &tray))
 			return;
     }

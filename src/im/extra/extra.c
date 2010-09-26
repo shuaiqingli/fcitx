@@ -262,11 +262,11 @@ void LoadExtraIM()
     {
         if (addon->category == AC_INPUTMETHOD)
         {
+            char *modulePath;
             switch (addon->type)
             {
                 case AT_SHAREDLIBRARY:
                     {
-                        char *modulePath;
                         FILE *fp = GetLibFile(addon->module, "r", &modulePath);
                         void *handle;
                         EXTRA_IM* eim;
@@ -300,6 +300,7 @@ void LoadExtraIM()
                 default:
                     break;
             }
+            free(modulePath);
         }
     }
 }

@@ -44,12 +44,6 @@ typedef struct {
     INT8            iMode;
 } ParsePYStruct;
 
-typedef struct {
-    char           *strPY;
-    uint            iWhich:2;
-    int             iIndex;
-} PYFAINDEX;
-
 int             IsSyllabary (char *strPY, Bool bMode);
 int             IsConsonant (char *strPY, Bool bMode);
 int             FindPYFAIndex (char *strPY, Bool bMode);

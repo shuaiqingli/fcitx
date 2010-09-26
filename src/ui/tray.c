@@ -104,6 +104,11 @@ InitTray(Display* dpy, TrayWindow* tray)
     XInternAtoms (dpy, atom_names, 5, False, tray->atoms);
     tray->size = 22;
 
+    XWindowAttributes attr;
+    XGetWindowAttributes(dpy, DefaultRootWindow(dpy), &attr);
+    if ((attr.your_event_mask & StructureNotifyMask) != StructureNotifyMask) {
+        XSelectInput(dpy, DefaultRootWindow(dpy), attr.your_event_mask | StructureNotifyMask); // for MANAGER selection
+    }
     return True;
 }
 
@@ -116,17 +121,20 @@ TrayFindDock(Display *dpy, TrayWindow* tray)
 
     Dock = XGetSelectionOwner(dpy, tray->atoms[ATOM_SELECTION]);
 
-    if (!Dock)
-        XSelectInput(dpy, RootWindow(dpy, DefaultScreen(dpy)),
-                StructureNotifyMask);
+    if (Dock != None)
+        XSelectInput(dpy, Dock,
+                StructureNotifyMask|PropertyChangeMask);
 
     XUngrabServer (dpy);
     XFlush (dpy);
 
     if (Dock != None) {
         TraySendOpcode(dpy, Dock, tray, SYSTEM_TRAY_REQUEST_DOCK, tray->window, 0, 0);
+        tray->bTrayMapped = True;
         return 1;
     } 
+    else
+        tray->bTrayMapped = False;
 
     return 0;
 }

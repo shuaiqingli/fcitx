@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #ifdef HAVE_MACHINE_ENDIAN_H
 #include <machine/endian.h>
@@ -101,6 +102,8 @@ extern int iLegendCandWordCount;
 extern int iLegendCandPageCount;
 extern int iCurrentLegendCandPage;
 
+static void LoadPYPhraseDict(FILE *fp, Bool isSystem);
+
 void PYInit(void)
 {
     bSP = False;
@@ -120,6 +123,7 @@ Bool LoadPYBaseDict(void)
     for (i = 0; i < iPYFACount; i++) {
         fread(PYFAList[i].strMap, sizeof(char) * 2, 1, fp);
         PYFAList[i].strMap[2] = '\0';
+
         fread(&(PYFAList[i].iBase), sizeof(int), 1, fp);
         PYFAList[i].pyBase = (PyBase *) malloc(sizeof(PyBase) * PYFAList[i].iBase);
         for (j = 0; j < PYFAList[i].iBase; j++) {
@@ -151,98 +155,122 @@ Bool LoadPYBaseDict(void)
     return True;
 }
 
-Bool LoadPYOtherDict(void)
+StringHashSet *GetPYPhraseFiles()
 {
-    //下面开始读系统词组
-    FILE *fp;
-    int i, j, k, iLen;
-    char strBase[UTF8_MAX_LENGTH + 1];
-    PyPhrase *phrase, *temp;
-    uint iIndex;
-    PyFreq *pyFreqTemp, *pPyFreq;
-    HZ *HZTemp, *pHZ;
+    char **pinyinPath;
+    size_t len;
+    char pathBuf[PATH_MAX];
+    int i = 0;
+    DIR *dir;
+    struct dirent *drt;
+    struct stat fileStat;
 
-    bPYOtherDictLoaded = True;
+	StringHashSet* sset = NULL;
 
-    fp = GetXDGFileData(PY_PHRASE_FILE, "r", NULL);
-    if (!fp)
-        FcitxLog(ERROR, _("Can not find System Database of Pinyin!"));
-    else {
-        while (!feof(fp)) {
-            INT8 clen;
-            if (!fread(&i, sizeof(int), 1, fp))
-                break;
-            if (!fread(&clen, sizeof(INT8), 1, fp))
-                break;
-            if (!fread(strBase, sizeof(char) * clen, 1, fp))
-                break;
-            strBase[clen] = '\0';
-            if (!fread(&k, sizeof(int), 1, fp))
-                break;
+    pinyinPath = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/pinyin" , DATADIR, "fcitx/data/pinyin" );
 
-            j = GetBaseIndex(i, strBase);
-            if (j == -1)
-                break;
+    for(i = 0; i< len; i++)
+    {
+        snprintf(pathBuf, sizeof(pathBuf), "%s", pinyinPath[i]);
+        pathBuf[sizeof(pathBuf) - 1] = '\0';
 
-            PYFAList[i].pyBase[j].iPhrase = k;
-            PYFAList[i].pyBase[j].phrase = (PyPhrase *) malloc(sizeof(PyPhrase) * k);
+        dir = opendir(pathBuf);
+        if (dir == NULL)
+            continue;
 
-            for (k = 0; k < PYFAList[i].pyBase[j].iPhrase; k++) {
-                fread(&iLen, sizeof(int), 1, fp);
-                PYFAList[i].pyBase[j].phrase[k].strMap = (char *) malloc(sizeof(char) * (iLen + 1));
-                fread(PYFAList[i].pyBase[j].phrase[k].strMap, sizeof(char) * iLen, 1, fp);
-                PYFAList[i].pyBase[j].phrase[k].strMap[iLen] = '\0';
-                fread(&iLen, sizeof(int), 1, fp);
-                PYFAList[i].pyBase[j].phrase[k].strPhrase = (char *) malloc(sizeof(char) * (iLen + 1));
-                fread(PYFAList[i].pyBase[j].phrase[k].strPhrase, sizeof(char) * iLen, 1, fp);
-                PYFAList[i].pyBase[j].phrase[k].strPhrase[iLen] = '\0';
-                fread(&iLen, sizeof(unsigned int), 1, fp);
-                PYFAList[i].pyBase[j].phrase[k].iIndex = iLen;
-                if (iLen > iCounter)
-                    iCounter = iLen;
-                PYFAList[i].pyBase[j].phrase[k].iHit = 0;
-                PYFAList[i].pyBase[j].phrase[k].flag = 0;
+		/* collect all *.conf files */
+        while((drt = readdir(dir)) != NULL)
+        {
+            size_t nameLen = strlen(drt->d_name);
+            if (nameLen <= strlen(".mb") )
+                continue;
+            memset(pathBuf,0,sizeof(pathBuf));
+
+            if (strcmp(drt->d_name + nameLen -strlen(".mb"), ".mb") != 0)
+                continue;
+            snprintf(pathBuf, sizeof(pathBuf), "%s/%s", pinyinPath[i], drt->d_name );
+
+            if (stat(pathBuf, &fileStat) == -1)
+                continue;
+
+            if (fileStat.st_mode & S_IFREG)
+            {
+				StringHashSet *string;
+				HASH_FIND_STR(sset, drt->d_name, string);
+				if (!string)
+				{
+					char *bStr = strdup(drt->d_name);
+					string = malloc(sizeof(StringHashSet));
+                    memset(string, 0, sizeof(StringHashSet));
+					string->name = bStr;
+					HASH_ADD_KEYPTR(hh, sset, string->name, strlen(string->name), string);
+				}
             }
         }
-        fclose(fp);
-        iOrigCounter = iCounter;
+
+        closedir(dir);
     }
 
-    //下面开始读取用户词库
-    fp = GetXDGFileData(PY_USERPHRASE_FILE, "rb", NULL);
-    if (fp) {
-        while (!feof(fp)) {
-            INT8 clen;
-            if (!fread(&i, sizeof(int), 1, fp))
-                break;
-            if (!fread(&clen, sizeof(INT8), 1, fp))
-                break;
-            if (!fread(strBase, sizeof(char) * clen, 1, fp))
-                break;
-            strBase[clen] = '\0';
-            if (!fread(&k, sizeof(int), 1, fp))
-                break;
+    FreeXDGPath(pinyinPath);
 
-            j = GetBaseIndex(i, strBase);
-            if (j == -1)
-                break;
+    return sset;
+}
 
-            PYFAList[i].pyBase[j].iUserPhrase = k;
+void LoadPYPhraseDict(FILE *fp, Bool isSystem)
+{
+    int i, j ,k, count, iLen;
+    char strBase[UTF8_MAX_LENGTH + 1];
+    PyPhrase *temp, *phrase;
+    while (!feof(fp)) {
+        INT8 clen;
+        if (!fread(&i, sizeof(int), 1, fp))
+            break;
+        if (!fread(&clen, sizeof(INT8), 1, fp))
+            break;
+        if (!fread(strBase, sizeof(char) * clen, 1, fp))
+            break;
+        strBase[clen] = '\0';
+        if (!fread(&count, sizeof(int), 1, fp))
+            break;
+
+        j = GetBaseIndex(i, strBase);
+        if (j == -1)
+            break;
+
+        if (isSystem)
+        {
+            phrase = (PyPhrase *) malloc(sizeof(PyPhrase) * count);
+            temp = phrase;
+        }
+        else
+        {
+            PYFAList[i].pyBase[j].iUserPhrase = count;
             temp = PYFAList[i].pyBase[j].userPhrase;
-            for (k = 0; k < PYFAList[i].pyBase[j].iUserPhrase; k++) {
+        }
+
+        for (k = 0; k < count; k++) {
+            if (!isSystem)
                 phrase = (PyPhrase *) malloc(sizeof(PyPhrase));
-                fread(&iLen, sizeof(int), 1, fp);
-                phrase->strMap = (char *) malloc(sizeof(char) * (iLen + 1));
-                fread(phrase->strMap, sizeof(char) * iLen, 1, fp);
-                phrase->strMap[iLen] = '\0';
-                fread(&iLen, sizeof(int), 1, fp);
-                phrase->strPhrase = (char *) malloc(sizeof(char) * (iLen + 1));
-                fread(phrase->strPhrase, sizeof(char) * iLen, 1, fp);
-                phrase->strPhrase[iLen] = '\0';
-                fread(&iLen, sizeof(int), 1, fp);
-                phrase->iIndex = iLen;
-                if (iLen > iCounter)
-                    iCounter = iLen;
+            fread(&iLen, sizeof(int), 1, fp);
+            phrase->strMap = (char *) malloc(sizeof(char) * (iLen + 1));
+            fread(phrase->strMap, sizeof(char) * iLen, 1, fp);
+            phrase->strMap[iLen] = '\0';
+            fread(&iLen, sizeof(int), 1, fp);
+            phrase->strPhrase = (char *) malloc(sizeof(char) * (iLen + 1));
+            fread(phrase->strPhrase, sizeof(char) * iLen, 1, fp);
+            phrase->strPhrase[iLen] = '\0';
+            fread(&iLen, sizeof(unsigned int), 1, fp);
+            phrase->iIndex = iLen;
+            if (iLen > iCounter)
+                iCounter = iLen;
+            if (isSystem)
+            {
+                phrase->iHit = 0;
+                phrase->flag = 0;
+                phrase ++;
+            }
+            else
+            {
                 fread(&iLen, sizeof(int), 1, fp);
                 phrase->iHit = iLen;
                 phrase->flag = 0;
@@ -254,6 +282,100 @@ Bool LoadPYOtherDict(void)
             }
         }
 
+        if (isSystem)
+        {
+            if (PYFAList[i].pyBase[j].iPhrase == 0)
+            {
+                PYFAList[i].pyBase[j].iPhrase = count;
+                PYFAList[i].pyBase[j].phrase = temp;
+            }
+            else
+            {
+                int m, n;
+                Bool *flag = malloc(sizeof(Bool) * count);
+                memset(flag, 0, sizeof(Bool) * count);
+                int left = count;
+                phrase = temp;
+                for (m = 0; m < count; m++)
+                {
+                    for (n = 0; n < PYFAList[i].pyBase[j].iPhrase; n++)
+                    {
+                        int result = strcmp(PYFAList[i].pyBase[j].phrase[n].strMap, phrase[m].strMap);
+                        if (result == 0)
+                        {
+                            if (strcmp(PYFAList[i].pyBase[j].phrase[n].strPhrase, phrase[m].strPhrase) == 0)
+                                break;
+                        }
+                    }
+                    if (n != PYFAList[i].pyBase[j].iPhrase)
+                    {
+                        flag[m] = 1;
+                        left -- ;
+                    }
+                }
+                int orig = PYFAList[i].pyBase[j].iPhrase;
+                if (left >= 0)
+                {
+                    PYFAList[i].pyBase[j].iPhrase += left;
+                    PYFAList[i].pyBase[j].phrase = realloc(PYFAList[i].pyBase[j].phrase, sizeof(PyPhrase) * PYFAList[i].pyBase[j].iPhrase);
+                }
+                for (m = 0; m < count; m ++)
+                {
+                    if (flag[m])
+                    {
+                        free(phrase[m].strMap);
+                        free(phrase[m].strPhrase);
+                    }
+                    else
+                    {
+                        memcpy(&PYFAList[i].pyBase[j].phrase[orig], &phrase[m], sizeof(PyPhrase));
+                        orig ++ ;
+                    }
+                }
+                free(flag);
+                free(phrase);
+            }
+        }
+    }
+}
+
+Bool LoadPYOtherDict(void)
+{
+    //下面开始读系统词组
+    FILE *fp;
+    int i, j, k, iLen;
+    uint iIndex;
+    PyFreq *pyFreqTemp, *pPyFreq;
+    HZ *HZTemp, *pHZ;
+
+    bPYOtherDictLoaded = True;
+
+    fp = GetXDGFileData(PY_PHRASE_FILE, "r", NULL);
+    if (!fp)
+        FcitxLog(ERROR, _("Can not find System Database of Pinyin!"));
+    else {
+        LoadPYPhraseDict(fp, True);
+        fclose(fp);
+        StringHashSet *sset = GetPYPhraseFiles();
+        StringHashSet *curStr;
+        while(sset)
+        {
+            curStr = sset;
+            HASH_DEL(sset, curStr);
+            fp = GetXDGFilePinyin(curStr->name, "r", NULL);
+            LoadPYPhraseDict(fp, True);
+            fclose(fp);
+            free(curStr->name);
+            free(curStr);
+        }
+
+        iOrigCounter = iCounter;
+    }
+
+    //下面开始读取用户词库
+    fp = GetXDGFileData(PY_USERPHRASE_FILE, "rb", NULL);
+    if (fp) {
+        LoadPYPhraseDict(fp, False);
         fclose(fp);
     }
     //下面读取索引文件

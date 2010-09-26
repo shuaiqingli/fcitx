@@ -119,6 +119,18 @@ FILE *GetXDGFileTable(const char *fileName, const char *mode, char **retFile, Bo
     return fp;
 }
 
+FILE *GetXDGFilePinyin(const char *fileName, const char *mode, char **retFile)
+{
+    size_t len;
+    char ** path;
+    path = GetXDGPath(&len, "XDG_CONFIG_HOME", ".config", "fcitx/pinyin" , DATADIR, "fcitx/data/pinyin" );
+
+    FILE* fp = GetXDGFile(fileName, path, mode, len, retFile);
+
+    FreeXDGPath(path);
+
+    return fp;
+}
 
 FILE *GetXDGFileUser(const char *fileName, const char *mode, char **retFile)
 {

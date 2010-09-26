@@ -8,7 +8,8 @@ DEFS = -DPKGDATADIR=\"$(pkgdatadir)\"
 toolsdir = $(pkgdatadir)/tools
 EXTRA_DIST = $(tools_DATA)
 
-bin_PROGRAMS = mb2txt txt2mb createPYMB readPYMB readPYBase mb2org fcitx-remote 
+bin_PROGRAMS = mb2txt txt2mb createPYMB readPYMB readPYBase mb2org fcitx-remote scel2org
+scel2org_SOURCES = scel2org.c
 readPYMB_SOURCES = pyTools.c pyTools.h readPYMB.c
 readPYBase_SOURCES = pyTools.c pyTools.h readPYBase.c
 fcitx_remote_SOURCES = fcitx-remote.c
