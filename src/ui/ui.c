@@ -169,7 +169,6 @@ MyXEventHandler(XEvent * event)
         break;
     case DestroyNotify:
 #ifdef _ENABLE_TRAY
-        printf("destroy notify\n");
         TrayEventHandler(event);
 #endif
         break;
