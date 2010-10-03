@@ -1333,12 +1333,12 @@ void SetIM(void)
         }
     }
 
+    if (fc.bEnableAddons)
+        LoadExtraIM();
+
     if ((!fc.inputMethods[IM_SP] && (!fc.inputMethods[IM_TABLE] || !tbl.iTableCount)) && !iIMCount)     //至少应该有一种输入法
         RegisterNewIM(strNameOfPinyin, strIconNameOfPinyin, ResetPYStatus,
                       DoPYInput, PYGetCandWords, PYGetCandWord, PYGetLegendCandWord, NULL, PYInit, NULL, NULL);
-
-    if (fc.bEnableAddons)
-        LoadExtraIM();
 
     SwitchIM(gs.iIMIndex);
 }

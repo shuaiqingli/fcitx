@@ -192,7 +192,7 @@ int GetKey (unsigned char iKeyCode, int iKeyState, int iCount)
     else {
 	if (iKeyState == KEY_NONE) {
 	    //小键盘的数字也要处理成与大键盘上一样      
-	    if (iKeyCode >= 176 && iKeyCode <= 185)
+        if (iKeyCode == 141 || (iKeyCode >= 176 && iKeyCode <= 185))
 		iKeyCode -= 128;
 	}
 	else {
