@@ -1,0 +1,1 @@
+Please move to http://download.fcitx-im.org/ due to google code will abandon download section in the future.
